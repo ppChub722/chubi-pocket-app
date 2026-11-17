@@ -27,6 +27,7 @@ class BillPerson {
     this.onPaidBack,
     this.tag,
     this.onRemove,
+    this.onOpen,
   });
 
   /// Stable across rebuilds (the row keeps its typed name by it).
@@ -72,6 +73,9 @@ class BillPerson {
 
   /// × at the end of the row; null = none (or [onAuto]'s toggle instead).
   final VoidCallback? onRemove;
+
+  /// A read-only card: tap the name to open the person (their debts page).
+  final VoidCallback? onOpen;
 }
 
 /// "คนในบิล | n": ONE card for the people of a bill, in the event bill sheet
@@ -231,7 +235,7 @@ class _BillPersonRowState extends State<_BillPersonRow> {
     final Widget name = p.isMe
         ? SplitRowName.muted(p.name)
         : readOnly
-        ? SplitRowName.picked(p.name, onTap: null, color: p.color)
+        ? SplitRowName.picked(p.name, onTap: p.onOpen, color: p.color)
         : p.editableName
         ? SplitRowName.input(
             controller: _name,

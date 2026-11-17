@@ -1077,8 +1077,30 @@ class DraftForm extends StatefulWidget {
     this.debtPersonCard,
     this.eventBill,
     this.detailCards = false,
+    this.eventCard,
+    this.debtsRow,
+    this.mineRow,
+    this.myRows = true,
+    this.onOpenPerson,
     super.key,
   });
+
+  /// [detailCards] (the bill page, owner 2026-11-17): the event as its own
+  /// card above the แบ่ง card (the แบ่ง card then has no event row).
+  final Widget? eventCard;
+
+  /// [detailCards]: "จดหนี้บิลนี้เลย", on top of the แบ่ง card.
+  final Widget? debtsRow;
+
+  /// [detailCards]: "ลงรายการของฉันเลย", on top of the detail card.
+  final Widget? mineRow;
+
+  /// [detailCards]: false = no transaction of mine (yet): the detail card
+  /// keeps [mineRow] only (no wallet / category / tags / note).
+  final bool myRows;
+
+  /// [detailCards], viewing a bill: tap a person (their debts page).
+  final ValueChanged<LinkPerson>? onOpenPerson;
 
   /// The transaction page (owner 2026-11-03, after quick create): the hero
   /// without the category / wallet tiles, then the แบ่ง card (read-only when
@@ -1752,28 +1774,33 @@ class _DraftFormState extends State<DraftForm> {
     const cardGap = SizedBox(height: PpForgeSpacing.md);
     final mode = _linkMode;
     final bill = mode != null && mode != LinkMode.personal;
+    final eventCard = widget.eventCard;
+    final openPerson = widget.onOpenPerson;
     final Widget? split = isTransfer || mode == null
         ? null
-        : editing
-        ? (widget.allowSplits
-              ? LinkSection(
-                  controller: _c,
-                  event: widget.eventSlot ?? const SplitEventSlot(),
-                  eventIsNew: widget.linkEventIsNew,
-                  isEventMember: widget.linkIsEventMember,
-                  flat: true,
-                  summary: bill ? _ShareLine.ofLink(_c, mode, l) : null,
-                )
-              : null)
-        // Viewing: the bill's card as it is, nothing to change.
+        : editing && widget.allowSplits
+        ? LinkSection(
+            controller: _c,
+            event: widget.eventSlot ?? const SplitEventSlot(),
+            eventIsNew: widget.linkEventIsNew,
+            isEventMember: widget.linkIsEventMember,
+            flat: true,
+            showEvent: eventCard == null,
+            summary: bill ? _ShareLine.ofLink(_c, mode, l) : null,
+          )
+        // Viewing (or a bill I can't change): the bill's card as it is (a
+        // name opens the person when [openPerson]).
         : bill
         ? longPressable(
             IgnorePointer(
+              ignoring: openPerson == null,
               child: LinkSection(
                 controller: _c,
                 event: widget.eventSlot ?? const SplitEventSlot(),
                 flat: true,
                 readOnly: true,
+                showEvent: eventCard == null,
+                onOpenPerson: openPerson,
                 summary: _ShareLine.ofLink(_c, mode, l),
               ),
             ),
@@ -1781,52 +1808,61 @@ class _DraftFormState extends State<DraftForm> {
         : null;
     final recurring = widget.recurringSlot;
     final note = _c.note.text.trim();
+    final debtsRow = widget.debtsRow;
+    final mineRow = widget.mineRow;
     return [
       cardGap,
+      if (eventCard != null) ...[eventCard, cardGap],
       if (split != null) ...[
-        EntrySectionCard(children: [split]),
+        EntrySectionCard(children: [?debtsRow, split]),
         cardGap,
       ],
-      EntrySectionCard(
-        children: [
-          longPressable(_cardsRow(l, isTransfer: isTransfer)),
-          if (editing || _c.tagIds.isNotEmpty)
-            ..._tagsBlock(editing: editing, longPress: longPressable),
-          if (recurring != null)
-            RecurringLinkRow(
-              slot: recurring,
-              variant: SplitEventVariant.compact,
-            ),
-          if (editing || note.isNotEmpty || widget.onEnterEdit != null)
-            longPressable(
-              DraftFieldRow(
-                label: l.commonNote,
-                // Viewing: the text sits level with the label.
-                dense: !editing,
-                child: editing
-                    ? PpForgeInput.inline(
-                        editing: true,
-                        controller: _c.note,
-                        focusNode: _noteFocus,
-                        maxLines: 5,
-                        maxLength: TextLimits.note,
-                        hint: l.txNoteAddHint,
-                      )
-                    : Text(
-                        note.isEmpty ? l.commonLongPressToEdit : note,
-                        textAlign: TextAlign.end,
-                        style: note.isEmpty
-                            ? Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              )
-                            : null,
-                      ),
+      if (!widget.myRows)
+        EntrySectionCard(children: [?mineRow])
+      else
+        EntrySectionCard(
+          children: [
+            ?mineRow,
+            longPressable(_cardsRow(l, isTransfer: isTransfer)),
+            if (editing || _c.tagIds.isNotEmpty)
+              ..._tagsBlock(editing: editing, longPress: longPressable),
+            if (recurring != null)
+              RecurringLinkRow(
+                slot: recurring,
+                variant: SplitEventVariant.compact,
               ),
-            ),
-        ],
-      ),
+            if (editing || note.isNotEmpty || widget.onEnterEdit != null)
+              longPressable(
+                DraftFieldRow(
+                  label: l.commonNote,
+                  // Viewing: the text sits level with the label.
+                  dense: !editing,
+                  child: editing
+                      ? PpForgeInput.inline(
+                          editing: true,
+                          controller: _c.note,
+                          focusNode: _noteFocus,
+                          maxLines: 5,
+                          maxLength: TextLimits.note,
+                          hint: l.txNoteAddHint,
+                        )
+                      : Text(
+                          note.isEmpty ? l.commonLongPressToEdit : note,
+                          textAlign: TextAlign.end,
+                          style: note.isEmpty
+                              ? Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                )
+                              : null,
+                        ),
+                ),
+              ),
+          ],
+        ),
     ];
   }
 

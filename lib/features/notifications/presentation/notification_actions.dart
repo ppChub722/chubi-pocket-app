@@ -20,7 +20,7 @@ import '../../personal_debts/presentation/debt_person_preset.dart';
 import '../../projects/data/projects_repository.dart';
 import '../../transactions/data/transactions_repository.dart';
 import '../../transactions/presentation/widgets/quick_create_sheet.dart'
-    show openPaperBill, showQuickCreateSheet;
+    show showQuickCreateSheet;
 import '../../recurring/data/recurring_repository.dart';
 import '../domain/notification.dart';
 import 'cubit/notifications_inbox_cubit.dart';
@@ -59,7 +59,7 @@ abstract final class NotificationActions {
     }
     final bill = billOfLink(n);
     if (bill != null) {
-      await openPaperBill(ctx, bill.id, projectId: bill.projectId);
+      _openFromBell(ctx, '/bills/${bill.id}');
       return;
     }
     final link = n.deepLink;
@@ -212,7 +212,9 @@ Future<void> _answer(
     await write();
     await inboxCubit.markActioned(n.id);
     await _reload(inboxCubit);
-    if (done != null) showPpForgeSnackBarOn(messenger, done, tone: Tone.success);
+    if (done != null) {
+      showPpForgeSnackBarOn(messenger, done, tone: Tone.success);
+    }
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
@@ -237,14 +239,14 @@ Future<void> _onAnswerBill(
   }
 }
 
-/// bill_new: the bill form, where "ลงรายการของฉัน" lives; a save answers
-/// the notice.
+/// bill_new: the bill page, where "ลงรายการของฉันเลย" lives; opening it
+/// answers the notice.
 Future<void> _onClaimBill(BuildContext ctx, AppNotification n) async {
   final bill = billOfLink(n);
   if (bill == null) return;
   final inboxCubit = ctx.read<NotificationsInboxCubit>();
-  final saved = await openPaperBill(ctx, bill.id, projectId: bill.projectId);
-  if (saved) await inboxCubit.markActioned(n.id);
+  _openFromBell(ctx, '/bills/${bill.id}');
+  await inboxCubit.markActioned(n.id);
 }
 
 /// bill_changed: my tx and each debt of the bill take it as it is now.

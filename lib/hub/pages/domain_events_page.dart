@@ -468,6 +468,39 @@ class _EventsPageState extends State<_EventsPage> {
           ),
         ),
         HubDemo(
+          title: 'EventSectionCard — the bill page\'s event',
+          note:
+              'The bill page (owner 2026-11-17): the event as its own card, '
+              'in the event\'s colour; tap = open it (editing: pick another, '
+              '× = take it off). No event: "เพิ่มในอีเวนต์" + the dashed chip.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EventSectionCard(
+                name: 'ทริปเชียงใหม่',
+                iconCode: const PpForgeIconCode(
+                  icon: 'flight',
+                  bgColors: ['#60A5FA'],
+                ),
+                onTap: () {},
+              ),
+              const SizedBox(height: PpForgeSpacing.sm),
+              EventSectionCard(
+                name: 'ปาร์ตี้วันเกิด',
+                iconCode: const PpForgeIconCode(
+                  icon: 'cake',
+                  bgColors: ['#F472B6'],
+                ),
+                editing: true,
+                onTap: () {},
+                onClear: () {},
+              ),
+              const SizedBox(height: PpForgeSpacing.sm),
+              EventSectionCard(name: null, onTap: () {}),
+            ],
+          ),
+        ),
+        HubDemo(
           title: 'BookOptionCard — where my part of a bill goes',
           note:
               'The event bill sheet\'s "ลงบัญชีของฉันด้วย": one card per '

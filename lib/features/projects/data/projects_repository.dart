@@ -342,14 +342,12 @@ class ProjectsRepository {
       ? '/split-bills/$paperId'
       : '/projects/$projectId/bills/$paperId';
 
-  /// One paper as I see it (the bill form's edit).
-  Future<PaperView> getPaper(String paperId, {String? projectId}) =>
-      _call(() async {
-        final res = await _client.dio.get<Map<String, dynamic>>(
-          _paperPath(paperId, projectId),
-        );
-        return PaperView.fromJson(res.data!);
-      });
+  /// One paper as I see it, either kind, by its id alone (`GET /bills/{id}`:
+  /// the bill page; writes keep the kind's own path from its `project_id`).
+  Future<PaperView> getPaper(String paperId) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>('/bills/$paperId');
+    return PaperView.fromJson(res.data!);
+  });
 
   /// Save an edit of the paper ([version] = the one read: 409 BILL_CHANGED
   /// when someone saved meanwhile). Only its own fields; my books follow

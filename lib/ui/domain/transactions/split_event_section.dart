@@ -525,3 +525,101 @@ class _SplitEventSectionState extends State<SplitEventSection> {
     );
   }
 }
+
+/// The bill page's event, as its own card (owner 2026-11-17): tinted with the
+/// event's colour, "อยู่ในอีเวนต์" over its name; tap = [onTap] (open the
+/// event when viewing, pick another when editing), × = [onClear]. No event:
+/// a plain card with "เพิ่มในอีเวนต์" and the dashed "+ เลือกอีเวนต์" chip.
+class EventSectionCard extends StatelessWidget {
+  const EventSectionCard({
+    required this.name,
+    this.iconCode,
+    this.onTap,
+    this.onClear,
+    this.editing = false,
+    this.locked = false,
+    super.key,
+  });
+
+  /// Null = not in an event.
+  final String? name;
+  final PpForgeIconCode? iconCode;
+  final VoidCallback? onTap;
+  final VoidCallback? onClear;
+  final bool editing;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final n = name;
+    if (n == null) {
+      return EntrySectionCard(
+        children: [
+          DraftFieldRow(
+            label: l.txLinkAddToEvent,
+            dense: true,
+            child: EventPickChip(name: null, onTap: onTap, locked: locked),
+          ),
+        ],
+      );
+    }
+    final theme = Theme.of(context);
+    final accent =
+        iconCode?.accentColorFor(theme.extension<PpForgeColors>()!) ??
+        ModuleColors.of(context).people;
+    final removable = editing && !locked && onClear != null;
+    final radius = BorderRadius.circular(PpForgeRadius.lg);
+    return Material(
+      color: Color.alphaBlend(
+        accent.withValues(alpha: 0.12),
+        theme.colorScheme.surface,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(color: accent, width: 1.5),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: locked ? null : onTap,
+        child: Padding(
+          padding: HeroMetrics.of(context).padding,
+          child: Row(
+            children: [
+              IconDisplay(type: IconType.project, size: 40, iconCode: iconCode),
+              const SizedBox(width: PpForgeSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l.txLinkInEvent,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      n,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+              if (removable)
+                SplitRowAction(
+                  icon: AppIcons.close,
+                  tooltip: l.quickEventRemove,
+                  onTap: onClear,
+                )
+              else if (onTap != null && !locked)
+                PpForgeIcon(AppIcons.chevronRight, color: accent),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

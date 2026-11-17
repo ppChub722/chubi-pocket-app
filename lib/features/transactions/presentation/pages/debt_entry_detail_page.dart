@@ -596,6 +596,30 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     _ => l.debtOriginCash,
   };
 
+  /// Its event, as the bill page shows it but read-only (owner 2026-11-17:
+  /// a debt or a repayment gets an event only from the event's side — a
+  /// bill, a payback, a lump — and never loses it here; delete instead).
+  /// Tap = the event. Null = not from an event.
+  Widget? _eventCard() {
+    final e = _entry;
+    final bill = e.bills.where((b) => !b.event.isSplit).firstOrNull;
+    final source = e.source;
+    final origin = e.origin;
+    final (String? id, String? name, PpForgeIconCode? icon) = bill != null
+        ? (bill.event.id, bill.event.name, bill.event.iconCode)
+        : source != null && source.kind == 'event'
+        ? (source.id, source.title, null)
+        : origin != null && origin.kind == 'event'
+        ? (origin.eventId, origin.title, null)
+        : (null, null, null);
+    if (id == null || name == null || name.isEmpty) return null;
+    return EventSectionCard(
+      name: name,
+      iconCode: icon,
+      onTap: () => openPage(context, '/projects/$id'),
+    );
+  }
+
   /// Opens where the debt came from: its transaction, else its event.
   VoidCallback? _openOrigin(DebtOrigin o) {
     final tx = o.transactionId;
@@ -946,6 +970,10 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                       onEdit: () => _edit(),
                       onLongPressField: (f) => _edit(focus: f),
                     ),
+                    if (_eventCard() case final card?) ...[
+                      const SizedBox(height: PpForgeSpacing.md),
+                      card,
+                    ],
                     // The tx page's card (owner 2026-11-05): the cards, tags
                     // and note under the hero, in one frame.
                     const SizedBox(height: PpForgeSpacing.md),
@@ -1029,11 +1057,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                               caption: b.inSync ? null : l.debtBillOutOfSync,
                               captionTone: Tone.warning,
                             ),
-                            onTap: () => openPaperBill(
-                              context,
-                              b.ptId,
-                              projectId: b.event.isSplit ? null : b.event.id,
-                            ),
+                            onTap: () => openPage(context, '/bills/${b.ptId}'),
                           ),
                       ],
                     ),

@@ -61,10 +61,14 @@ RejectRoute rejectRouteOf(NotificationType type) => switch (type) {
   _ => RejectRoute.dismiss,
 };
 
-/// A bill's deep link (`/projects/{pid}/bills/{id}` or `/split-bills/{id}`)
-/// opens the bill form, not a route; null = the link is a page.
+/// A bill's deep link (`/bills/{id}`, or the older `/projects/{pid}/bills/
+/// {id}` / `/split-bills/{id}`) opens the bill page (`/bills/{id}`); null =
+/// the link is another page.
 ({String id, String? projectId})? billOfLink(AppNotification n) {
   final parts = (n.deepLink ?? '').split('?').first.split('/');
+  if (parts.length == 3 && parts[1] == 'bills' && parts[2].isNotEmpty) {
+    return (id: parts[2], projectId: null);
+  }
   if (parts.length == 5 &&
       parts[1] == 'projects' &&
       parts[3] == 'bills' &&

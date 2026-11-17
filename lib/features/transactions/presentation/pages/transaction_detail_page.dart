@@ -17,7 +17,10 @@ import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
 import '../../../categories/domain/category.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
+import '../../../personal_debts/domain/debt_ledger.dart' show debtPersonKey;
 import '../../../personal_debts/presentation/cubit/debt_directory_cubit.dart';
+import '../../../personal_debts/presentation/debt_wiring.dart'
+    show debtPersonPath;
 import '../../../projects/data/projects_repository.dart';
 import '../../../projects/domain/paper.dart' show PaperView;
 import '../../../pending/domain/pending_transaction.dart';
@@ -41,6 +44,7 @@ import 'debt_entry_detail_page.dart';
 import '../widgets/event_pick.dart';
 import '../widgets/event_picker.dart';
 import '../widgets/link_view.dart';
+import '../widgets/quick_create_sheet.dart' show openPaperBill;
 import '../widgets/recurring_link.dart';
 import '../widgets/tx_compact_hero.dart';
 
@@ -131,15 +135,138 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
   }
 }
 
+/// One bill, either kind, by its id alone (owner 2026-11-17: a paper is ONE
+/// page from everywhere — the event, a notice, a debt's "มาจาก"): with my
+/// transaction of it, that transaction's page; none yet, the same page
+/// without my part, where "ลงรายการของฉันเลย" / "จดหนี้บิลนี้เลย" book it.
+class BillPage extends StatefulWidget {
+  const BillPage({required this.paperId, super.key});
+
+  final String paperId;
+
+  @override
+  State<BillPage> createState() => _BillPageState();
+}
+
+class _BillPageState extends State<BillPage> {
+  PaperView? _paper;
+  bool _loading = true;
+  ApiException? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    PaperView? paper;
+    ApiException? error;
+    try {
+      paper = await context.read<ProjectsRepository>().getPaper(widget.paperId);
+    } catch (e, st) {
+      error = ApiException.from(e, st);
+    }
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _error = error;
+      if (paper != null) _paper = paper;
+    });
+    // A payback not in my book yet: its sheet (where it is booked), then
+    // back. Booked, it is my repayment's page (build).
+    if (paper != null &&
+        paper.isPayback &&
+        paper.myTransactionId == null &&
+        paper.myDebtIds.isEmpty) {
+      final nav = Navigator.of(context);
+      await openPaperBill(context, paper.id);
+      if (mounted && nav.canPop()) nav.pop();
+    }
+  }
+
+  /// The page's row while I have no transaction of the bill: the bill's own
+  /// fields, no wallet / category of mine.
+  static Transaction _unbookedRow(PaperView p) => Transaction(
+    id: '',
+    accountId: null,
+    type: p.type == 'income' ? TransactionType.income : TransactionType.expense,
+    amount: p.amount,
+    date: p.date,
+    description: p.description,
+    eventBill: EventBillLink(
+      event:
+          p.event ??
+          EventRef(id: p.id, name: p.description ?? '', kind: 'split'),
+      billId: p.id,
+      linked: true,
+      billAmount: p.amount,
+      editInBill: true,
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final p = _paper;
+    final txId = p?.myTransactionId;
+    if (txId != null) {
+      return TransactionDetailPage(key: ValueKey(txId), transactionId: txId);
+    }
+    // A payback is a repayment (owner 2026-11-17): booked, my repayment's
+    // page.
+    final repayment = p != null && p.isPayback ? p.myDebtIds.firstOrNull : null;
+    if (repayment != null) {
+      return DebtEntryDetailPage(key: ValueKey(repayment), entryId: repayment);
+    }
+    if (p != null && !p.isPayback) {
+      return _Loaded(
+        key: ValueKey('${p.id}:${p.version}'),
+        tx: _unbookedRow(p),
+        paper: p,
+        onReload: _load,
+      );
+    }
+    final missing = _error?.statusCode == 404;
+    return Scaffold(
+      appBar: AppTopBar(title: l.navTransactions, showBack: true),
+      extendBodyBehindAppBar: true,
+      body: AsyncStateView.fallback(
+        loading: _loading || p != null,
+        error: missing ? null : _error,
+        onRetry: _load,
+        notFound: EmptyView(
+          icon: AppIcons.empty,
+          title: l.transactionDetailNotFound,
+          message: l.transactionDetailNotFoundMessage,
+        ),
+      ),
+    );
+  }
+}
+
 class _Loaded extends StatefulWidget {
   const _Loaded({
     required this.tx,
     this.fetching = false,
     this.startEditing = false,
+    this.paper,
+    this.onReload,
+    super.key,
   });
   final Transaction tx;
   final bool fetching;
   final bool startEditing;
+
+  /// A bill with no transaction of mine yet ([BillPage]): [tx] is made from
+  /// it; a save books what the switches ask, then [onReload].
+  final PaperView? paper;
+  final Future<void> Function()? onReload;
 
   @override
   State<_Loaded> createState() => _LoadedState();
@@ -248,6 +375,34 @@ class _LoadedState extends State<_Loaded>
   /// The row is my book of a bill (its card shows once [_paper] is read).
   bool get _inBill => widget.tx.eventBill != null;
 
+  /// A bill with no transaction of mine yet ([BillPage]).
+  bool get _unbooked => widget.paper != null;
+
+  /// The bill as sent when opened, to skip its PUT when only my books
+  /// change (I may book a bill I can't edit).
+  String? _paperBodyBaseline;
+
+  String? _paperBody() {
+    final paper = _paper;
+    if (paper == null) return null;
+    final b = paperBodies(
+      _c,
+      _mode,
+      personIds: paper.personIds,
+      mePersonId: paper.paper.me?.id,
+    );
+    return jsonEncode(b?.paper);
+  }
+
+  /// A switch flipped while viewing: edit, then flip it.
+  void _switchInEdit(VoidCallback flip) {
+    if (isEditing) {
+      flip();
+    } else {
+      _enterEdit(then: flip);
+    }
+  }
+
   /// The แบ่ง card: a money row of mine, or my book of a bill.
   bool get _linkTabs =>
       _inBill ||
@@ -283,6 +438,7 @@ class _LoadedState extends State<_Loaded>
       b?.paper['split_mode'],
       b?.paidBack,
       _c.link.eventBookDebts,
+      _c.link.eventBookMine,
     ]);
   }
 
@@ -292,13 +448,14 @@ class _LoadedState extends State<_Loaded>
     final bill = widget.tx.eventBill;
     if (bill == null) return;
     try {
-      final p = switch (widget.tx.paperJson) {
-        final j? => PaperView.fromJson(j),
-        null => await context.read<ProjectsRepository>().getPaper(
-          bill.billId,
-          projectId: bill.event.isSplit ? null : bill.event.id,
-        ),
-      };
+      final p =
+          widget.paper ??
+          switch (widget.tx.paperJson) {
+            final j? => PaperView.fromJson(j),
+            null => await context.read<ProjectsRepository>().getPaper(
+              bill.billId,
+            ),
+          };
       if (!mounted) return;
       setState(() => _paper = PaperEditSession(p));
       if (!isEditing) _reload();
@@ -370,6 +527,8 @@ class _LoadedState extends State<_Loaded>
   void initState() {
     super.initState();
     _link.addListener(_onLinkChanged);
+    // Not booked yet: the bill is here already, so the first frame has it.
+    if (widget.paper case final p?) _paper = PaperEditSession(p);
     _prefill();
     initDraft(_draft());
     _c.addListener(_onFormChanged);
@@ -592,6 +751,7 @@ class _LoadedState extends State<_Loaded>
     }
     _eventChange = null;
     _billBaseline = _linkTabs ? _billSnapshot() : null;
+    _paperBodyBaseline = _paperBody();
     _billOn = _mode != LinkMode.personal;
   }
 
@@ -698,6 +858,11 @@ class _LoadedState extends State<_Loaded>
       showPpForgeSnackBar(context, l.txLinkModeUnbalanced, tone: Tone.danger);
       return;
     }
+    if (_unbooked && !bill) {
+      // แบ่ง off on a bill I have no part of yet: leave it.
+      await _deleteNow(context, l);
+      return;
+    }
     setSaving(true);
     final projects = context.read<ProjectsRepository>();
     final txCubit = context.read<TransactionsCubit>();
@@ -713,6 +878,7 @@ class _LoadedState extends State<_Loaded>
           txs: txCubit,
           c: _c,
           mode: mode,
+          billChanged: !_unbooked || _paperBody() != _paperBodyBaseline,
         );
         if (!ok) {
           if (!mounted) return;
@@ -725,7 +891,10 @@ class _LoadedState extends State<_Loaded>
           return;
         }
         final change = _eventChange;
-        if (change != null) {
+        if (_unbooked && change is RemoveFromEvent) {
+          // No transaction of mine to unlink: the bill leaves its event.
+          await projects.movePaper(paper.paper.id, fromProjectId: _billEventId);
+        } else if (change != null) {
           await applyEventChange(
             projects,
             txRepo: txRepo,
@@ -776,6 +945,15 @@ class _LoadedState extends State<_Loaded>
         }
       }
       if (!mounted) return;
+      if (_unbooked) {
+        // Booked now (or the bill changed): the bill page reads it again and
+        // shows my transaction's page once there is one.
+        HapticFeedback.mediumImpact();
+        commitSaved(working);
+        showPpForgeSnackBar(context, l.quickSaved, tone: Tone.success);
+        await widget.onReload?.call();
+        return;
+      }
       await _applyRecurringChange(txCubit, accountsCubit);
       try {
         await txCubit.refreshOne(_edited.id, afterWrite: true);
@@ -845,7 +1023,7 @@ class _LoadedState extends State<_Loaded>
     final SplitRecurringSlot? recurringSlot;
     // The recurring link: the saved one (unless its removal is held), else a
     // held pick.
-    final recurringItem = tx.recurringItem;
+    final recurringItem = _unbooked ? null : tx.recurringItem;
     final savedLink = _pendingUnlink || recurringItem == null
         ? null
         : recurringItem;
@@ -861,7 +1039,7 @@ class _LoadedState extends State<_Loaded>
         onTap: _pickEvent,
         onClear: _eventName(l, tx) == null ? null : _clearEvent,
       );
-      recurringSlot = canEdit
+      recurringSlot = canEdit && !_unbooked
           ? _link.slot(
               context,
               type: _edited.type,
@@ -897,6 +1075,54 @@ class _LoadedState extends State<_Loaded>
               done: (m) => _say(m, tone: Tone.success),
             );
     }
+
+    // The bill page (owner 2026-11-17): the event as its own card, in its
+    // colour; none yet = "เพิ่มในอีเวนต์".
+    final eventName = _eventName(l, tx);
+    final Widget? eventCard = _linkTabs && tx.type != TransactionType.transfer
+        ? EventSectionCard(
+            name: eventName,
+            iconCode: switch (_eventChange) {
+              ExistingEventTarget(:final project) => project.iconCode,
+              null when billEventId != null => bill?.event.iconCode,
+              _ => null,
+            },
+            editing: editing,
+            locked: !canEdit,
+            onTap: editing
+                ? _pickEvent
+                : eventName != null
+                ? openProject
+                : () => _enterEdit(then: _pickEvent),
+            onClear: editing && eventName != null ? _clearEvent : null,
+          )
+        : null;
+    // My books of the bill as switches, also while viewing: "จดหนี้บิลนี้เลย"
+    // (an event bill) on the แบ่ง card, "ลงรายการของฉันเลย" on mine. Once
+    // booked they stay on (nothing to undo here).
+    final billPaper = _paper?.paper;
+    final debts = _c.link.eventBookDebts;
+    final Widget? debtsRow =
+        billPaper != null && _mode == LinkMode.event && debts != null
+        ? LinkSwitchRow(
+            key: const ValueKey('linkBookDebtRow'),
+            label: l.txLinkBookDebt,
+            value: debts,
+            onChanged: billPaper.myDebtIds.isNotEmpty || !canEdit
+                ? null
+                : (v) => _switchInEdit(() => _c.setEventBookDebts(v)),
+          )
+        : null;
+    final Widget? mineRow = billPaper != null && !billPaper.isPayback
+        ? LinkSwitchRow(
+            key: const ValueKey('linkBookMineRow'),
+            label: l.txLinkBookMine,
+            value: _c.link.eventBookMine,
+            onChanged: _unbooked && canEdit
+                ? (v) => _switchInEdit(() => _c.setEventBookMine(v))
+                : null,
+          )
+        : null;
 
     final metaLines = [
       if (tx.createdBy != null)
@@ -981,9 +1207,26 @@ class _LoadedState extends State<_Loaded>
                         eventPending:
                             _eventChange is NewEventTarget ||
                             _eventChange is ExistingEventTarget,
+                        eventCard: eventCard,
+                        debtsRow: debtsRow,
+                        mineRow: mineRow,
+                        myRows: !_unbooked || _c.link.eventBookMine,
+                        // A name opens that person's debts (all of them,
+                        // not this bill's piece).
+                        onOpenPerson: editing || !_inBill
+                            ? null
+                            : (p) => openPage(
+                                context,
+                                debtPersonPath(
+                                  debtPersonKey(
+                                    contactId: p.contactId,
+                                    name: p.name,
+                                  ),
+                                ),
+                              ),
                       ),
                       // My row differs from its bill: "อัปเดตตาม".
-                      if (!editing)
+                      if (!editing && !_unbooked)
                         LinkViewRows(
                           tx: tx,
                           onApplyEvent: canEdit ? _applyEvent : null,
@@ -991,7 +1234,16 @@ class _LoadedState extends State<_Loaded>
                     ],
                   ),
                   sections: const [],
-                  manage: (editing && canEdit) || isRepayment
+                  manage: _unbooked
+                      ? (editing && (billPaper?.canLeave ?? false)
+                            ? ManageSection(
+                                deleteLabel: l.evbLeaveTitle,
+                                onDelete: isSaving
+                                    ? null
+                                    : () => _confirmDelete(context, l),
+                              )
+                            : null)
+                      : (editing && canEdit) || isRepayment
                       ? ManageSection(
                           deleteLabel: l.transactionDeleteThis,
                           deleteConsequence: l.transactionDeleteConsequence,
@@ -1042,6 +1294,17 @@ class _LoadedState extends State<_Loaded>
     // it (rule f).
     final tx = widget.tx;
     final isTransfer = tx.type == TransactionType.transfer;
+    if (_unbooked) {
+      // Nothing of mine to delete: I only leave the bill.
+      final leave = await showConfirmDialog(
+        context,
+        title: l.evbLeaveTitle,
+        confirmLabel: l.evbLeaveTitle,
+        destructive: true,
+      );
+      if (leave && context.mounted) await _deleteNow(context, l);
+      return;
+    }
     final ok = await showConfirmDialog(
       context,
       title: isTransfer
@@ -1083,7 +1346,7 @@ class _LoadedState extends State<_Loaded>
           projectId: bill.event.isSplit ? null : bill.event.id,
           keepBooks: false,
         );
-        txCubit.dropRow(tx.id);
+        if (!_unbooked) txCubit.dropRow(tx.id);
       } else {
         final result = await txCubit.remove(tx.id);
         applyTxDeleteResult(result, accounts: accountsCubit, debts: debts);

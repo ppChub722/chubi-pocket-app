@@ -24,8 +24,16 @@ class LinkSection extends StatefulWidget {
     this.summary,
     this.fixed = false,
     this.readOnly = false,
+    this.showEvent = true,
+    this.onOpenPerson,
     super.key,
   });
+
+  /// False: no event row on top (the page shows the event as its own card).
+  final bool showEvent;
+
+  /// Viewing: tap a person's name (their debts page).
+  final ValueChanged<LinkPerson>? onOpenPerson;
 
   /// A saved bill being viewed (owner 2026-11-04): no switch row, the event
   /// row only when it has one ("อยู่ในอีเวนต์ X"), the people card read-only.
@@ -262,6 +270,12 @@ class _LinkSectionState extends State<LinkSection> {
       onPaidBack: _c.toggleMePaidBack,
     );
 
+    final onOpenPerson = widget.onOpenPerson;
+    VoidCallback? open(LinkPerson p, {required bool named}) =>
+        !widget.readOnly || onOpenPerson == null || !named
+        ? null
+        : () => onOpenPerson(p);
+
     // "คืนแล้ว" on anyone but the payer, whoever paid (a split bill holds
     // each one's payback, 0.4.1-2 SA6).
     const paidBackAllowed = true;
@@ -301,6 +315,7 @@ class _LinkSectionState extends State<LinkSection> {
         paidBack: _c.isPaidBack(person),
         onPaidBack: () => _c.togglePaidBack(person),
         tag: named ? tagFor(person) : null,
+        onOpen: open(person, named: named),
         onRemove: () {
           if (paid) setPayer(null);
           if (event && named) {
@@ -326,7 +341,7 @@ class _LinkSectionState extends State<LinkSection> {
       readOnly: widget.readOnly,
       statusLeading: widget.summary,
       payLabel: income ? l.evbReceives : null,
-      top: _eventRow(l),
+      top: widget.showEvent ? _eventRow(l) : null,
       title: l.evbPeople((event ? members.length : _c.splits.length) + 1),
       people: [
         me,
@@ -348,6 +363,7 @@ class _LinkSectionState extends State<LinkSection> {
             paidBack: _c.isPaidBack(p),
             onPaidBack: () => _c.togglePaidBack(p),
             tag: tagFor(p),
+            onOpen: open(p, named: true),
             onRemove: () => _c.removeEventMember(p),
           ),
       ],

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../domain/project.dart';
-import '../../../transactions/presentation/widgets/quick_create_sheet.dart'
-    show openPaperBill;
 import 'project_common.dart';
 
 String projectTxDateLabel(BuildContext context, String ymd) {
@@ -295,12 +294,8 @@ class ProjectTxTreeTile extends StatelessWidget {
     await _openForm(context);
   }
 
-  Future<void> _openForm(BuildContext context) async {
-    final saved = await openPaperBill(
-      context,
-      tree.parent.id,
-      projectId: view.project.id,
-    );
-    if (saved) await onChanged();
-  }
+  /// The bill page (owner 2026-11-17: one page from everywhere): a booked
+  /// payback is my repayment's page, one not booked yet its form.
+  Future<void> _openForm(BuildContext context) async =>
+      openPage(context, '/bills/${tree.parent.id}');
 }

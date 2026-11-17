@@ -1,4 +1,4 @@
-import '../../transactions/domain/refs.dart' show EmbeddedPerson;
+import '../../transactions/domain/refs.dart' show EmbeddedPerson, EventRef;
 
 double _money(Object? v) => (v as num?)?.toDouble() ?? 0;
 
@@ -62,6 +62,7 @@ class PaperView {
     required this.version,
     required this.people,
     this.projectId,
+    this.event,
     this.paybackKind,
     this.description,
     this.note,
@@ -75,6 +76,9 @@ class PaperView {
 
   final String id;
   final String? projectId;
+
+  /// The event it is a bill of (name, icon); null = a split bill.
+  final EventRef? event;
   final String type;
   final String? paybackKind;
   final double amount;
@@ -95,12 +99,19 @@ class PaperView {
   bool get isPayback => type == 'payback';
   PaperPersonView? get me => people.where((p) => p.isMe).firstOrNull;
 
+  /// My transaction of it, null = none yet.
+  String? get myTransactionId => myTransaction?['id'] as String?;
+
   factory PaperView.fromJson(Map<String, dynamic> j) {
     final books = (j['my_books'] as Map?)?.cast<String, dynamic>() ?? const {};
     final rights = (j['rights'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final projectId = j['project_id'] as String?;
     return PaperView(
       id: j['id'] as String,
-      projectId: j['project_id'] as String?,
+      projectId: projectId,
+      event: projectId != null && j['event'] is Map
+          ? EventRef.fromJson((j['event'] as Map).cast<String, dynamic>())
+          : null,
       type: (j['type'] as String?) ?? 'expense',
       paybackKind: j['payback_kind'] as String?,
       amount: _money(j['amount']),

@@ -153,14 +153,16 @@ class PaperEditSession {
   }
 
   /// Saves the edited bill (`PUT` with the version read: 409 BILL_CHANGED
-  /// when someone saved meanwhile), then what my switches add to my books,
-  /// my own fields on my transaction, and the "คืนแล้ว" marks that changed.
-  /// False = the form has no people to save (nothing sent).
+  /// when someone saved meanwhile; none when [billChanged] is false, only my
+  /// books change), then what my switches add to my books, my own fields on
+  /// my transaction, and the "คืนแล้ว" marks that changed. False = the form
+  /// has no people to save (nothing sent).
   Future<bool> save({
     required ProjectsRepository projects,
     required TransactionsCubit txs,
     required DraftFormController c,
     required LinkMode mode,
+    bool billChanged = true,
   }) async {
     final edit = paper;
     final body = paperBodies(
@@ -170,17 +172,20 @@ class PaperEditSession {
       mePersonId: edit.me?.id,
     );
     if (body == null) return false;
-    final saved = await projects.updatePaper(
-      edit.id,
-      projectId: edit.projectId,
-      paper: body.paper,
-      version: edit.version,
-    );
+    if (billChanged) {
+      await projects.updatePaper(
+        edit.id,
+        projectId: edit.projectId,
+        paper: body.paper,
+        version: edit.version,
+      );
+    }
     final wantTx = c.link.eventBookMine && edit.myTransaction == null;
     final wantDebts =
         (c.link.eventBookDebts ?? false) && edit.myDebtIds.isEmpty;
     final split = edit.projectId == null;
-    if (split ? edit.myTransaction == null : (wantTx || wantDebts)) {
+    // A split bill gives my transaction and its debts together.
+    if (split ? wantTx : (wantTx || wantDebts)) {
       await projects.claimPaper(
         edit.id,
         projectId: edit.projectId,
@@ -201,7 +206,7 @@ class PaperEditSession {
         privateNote: c.note.text.trim(),
       );
     }
-    await savePaidBack(projects, c, saved.paperId, edit.projectId);
+    await savePaidBack(projects, c, edit.id, edit.projectId);
     return true;
   }
 

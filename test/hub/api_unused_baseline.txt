@@ -1,7 +1,9 @@
 DELETE /projects/{id}/bills/{bid}/people/{pid}
 DELETE /recurring-items/{id}
 DELETE /split-bills/{id}/people/{pid}
+GET /projects/{id}/bills/{bid}
 GET /split-bills
+GET /split-bills/{id}
 GET /transactions/summary
 POST /personal-debts/{id}/unlink-paper
 POST /projects/{id}/members/{member_id}/merge

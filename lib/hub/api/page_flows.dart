@@ -165,9 +165,17 @@ const List<PageFlow> pageFlows = [
       FlowCall('listContacts', note: 'person picker'),
     ]),
     FlowStep.action('Opened on my bill row (its แบ่ง card)', [
-      FlowCall('getSplitBill'),
-      FlowCall('getEventBill'),
+      FlowCall('getBill', note: 'when the row did not bring its bill'),
     ]),
+    FlowStep.action(
+      'Opened as the bill page (/bills/{id}: the event, a notice, "มาจาก")',
+      [
+        FlowCall(
+          'getBill',
+          note: 'either kind; none of mine yet = the switches book it',
+        ),
+      ],
+    ),
     FlowStep.action('"บันทึก" with แบ่ง switched on (a plain row)', [
       FlowCall(
         'createSplitBill',
@@ -275,9 +283,8 @@ const List<PageFlow> pageFlows = [
       ),
       FlowCall('createEventBill', note: 'a new bill or a payback'),
     ]),
-    FlowStep.action('Edit bill opened (event or split)', [
-      FlowCall('getEventBill'),
-      FlowCall('getSplitBill'),
+    FlowStep.action('Payback bill opened (every other bill: its page)', [
+      FlowCall('getBill'),
     ]),
     FlowStep.action('Button "บันทึก" (edit bill)', [
       FlowCall(
@@ -490,9 +497,8 @@ const List<PageFlow> pageFlows = [
     FlowStep.action('Wallet invite: accept', [FlowCall('acceptAccountInvite')]),
     FlowStep.action('Wallet invite: reject', [FlowCall('rejectAccountInvite')]),
     FlowStep.action('Unlinked names opened', [FlowCall('listUnlinkedNames')]),
-    FlowStep.action('A bill notice → the bill form', [
-      FlowCall('getEventBill'),
-      FlowCall('getSplitBill'),
+    FlowStep.action('A bill notice → the bill page (/bills/{id})', [
+      FlowCall('getBill'),
     ]),
     FlowStep.action('Event link request: accept', [
       FlowCall('acceptProjectLinkRequest'),
@@ -759,7 +765,7 @@ const List<PageFlow> pageFlows = [
     ]),
     // The bill form is quick create in event mode (see quick-create-sheet).
     FlowStep.action('"เพิ่มบิล" / tap a bill / ⤓ "ลงบัญชี"', [
-      FlowCall('getEventBill', note: 'an existing bill opens its form'),
+      FlowCall('getBill', note: 'a bill opens its page; a payback its form'),
     ]),
   ]),
   PageFlow('event-members', 'Members (on hold: kept as is, on the new API).', [

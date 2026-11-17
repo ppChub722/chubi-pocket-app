@@ -202,6 +202,13 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
         startEditing: true,
       ),
     ),
+    // A bill, either kind, from everywhere (owner 2026-11-17).
+    GoRoute(
+      path: '/bills/:id',
+      name: 'bill',
+      builder: (context, state) =>
+          BillPage(paperId: state.pathParameters['id']!),
+    ),
   ],
   ShellTab.accounts => [
     GoRoute(
@@ -575,4 +582,3 @@ class _StreamToListenable extends ChangeNotifier {
     super.dispose();
   }
 }
-

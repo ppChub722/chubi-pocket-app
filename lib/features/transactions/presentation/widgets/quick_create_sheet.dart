@@ -284,19 +284,16 @@ class EventBillPreset {
   final PaperView? edit;
 }
 
-/// Opens an existing bill (event or split) in the quick create form: loads
-/// the paper (and its event) first. True = saved / left.
-Future<bool> openPaperBill(
-  BuildContext context,
-  String paperId, {
-  String? projectId,
-}) async {
+/// Opens an existing payback bill in the quick create form (every other bill
+/// is the bill page, `/bills/{id}`): loads the paper (and its event) first.
+/// True = saved / left.
+Future<bool> openPaperBill(BuildContext context, String paperId) async {
   final repo = context.read<ProjectsRepository>();
   final l = AppLocalizations.of(context)!;
   final PaperView paper;
   Project? project;
   try {
-    paper = await repo.getPaper(paperId, projectId: projectId);
+    paper = await repo.getPaper(paperId);
     final pid = paper.projectId;
     if (pid != null) project = await repo.get(pid);
   } on ApiException catch (e) {
