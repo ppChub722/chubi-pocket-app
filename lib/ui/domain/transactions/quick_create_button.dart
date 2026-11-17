@@ -56,16 +56,44 @@ class QuickCreateButton extends StatelessWidget {
         : QuickCreateModeColors.onOf(context, mode);
     final label = this.label;
     final glyph = icon ?? quickCreateModeIcon(mode);
-    Widget mark(double size) => AnimatedSwitcher(
-      duration: still ? Duration.zero : PpForgeDurations.fast,
-      child: loading
-          ? SizedBox.square(
-              key: const ValueKey('quickCreateLoading'),
-              dimension: size,
-              child: Center(child: PpForgeSpinner(color: on)),
-            )
-          : PpForgeIcon(glyph, size: size, color: on),
-    );
+    // Loading: only the spinner, icon and word gone. Any swap (loading ↔ ready,
+    // one page's button to another's) fades (owner 2026-11-17).
+    final Widget content = loading
+        ? PpForgeSpinner(
+            key: const ValueKey('quickCreateLoading'),
+            size: PpForgeSpinnerSize.large,
+            color: on,
+          )
+        : KeyedSubtree(
+            key: ValueKey(('quickCreateType', label, glyph)),
+            child: label == null
+                ? PpForgeIcon(glyph, size: PpForgeIconSize.xl, color: on)
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    // A long word shrinks rather than leaving the circle.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PpForgeIcon(glyph, size: 26, color: on),
+                          const SizedBox(height: 4),
+                          Text(
+                            label,
+                            key: const ValueKey('quickCreateLabel'),
+                            maxLines: 1,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: on,
+                              fontSize: 11.5,
+                              height: 1.1,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          );
     final button = SizedBox.square(
       dimension: size,
       child: TweenAnimationBuilder<Color?>(
@@ -90,33 +118,12 @@ class QuickCreateButton extends StatelessWidget {
             child: InkWell(
               onTap: loading ? null : onPressed,
               child: Center(
-                child: label == null
-                    ? mark(PpForgeIconSize.xl)
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        // A long word shrinks rather than leaving the circle.
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              mark(26),
-                              const SizedBox(height: 4),
-                              Text(
-                                label,
-                                key: const ValueKey('quickCreateLabel'),
-                                maxLines: 1,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: on,
-                                  fontSize: 11.5,
-                                  height: 1.1,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                child: AnimatedSwitcher(
+                  duration: still ? Duration.zero : PpForgeDurations.fast,
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: content,
+                ),
               ),
             ),
           ),
