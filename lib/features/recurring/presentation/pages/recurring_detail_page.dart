@@ -844,7 +844,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ?_focusCard(l, r),
         if (d.page?.plan case final plan?)
           RecurringPlanSection(plan: plan, onTable: _openPlanTable),
-        if (d.page case final page? when page.lines.length > 1)
+        if (d.page case final page? when page.lines.isNotEmpty)
           RecurringLinesSection(
             page: page,
             onMenu: (line, a) => unawaited(_lineMenu(line, a)),
@@ -983,12 +983,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       final symbol = context.readUserCurrencySymbol;
       return HeroNextOccurrence(
         key: const ValueKey('heroNextInstallment'),
-        label: planNextLabel(
-          l,
-          plan,
-          i,
-          (v) => moneyString(context, v, symbol: symbol),
-        ),
+        label: [
+          planNextLabel(
+            l,
+            plan,
+            i,
+            (v) => moneyString(context, v, symbol: symbol),
+          ),
+          if (plan.onCard) l.recurringPlanBilledOnCard,
+        ].join(' | '),
         amount: MoneyText(-i.amount, tone: MoneyTone.signed, symbol: symbol),
         onTap: () => unawaited(_installmentMenu(i)),
       );
@@ -1065,9 +1068,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   /// into as chips. The next occurrence sits under the card (_focusCard).
   Widget _viewHero(AppLocalizations l, RecurringDetail d) {
     final r = d.recurring;
-    final rule = r.rule;
+    final plan = d.page?.plan;
+    final rule = plan?.rule ?? r.rule;
     final description = (r.description ?? '').trim();
-    final stats = _stats(l, r, d.stats);
+    final stats = plan != null ? _planStats(l, plan) : _stats(l, r, d.stats);
     return PpForgeHeroCard(
       style: _style(r),
       content: [
@@ -1104,7 +1108,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 key: const ValueKey('heroRound'),
                 icon: AppIcons.recurring,
                 title: recurrenceLabel(l, rule),
-                subtitle: !r.hasEnd
+                subtitle: plan != null
+                    ? l.fpRecurringCountUnit(plan.count)
+                    : !r.hasEnd
                     ? l.fpRecurringSince(
                         DateFormat.yMMM(_locale).format(rule.start),
                       )
@@ -1122,10 +1128,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             ],
           ),
         ),
-        ?_track(l, r, d.stats),
+        if (plan != null) _planTrack(l, plan) else ?_track(l, r, d.stats),
         if (stats.isNotEmpty) HeroTiles(joined: true, children: stats),
         ?_pickCards(l),
-        HeroChipRow(chips: _heroChips(l, r)),
+        ?_purchaseRow(l, plan),
+        HeroChipRow(chips: _heroChips(l, r, plan)),
         ?_heroNext(l, r),
       ],
     );
@@ -1214,6 +1221,65 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
+  /// A plan's installments as a numbered chain.
+  Widget _planTrack(AppLocalizations l, RecurringPlan plan) {
+    final dots = [
+      for (final c in plan.chain)
+        switch (c.status) {
+          InstallmentStatus.paid => ChainDot.paid,
+          InstallmentStatus.skipped => ChainDot.skipped,
+          InstallmentStatus.due => ChainDot.wait,
+          InstallmentStatus.upcoming => ChainDot.future,
+        },
+    ];
+    final next = dots.indexOf(ChainDot.future);
+    if (next >= 0) dots[next] = ChainDot.current;
+    return OccurrenceChain(
+      key: const ValueKey('heroPlanChain'),
+      dots: dots,
+      semanticLabel: l.fpRecurringChainLabel(plan.done, plan.count),
+    );
+  }
+
+  /// A plan's three tiles: paid (a card plan: billed) / left / the last one.
+  List<Widget> _planStats(AppLocalizations l, RecurringPlan plan) {
+    final symbol = context.readUserCurrencySymbol;
+    Widget tile(String label, String value) => SummaryTileView(
+      tile: SummaryTile(label: label, value: value),
+    );
+    final last = plan.lastDate;
+    return [
+      tile(
+        plan.onCard ? l.recurringPlanBilled : l.fpRecurringStatPaid,
+        moneyString(context, plan.paidTotal, symbol: symbol),
+      ),
+      tile(
+        l.recurringPlanLeft,
+        moneyString(context, plan.leftTotal, symbol: symbol),
+      ),
+      tile(l.fpRecurringStatLast, last == null ? '–' : _monthYear(last)),
+    ];
+  }
+
+  /// A card plan's purchase: the full-price expense on the card; a tap
+  /// opens it.
+  Widget? _purchaseRow(AppLocalizations l, RecurringPlan? plan) {
+    final p = plan?.purchase;
+    if (p == null) return null;
+    final when = DateFormat.MMMd(_locale).format(p.date);
+    return HeroNextOccurrence(
+      key: const ValueKey('heroPurchase'),
+      icon: AppIcons.receipt,
+      label: l.recurringPlanPurchase(when),
+      amount: MoneyText(
+        -p.amount,
+        tone: MoneyTone.signed,
+        symbol: context.readUserCurrencySymbol,
+      ),
+      onTap: () => openPage(context, '/transactions/${p.id}'),
+    );
+  }
+
   /// Always three tiles (plan E), by [Recurring.hasEnd]. With an end: paid /
   /// left / the last one (picked dates: รวม, never ปีละ). Open-ended with an
   /// amount that changes: average / last time / highest; else per month /
@@ -1278,7 +1344,11 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   /// Status ▾ (pause / resume), the kind, tags and บันทึกอัตโนมัติ (the
   /// category and wallets are the tiles above).
-  List<Widget> _heroChips(AppLocalizations l, Recurring r) {
+  List<Widget> _heroChips(
+    AppLocalizations l,
+    Recurring r,
+    RecurringPlan? plan,
+  ) {
     return [
       if (r.actions.pause || r.actions.resume)
         OptionMenuAnchor<RecurringAction>(
@@ -1304,10 +1374,19 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       else
         _statusChip(l, r),
       PpForgeChip(
-        label: recurringKindLabel(l, r.kind),
+        label: plan == null
+            ? recurringKindLabel(l, r.kind)
+            : '${recurringKindLabel(l, r.kind)} · ${plan.onCard ? l.recurringPlanOnCard : l.recurringPlanChip(plan.count)}',
         selected: true,
         tone: PpForgeChipTone.neutral,
       ),
+      if (plan != null)
+        PpForgeChip(
+          key: const ValueKey('heroPlanRate'),
+          label: _rateLabel(l, plan),
+          selected: true,
+          tone: PpForgeChipTone.neutral,
+        ),
       for (final t in r.tags) _tagChip(t.name, t.iconCode),
       if (r.autoCreate)
         PpForgeChip(
@@ -1318,6 +1397,23 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           tone: PpForgeChipTone.primary,
         ),
     ];
+  }
+
+  /// "0%", else "Flat 2.99%/ปี".
+  String _rateLabel(AppLocalizations l, RecurringPlan plan) {
+    final rate = plan.rate;
+    if (!plan.hasInterest || rate == null) return '0%';
+    final method = switch (plan.method) {
+      PlanInterestMethod.flat => l.recurringPlanMethodFlat,
+      PlanInterestMethod.reducing => l.recurringPlanMethodReducing,
+      PlanInterestMethod.fixed => l.recurringPlanMethodFixed,
+      PlanInterestMethod.manual => l.recurringPlanMethodManual,
+      PlanInterestMethod.none => l.recurringPlanMethodNone,
+    };
+    return l.recurringPlanRateChip(
+      method,
+      NumberFormat.decimalPattern(_locale).format(rate),
+    );
   }
 
   Widget _tagChip(String name, PpForgeIconCode? iconCode) {
@@ -1531,6 +1627,24 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         key: const ValueKey('debtFlow'),
         from: person,
         to: _paidByCard(l),
+      );
+    }
+    // ผ่อนผ่านบัตร: no line; the debt is held by the card.
+    final plan = _detail?.page?.plan;
+    if (plan != null && plan.onCard) {
+      final card = context.watch<AccountsCubit>().byId(plan.cardAccountId!);
+      return FlowCards(
+        key: const ValueKey('debtFlow'),
+        from: person,
+        to: WalletPickCard(
+          account: card,
+          label: l.recurringPlanInCard,
+          placeholder: plan.cardAccount?.name ?? l.debtNoWallet,
+          dense: true,
+          onTap: card == null
+              ? null
+              : () => openPage(context, '/accounts/${card.id}'),
+        ),
       );
     }
     final wallet = WalletPickCard(

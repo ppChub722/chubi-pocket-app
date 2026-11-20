@@ -13147,6 +13147,42 @@ abstract class AppLocalizations {
   /// **'No separate payment: it\'s paid with the card statement (\"Pay card\")'**
   String get recurringPlanOnCardNote;
 
+  /// No description provided for @recurringPlanBilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Billed'**
+  String get recurringPlanBilled;
+
+  /// No description provided for @recurringPlanBilledOnCard.
+  ///
+  /// In en, this message translates to:
+  /// **'billed on the card'**
+  String get recurringPlanBilledOnCard;
+
+  /// No description provided for @recurringPlanInCard.
+  ///
+  /// In en, this message translates to:
+  /// **'On card'**
+  String get recurringPlanInCard;
+
+  /// No description provided for @recurringPlanPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase | {date} | full price on the card'**
+  String recurringPlanPurchase(String date);
+
+  /// No description provided for @recurringPlanChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}-installment plan'**
+  String recurringPlanChip(int n);
+
+  /// No description provided for @recurringPlanRateChip.
+  ///
+  /// In en, this message translates to:
+  /// **'{method} {rate}%/yr'**
+  String recurringPlanRateChip(String method, String rate);
+
   /// No description provided for @recurringPlanClose.
   ///
   /// In en, this message translates to:

@@ -7736,6 +7736,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'No separate payment: it\'s paid with the card statement (\"Pay card\")';
 
   @override
+  String get recurringPlanBilled => 'Billed';
+
+  @override
+  String get recurringPlanBilledOnCard => 'billed on the card';
+
+  @override
+  String get recurringPlanInCard => 'On card';
+
+  @override
+  String recurringPlanPurchase(String date) {
+    return 'Purchase | $date | full price on the card';
+  }
+
+  @override
+  String recurringPlanChip(int n) {
+    return '$n-installment plan';
+  }
+
+  @override
+  String recurringPlanRateChip(String method, String rate) {
+    return '$method $rate%/yr';
+  }
+
+  @override
   String get recurringPlanClose => 'Close the plan early';
 
   @override

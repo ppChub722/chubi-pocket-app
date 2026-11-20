@@ -13,10 +13,14 @@ class HeroNextOccurrence extends StatelessWidget {
     this.amountText,
     this.amountColor,
     this.onTap,
+    this.icon = AppIcons.date,
     super.key,
   });
 
   final String label;
+
+  /// The leading glyph (a date by default).
+  final IconData icon;
   final Widget? amount;
   final String? amountText;
   final Color? amountColor;
@@ -40,7 +44,7 @@ class HeroNextOccurrence extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(AppIcons.date, size: 16, color: scheme.onSurfaceVariant),
+                Icon(icon, size: 16, color: scheme.onSurfaceVariant),
                 const SizedBox(width: PpForgeSpacing.xs),
                 Expanded(
                   child: Text(

@@ -7578,6 +7578,30 @@ class AppLocalizationsTh extends AppLocalizations {
       'ไม่ต้องบันทึกจ่ายแยก จ่ายรวมกับใบแจ้งยอดบัตรด้วยปุ่ม \"ชำระบัตร\"';
 
   @override
+  String get recurringPlanBilled => 'เรียกเก็บแล้ว';
+
+  @override
+  String get recurringPlanBilledOnCard => 'เรียกเก็บในบัตร';
+
+  @override
+  String get recurringPlanInCard => 'อยู่ในบัตร';
+
+  @override
+  String recurringPlanPurchase(String date) {
+    return 'รายการซื้อ | $date | ราคาเต็มเข้าบัตรแล้ว';
+  }
+
+  @override
+  String recurringPlanChip(int n) {
+    return 'มีแผน $n งวด';
+  }
+
+  @override
+  String recurringPlanRateChip(String method, String rate) {
+    return '$method $rate%/ปี';
+  }
+
+  @override
   String get recurringPlanClose => 'ปิดแผนก่อนกำหนด';
 
   @override

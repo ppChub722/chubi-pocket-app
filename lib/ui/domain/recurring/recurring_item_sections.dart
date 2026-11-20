@@ -113,9 +113,9 @@ class RecurringLinesSection extends StatelessWidget {
   }
 }
 
-/// A debt item's plan on its page: the plan's tiles (จ่ายต้นแล้ว / เหลือ /
-/// งวดสุดท้าย, then เงินต้นคงเหลือ / ดอกที่ยังต้องจ่าย), the on-card note,
-/// and ตารางงวด (tap an installment = แก้งวดนี้ / tick it).
+/// A debt item's plan on its page (paid / left / the last one are the
+/// hero's tiles): เงินต้นคงเหลือ / ดอกที่ยังต้องจ่าย, the on-card note, and
+/// ตารางงวด (tap an installment = แก้งวดนี้ / tick it).
 class RecurringPlanSection extends StatelessWidget {
   const RecurringPlanSection({
     required this.plan,
@@ -131,11 +131,9 @@ class RecurringPlanSection extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final symbol = context.readUserCurrencySymbol;
     String money(double v) => moneyString(context, v, symbol: symbol);
-    final locale = Localizations.localeOf(context).toLanguageTag();
     Widget tile(String label, String value) => SummaryTileView(
       tile: SummaryTile(label: label, value: value),
     );
-    final last = plan.lastDate;
     return SectionCard(
       key: const ValueKey('planView'),
       title: plan.closed
@@ -147,19 +145,7 @@ class RecurringPlanSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              HeroTiles(
-                joined: true,
-                children: [
-                  tile(l.recurringPlanPaidPrincipal, money(plan.paidPrincipal)),
-                  tile(l.recurringPlanLeft, money(plan.leftTotal)),
-                  tile(
-                    l.fpRecurringStatLast,
-                    last == null ? '–' : DateFormat.yMMM(locale).format(last),
-                  ),
-                ],
-              ),
-              if (plan.hasInterest) ...[
-                const SizedBox(height: PpForgeSpacing.sm),
+              if (plan.hasInterest)
                 HeroTiles(
                   joined: true,
                   children: [
@@ -170,12 +156,12 @@ class RecurringPlanSection extends StatelessWidget {
                     tile(l.recurringPlanLeftInterest, money(plan.leftInterest)),
                   ],
                 ),
-              ],
-              if (plan.onCard) ...[
+              if (plan.hasInterest && plan.onCard)
                 const SizedBox(height: PpForgeSpacing.sm),
+              if (plan.onCard)
                 PpForgeMessage(message: l.recurringPlanOnCardNote),
-              ],
-              const SizedBox(height: PpForgeSpacing.sm),
+              if (plan.hasInterest || plan.onCard)
+                const SizedBox(height: PpForgeSpacing.sm),
             ],
           ),
         ),

@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../ui/ui.dart' show RecurrenceRule;
+import '../../../ui/ui.dart'
+    show RecurrenceEnd, RecurrenceFreq, RecurrenceMonthly, RecurrenceRule;
+import '../../categories/domain/category.dart';
 import '../../institutions/domain/institution.dart';
 import '../../personal_debts/domain/debt_direction.dart';
 import '../../transactions/domain/refs.dart';
@@ -249,6 +251,39 @@ class PlanInstallment extends Equatable {
   ];
 }
 
+/// A card plan's purchase (BE `PlanPurchase`): the full-price expense on
+/// the card it was made from.
+class PlanPurchase extends Equatable {
+  const PlanPurchase({
+    required this.id,
+    required this.amount,
+    required this.date,
+    this.description,
+    this.category,
+  });
+
+  static PlanPurchase? tryParse(Object? json) {
+    if (json is! Map<String, dynamic> || json['id'] is! String) return null;
+    final c = json['category'];
+    return PlanPurchase(
+      id: json['id'] as String,
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      date: parseYmd(json['date'] as String?) ?? today(),
+      description: json['description'] as String?,
+      category: c is Map<String, dynamic> ? CategoryRef.fromJson(c) : null,
+    );
+  }
+
+  final String id;
+  final double amount;
+  final DateTime date;
+  final String? description;
+  final CategoryRef? category;
+
+  @override
+  List<Object?> get props => [id, amount, date, description, category];
+}
+
 /// A debt item's plan (BE `PlanView`): information; the balance counts the
 /// debt rows only.
 class RecurringPlan extends Equatable {
@@ -261,10 +296,12 @@ class RecurringPlan extends Equatable {
     this.installmentAmount,
     this.cardAccount,
     this.cardAccountId,
+    this.purchase,
     this.closed = false,
     this.done = 0,
     this.leftCount = 0,
     this.paidPrincipal = 0,
+    this.paidTotal = 0,
     this.leftPrincipal = 0,
     this.leftInterest = 0,
     this.leftTotal = 0,
@@ -288,10 +325,12 @@ class RecurringPlan extends Equatable {
       cardAccount: card is Map<String, dynamic>
           ? AccountRef.fromJson(card)
           : null,
+      purchase: PlanPurchase.tryParse(json['purchase']),
       closed: json['closed'] == true,
       done: (json['done'] as num?)?.toInt() ?? 0,
       leftCount: (json['left_count'] as num?)?.toInt() ?? 0,
       paidPrincipal: (json['paid_principal'] as num?)?.toDouble() ?? 0,
+      paidTotal: (json['paid_total'] as num?)?.toDouble() ?? 0,
       leftPrincipal: (json['left_principal'] as num?)?.toDouble() ?? 0,
       leftInterest: (json['left_interest'] as num?)?.toDouble() ?? 0,
       leftTotal: (json['left_total'] as num?)?.toDouble() ?? 0,
@@ -323,6 +362,9 @@ class RecurringPlan extends Equatable {
   final String? cardAccountId;
   final AccountRef? cardAccount;
 
+  /// A card plan made by quick create: its purchase on the card.
+  final PlanPurchase? purchase;
+
   /// ปิดแผนก่อนกำหนด: the unmarked installments were skipped.
   final bool closed;
 
@@ -330,6 +372,9 @@ class RecurringPlan extends Equatable {
   final int done;
   final int leftCount;
   final double paidPrincipal;
+
+  /// Principal + interest of the ticked installments (a card plan: billed).
+  final double paidTotal;
   final double leftPrincipal;
   final double leftInterest;
   final double leftTotal;
@@ -342,6 +387,15 @@ class RecurringPlan extends Equatable {
 
   /// ผ่อนผ่านบัตร: paid with the card's statement, no line.
   bool get onCard => cardAccountId != null;
+
+  /// The round as a rule: monthly on the first installment's day, [count]
+  /// times (a card plan has no line to read one from).
+  RecurrenceRule get rule => RecurrenceRule(
+    freq: RecurrenceFreq.monthly,
+    start: start,
+    monthly: RecurrenceMonthly.onDay(start.day),
+    end: RecurrenceEnd.afterCount(count),
+  );
 
   bool get hasInterest => method != PlanInterestMethod.none;
 
@@ -369,10 +423,12 @@ class RecurringPlan extends Equatable {
     installmentAmount,
     cardAccountId,
     cardAccount,
+    purchase,
     closed,
     done,
     leftCount,
     paidPrincipal,
+    paidTotal,
     leftPrincipal,
     leftInterest,
     leftTotal,
