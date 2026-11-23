@@ -10,8 +10,6 @@ import '../domain/recurring_item.dart';
 
 String recurringKindLabel(AppLocalizations l, RecurringKind k) => switch (k) {
   RecurringKind.expense => l.fpRecurringKindExpense,
-  RecurringKind.subscription => l.fpRecurringKindSubscription,
-  RecurringKind.bill => l.fpRecurringKindBill,
   RecurringKind.income => l.fpRecurringKindIncome,
   RecurringKind.transfer => l.fpRecurringKindTransfer,
   RecurringKind.saving => l.fpRecurringKindSaving,
@@ -24,21 +22,13 @@ IconData recurringKindIcon(RecurringKind k) => k.iconDefault.icon;
 /// icon nor a category.
 extension RecurringKindIconDefault on RecurringKind {
   TypeIconDefault get iconDefault => switch (this) {
-    RecurringKind.subscription => const TypeIconDefault(
+    RecurringKind.expense => const TypeIconDefault(
       iconId: 'subscriptions',
       color: ModuleColors.defaultSubscription,
-    ),
-    RecurringKind.expense => const TypeIconDefault(
-      iconId: 'timelapse',
-      color: ModuleColors.defaultInstallment,
     ),
     RecurringKind.income => const TypeIconDefault(
       iconId: 'cash',
       color: ModuleColors.defaultIncome,
-    ),
-    RecurringKind.bill => const TypeIconDefault(
-      iconId: 'notifications',
-      color: ModuleColors.defaultReminder,
     ),
     RecurringKind.transfer => const TypeIconDefault(
       iconId: 'swap_horiz',

@@ -31,7 +31,10 @@ import '../../features/notifications/presentation/pages/notification_settings_pa
 import '../../features/notifications/presentation/pages/notifications_inbox_page.dart';
 import '../../features/pending/presentation/pages/pending_batch_add_page.dart';
 import '../../features/pending/presentation/pages/pending_page.dart';
+import '../../features/personal_debts/presentation/pages/card_debt_page.dart';
 import '../../features/personal_debts/presentation/pages/debt_person_page.dart';
+import '../../features/personal_debts/presentation/pages/debt_plan_page.dart';
+import '../../features/personal_debts/presentation/pages/new_debt_plan_page.dart';
 import '../../features/personal_debts/presentation/pages/personal_debts_page.dart';
 import '../../features/projects/presentation/pages/project_detail_page.dart';
 import '../../features/projects/presentation/pages/project_members_page.dart';
@@ -543,6 +546,24 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       name: 'personal-debt-entry',
       builder: (context, state) =>
           DebtEntryDetailPage(entryId: state.pathParameters['id']!),
+    ),
+    // 0.4.3: หนี้บัตร / PayLater and debt plans
+    GoRoute(
+      path: '/personal-debts/cards/:id',
+      name: 'personal-debt-card',
+      builder: (context, state) =>
+          CardDebtPage(accountId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/personal-debts/plans/new',
+      name: 'personal-debt-plan-new',
+      builder: (context, state) => const NewDebtPlanPage(),
+    ),
+    GoRoute(
+      path: '/personal-debts/plans/:id',
+      name: 'personal-debt-plan',
+      builder: (context, state) =>
+          DebtPlanPage(id: state.pathParameters['id']!),
     ),
     GoRoute(
       path: '/personal-debts/:id',

@@ -66,14 +66,14 @@ void main() {
           'type': 'debt',
           'status': 'active',
           'debt_direction': 'paid',
-          'lines_count': 1,
+          'reminders_count': 1,
           'plan': {
             'count': 5,
             'done': 2,
             'left_principal': 6000,
             'next': {'seq': 3, 'due_date': '2026-11-30', 'amount': 2000},
           },
-          'lines': [
+          'reminders': [
             {
               'id': 'l1',
               'amount': 2000,

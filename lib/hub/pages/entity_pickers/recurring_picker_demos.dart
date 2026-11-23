@@ -39,7 +39,7 @@ class RecurringPickerDemos extends StatelessWidget {
     }) {
       final d = ymd(now.add(Duration(days: days)));
       return {
-        'recurring_rule_id': ruleId,
+        'recurring_reminder_id': ruleId,
         'slot': d,
         'date': d,
         'days_until': days,

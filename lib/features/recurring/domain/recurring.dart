@@ -45,18 +45,12 @@ enum RecurringPauseReason {
   };
 }
 
-/// A recurring item's type (0.4.3: 7 types; every line is the item's type).
-/// "ผ่อนชำระ" is an expense with an end, "เตือนจ่าย" a bill or a transfer;
-/// "ทดลองฟรีถึง" is gone.
+/// A recurring item's type (0.4.3: 5 types, fixed once created; the type
+/// decides what its reminders can do). ค่าสมาชิก / บิล are expenses (a bill
+/// asks its amount each round: amount_mode ask).
 enum RecurringKind {
-  /// รายจ่าย.
+  /// รายจ่าย: expense / คนจ่ายแทน / คืนคนจ่ายแทน.
   expense,
-
-  /// ค่าสมาชิก.
-  subscription,
-
-  /// บิล: may start without an amount.
-  bill,
   income,
 
   /// โอน: wallet → wallet.
@@ -80,13 +74,13 @@ enum RecurringKind {
     return switch (legacyKind) {
       'saving' => saving,
       'debt' => debt,
-      'bill' => bill,
+      'bill' => expense,
       'expense' => expense,
       'transfer' => transfer,
-      'subscription' => subscription,
+      'subscription' => expense,
       'installment' => expense,
       'income' => income,
-      'reminder' => type == 'transfer' ? transfer : bill,
+      'reminder' => type == 'transfer' ? transfer : expense,
       _ => switch (type) {
         'income' => income,
         'transfer' => transfer,
@@ -106,7 +100,7 @@ enum RecurringKind {
   };
 
   /// May start without an amount (บิล / โอน: เตือนจ่าย before).
-  bool get amountOptional => this == bill || this == transfer;
+  bool get amountOptional => this == expense || this == transfer;
 }
 
 /// The wire type as a money type: the item types other than income /
@@ -224,7 +218,7 @@ class CurrentOccurrence extends Equatable {
     required String recurringId,
   }) {
     final slot = json['slot'] as String?;
-    final line = json['recurring_rule_id'] as String? ?? recurringId;
+    final line = json['recurring_reminder_id'] as String? ?? recurringId;
     RecurringLineIndex.remember(line: line, item: recurringId);
     return CurrentOccurrence(
       itemId: json['item_id'] as String? ?? 'slot:$line:$slot',
@@ -239,7 +233,7 @@ class CurrentOccurrence extends Equatable {
 
   final String itemId;
 
-  /// Its line (`recurring_rule_id`): a round is addressed by line + slot.
+  /// Its line (`recurring_reminder_id`): a round is addressed by line + slot.
   final String ruleId;
 
   /// The original date ("YYYY-MM-DD"); null from an old BE.
@@ -345,7 +339,7 @@ class Recurring extends Equatable {
     required this.type,
     required this.rule,
     required this.status,
-    this.kind = RecurringKind.subscription,
+    this.kind = RecurringKind.expense,
     this.amount,
     this.description,
     this.note,
@@ -599,7 +593,7 @@ class Recurring extends Equatable {
       pauseReason: RecurringPauseReason.fromJson(json['pause_reason']),
       createdAt: DateTime.tryParse((json['created_at'] as String?) ?? ''),
       updatedAt: DateTime.tryParse((json['updated_at'] as String?) ?? ''),
-      linesCount: (json['lines_count'] as num?)?.toInt() ?? 1,
+      linesCount: (json['reminders_count'] as num?)?.toInt() ?? 1,
       monthTotal: (json['month_total'] as num?)?.toDouble(),
       counterparty: counterparty,
       planDone: (plan?['done'] as num?)?.toInt(),
@@ -697,11 +691,15 @@ class RecurringLineWrite extends Equatable {
     this.paidByName,
     this.toAccountId,
     this.debtSub,
+    this.repaysReminderId,
     this.autoCreate = false,
   });
 
   final String? id;
   final double? amount;
+
+  /// คืนคนจ่ายแทน: the person-paid line it pays back.
+  final String? repaysReminderId;
   final String? accountId;
   final String? paidByContactId;
   final String? paidByName;
@@ -712,9 +710,14 @@ class RecurringLineWrite extends Equatable {
 
   bool get paidBy => paidByContactId != null || paidByName != null;
 
+  /// No amount (0.4.3): the round asks it (amount_mode ask); a debt round
+  /// without one takes its plan's installment.
   Map<String, dynamic> toJson() => {
     'id': ?id,
-    'amount': amount ?? 0,
+    if ((amount ?? 0) > 0) 'amount': amount,
+    if ((amount ?? 0) <= 0 && debtSub == null && repaysReminderId == null)
+      'amount_mode': 'ask',
+    'repays_reminder_id': ?repaysReminderId,
     'source': paidBy
         ? {
             'paid_by': {
@@ -794,7 +797,6 @@ class RecurringPlanWrite extends Equatable {
     'interest_method': method.name,
     'interest_rate': rate,
     'installment_amount': installmentAmount,
-    'card_account_id': cardAccountId,
     'opening_account_id': ?openingAccountId,
   };
 
@@ -914,8 +916,12 @@ class RecurringWrite extends Equatable {
   /// the BE sent it).
   final List<Map<String, dynamic>> lines;
 
-  Map<String, dynamic> toJson() {
+  /// [debtPlanId] — the debt plan the item pays (0.4.3: the plan is written
+  /// apart, see RecurringRepository.create).
+  Map<String, dynamic> toJson({String? debtPlanId}) {
     final debt = kind == RecurringKind.debt;
+    final paysPlan = debt && debtPlanId != null;
+    final alerts = [for (final r in reminders) r.toJson()];
     final saving = kind == RecurringKind.saving;
     final noCategory = debt || saving || kind == RecurringKind.transfer;
     return {
@@ -927,7 +933,8 @@ class RecurringWrite extends Equatable {
       'category_id': noCategory ? null : categoryId,
       'tag_ids': debt || saving ? const <String>[] : tagIds,
       'goal_id': saving ? goalId : null,
-      'counterparty': debt
+      'debt_plan_id': paysPlan ? debtPlanId : null,
+      'counterparty': debt && !paysPlan
           ? {
               'contact_id': institutionId == null ? contactId : null,
               'person_name': institutionId == null && contactId == null
@@ -936,12 +943,13 @@ class RecurringWrite extends Equatable {
               'institution_id': institutionId,
             }
           : null,
-      'debt_direction': debt
+      'debt_direction': debt && !paysPlan
           ? (direction ?? DebtEntryDirection.paid).wire
           : null,
-      'plan': debt ? plan?.toJson() : null,
-      'reminders': [for (final r in reminders) r.toJson()],
-      'lines': lines,
+      // 0.4.3: alerts sit on each reminder; the form still edits one set
+      'reminders': [
+        for (final l in lines) {...l, 'alerts': alerts},
+      ],
     };
   }
 

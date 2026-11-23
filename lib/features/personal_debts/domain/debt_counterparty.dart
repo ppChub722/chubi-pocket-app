@@ -104,7 +104,9 @@ class DebtRecurringPlan extends Equatable {
       leftPrincipal: (json['left_principal'] as num?)?.toDouble(),
       lastDate: _date(json['last_date']),
       next: DebtInstallmentRef.tryParse(json['next']),
-      cardAccountId: json['card_account_id'] as String?,
+      cardAccountId: (json['creditor'] is Map && json['creditor']['account'] is Map)
+          ? json['creditor']['account']['id'] as String?
+          : null,
     );
   }
 
@@ -227,7 +229,7 @@ class DebtCounterpartyRecurring extends Equatable {
           ? null
           : DebtEntryDirection.parse(direction) == DebtEntryDirection.paid,
       balance: (json['balance'] as num?)?.toDouble(),
-      linesCount: (json['lines_count'] as num?)?.toInt() ?? 0,
+      linesCount: (json['reminders_count'] as num?)?.toInt() ?? 0,
       nextDate: next is Map ? _date(next['date']) : _date(json['next_date']),
       nextAmount: next is Map
           ? (next['amount'] as num?)?.toDouble()
@@ -235,7 +237,7 @@ class DebtCounterpartyRecurring extends Equatable {
       dueCount: (json['due_count'] as num?)?.toInt() ?? 0,
       plan: DebtRecurringPlan.tryParse(json['plan']),
       lines: [
-        for (final l in (json['lines'] as List?) ?? const [])
+        for (final l in (json['reminders'] as List?) ?? const [])
           ?DebtRecurringLine.tryParse(l),
       ],
     );

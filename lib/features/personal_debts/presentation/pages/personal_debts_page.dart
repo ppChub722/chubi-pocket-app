@@ -12,12 +12,15 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
 import '../../../preferences/page_prefs.dart';
+import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_directory.dart';
+import '../../domain/debt_plans.dart';
 import '../cubit/debt_directory_cubit.dart';
 import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../debt_wiring.dart';
+import 'new_debt_plan_page.dart';
 
 /// หนี้ · รายการหนี้ (owner 2026-10-22, mock DebtsList): a list hero like the
 /// other lists (tile + "หนี้สุทธิ | N คน" + the big net; facts รอรับ / รอจ่าย
@@ -55,6 +58,44 @@ class _PeopleView extends StatefulWidget {
 class _PeopleViewState extends State<_PeopleView> {
   final _search = TextEditingController();
   final _toolbar = PpForgeListToolbarState.of('personal_debts');
+
+  /// หนี้แบบที่ 1 (0.4.3): my cards / PayLater wallets holding a debt.
+  List<CardSummary> _cards = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCards();
+  }
+
+  Future<void> _loadCards() async {
+    try {
+      final cards = await context.read<PersonalDebtsRepository>().cardSummaries();
+      if (mounted) {
+        setState(
+          () => _cards = [
+            for (final c in cards)
+              if (c.owed > 0.005 || c.plans.isNotEmpty) c,
+          ],
+        );
+      }
+    } catch (_) {
+      // the people list still shows; cards come back on the next visit
+    }
+  }
+
+  Widget _cardRow(AppLocalizations l, CardSummary c) => PpForgeListRow(
+    key: ValueKey('debtCard-${c.account.id}'),
+    leading: const PpForgeIcon(AppIcons.wallet, size: PpForgeIconSize.md),
+    title: c.account.name,
+    line2: c.bill.left > 0.005
+        ? ListRowLine(parts: [l.debtCardLeft], tone: Tone.warning)
+        : null,
+    trailing: ListRowTrailing.value(MoneyText(c.owed, tone: MoneyTone.expense)),
+    onTap: () {
+      openPage(context, '/personal-debts/cards/${c.account.id}');
+    },
+  );
 
   @override
   void dispose() {
@@ -142,6 +183,10 @@ class _PeopleViewState extends State<_PeopleView> {
       count: count,
     );
     return [
+      if (_cards.isNotEmpty) ...[
+        head(l.debtsSectionCards, AppIcons.wallet, _cards.length),
+        for (final c in _cards) _cardRow(l, c),
+      ],
       if (institutions.isNotEmpty) ...[
         head(l.debtsSectionInstitutions, AppIcons.bank, institutions.length),
         for (final p in institutions) _group(l, p, symbol),
@@ -150,6 +195,11 @@ class _PeopleViewState extends State<_PeopleView> {
         head(l.debtsSectionPeople, AppIcons.contact, people.length),
         for (final p in people) _group(l, p, symbol),
       ],
+      DueMoreRow(
+        key: const ValueKey('debtPlanNew'),
+        label: l.debtPlanNew,
+        onTap: () => openNewDebtPlan(context),
+      ),
     ];
   }
 

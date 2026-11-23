@@ -61,7 +61,7 @@ void main() {
   test('a filled debt occurrence carries its person and entry', () {
     final item = RecurringItem.tryParse({
       'id': 'i1',
-      'recurring_rule_id': 'r1',
+      'recurring_reminder_id': 'r1',
       'slot': '2026-11-01',
       'stored': true,
       'date': '2026-11-01',
@@ -121,7 +121,7 @@ void main() {
       expect(body['category_id'], isNull);
       expect(body['tag_ids'], isEmpty);
       expect(body['goal_id'], isNull);
-      final line = (body['lines'] as List).single as Map<String, dynamic>;
+      final line = (body['reminders'] as List).single as Map<String, dynamic>;
       expect(line['debt_kind'], 'repayment');
       expect(line['amount'], 300);
       expect(line['source'], {'account_id': null});
@@ -153,7 +153,7 @@ void main() {
     expect(cp['contact_id'], 'c1');
     expect(cp['person_name'], isNull, reason: 'a contact wins over the name');
     expect(w['debt_direction'], 'received');
-    final line = (w['lines'] as List).single as Map<String, dynamic>;
+    final line = (w['reminders'] as List).single as Map<String, dynamic>;
     expect(line['debt_kind'], 'repayment');
 
     final empty = RecurringDraft.blank(
@@ -161,7 +161,7 @@ void main() {
     );
     expect(empty.personOk, isFalse);
     // Leaving the debt kind drops the person.
-    final money = d.withKind(RecurringKind.subscription);
+    final money = d.withKind(RecurringKind.expense);
     expect(money.person, isNull);
     expect(money.withKind(RecurringKind.debt).person, isNull);
     expect(

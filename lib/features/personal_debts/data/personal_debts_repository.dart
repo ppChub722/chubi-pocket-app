@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/debt_ledger.dart';
+import '../domain/debt_plans.dart';
 
 class PersonalDebtsRepository {
   PersonalDebtsRepository({required ApiClient client}) : _client = client;
@@ -274,6 +275,117 @@ class PersonalDebtsRepository {
       throw ApiException.from(e, st);
     }
   }
+
+  // ---- debt plans + cards (0.4.3) ----
+
+  Future<T> _call<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    } catch (e, st) {
+      throw ApiException.from(e, st);
+    }
+  }
+
+  /// My cards / PayLater wallets as debts (bill, unbilled, plans).
+  Future<List<CardSummary>> cardSummaries() => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>('/card-summaries');
+    return [
+      for (final c in (res.data?['data'] as List?) ?? const [])
+        ?CardSummary.tryParse(c),
+    ];
+  });
+
+  Future<CardSummary> cardSummary(String accountId) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/card-summaries/$accountId',
+    );
+    return CardSummary.tryParse(res.data)!;
+  });
+
+  /// My plans (open first); [accountId] = only the plans on that card.
+  Future<List<DebtPlan>> plans({String? accountId}) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/debt-plans',
+      queryParameters: {'account_id': ?accountId},
+    );
+    return [
+      for (final p in (res.data?['data'] as List?) ?? const [])
+        ?DebtPlan.tryParse(p),
+    ];
+  });
+
+  Future<DebtPlan> plan(String id) => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>('/debt-plans/$id');
+    return DebtPlan.tryParse(res.data)!;
+  });
+
+  /// POST /debt-plans (the BE DebtPlanInput as a map).
+  Future<DebtPlan> createPlan(Map<String, dynamic> body) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/debt-plans',
+      data: body,
+    );
+    return DebtPlan.tryParse(res.data)!;
+  });
+
+  /// จ่ายงวดนี้: the principal back + its interest (ดอกเบี้ย) from [accountId].
+  Future<DebtPlan> payInstallment(String id, {int? seq, String? accountId}) =>
+      _call(() async {
+        final res = await _client.dio.post<Map<String, dynamic>>(
+          '/debt-plans/$id/pay',
+          data: {'seq': ?seq, 'account_id': ?accountId},
+        );
+        return DebtPlan.tryParse(res.data)!;
+      });
+
+  Future<DebtPlan> closePlan(String id) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/debt-plans/$id/close',
+    );
+    return DebtPlan.tryParse(res.data)!;
+  });
+
+  Future<void> deletePlan(String id) =>
+      _call(() => _client.dio.delete<void>('/debt-plans/$id'));
+
+  /// จ่ายบิลบัตร: a debt item paying the card's bill (0.4.3): monthly on
+  /// [day] from [fromAccountId], a transfer into the card whose amount is the
+  /// bill's left (amount_mode ask). Answers the item id.
+  Future<String> createCardBillReminder({
+    required String accountId,
+    required String name,
+    required String fromAccountId,
+    required int day,
+  }) => _call(() async {
+    final now = DateTime.now();
+    final start =
+        '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/recurring',
+      data: {
+        'name': name,
+        'type': 'debt',
+        'counterparty': {'account_id': accountId},
+        'reminders': [
+          {
+            'amount_mode': 'ask',
+            'source': {'account_id': fromAccountId},
+            'schedule': {
+              'freq': 'monthly',
+              'interval': 1,
+              'monthly': {'mode': 'day', 'day': day},
+              'start_date': start,
+            },
+          },
+        ],
+      },
+    );
+    return res.data!['id'] as String;
+  });
 }
 
 class DebtEntryUpdate {

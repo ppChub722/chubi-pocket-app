@@ -30,14 +30,14 @@ void main() {
 
   test('the 0.4.0 fields parse; a reminder has no amount', () {
     final r = Recurring.fromJson(prodRecurringJson());
-    expect(r.kind, RecurringKind.subscription);
+    expect(r.kind, RecurringKind.expense);
     expect(r.yearlyCost, 5028);
     expect(r.savedCount, 1);
     expect(r.pendingCount, 2);
     expect(r.hasAmount, isTrue);
     final w = Recurring.fromJson(reminderJson());
     // 0.4.3: an old "reminder" reads as บิล.
-    expect(w.kind, RecurringKind.bill);
+    expect(w.kind, RecurringKind.expense);
     expect(w.amount, isNull);
     expect(w.hasAmount, isFalse);
     expect(w.currentOccurrence?.status, OccurrenceState.pending);
@@ -48,7 +48,7 @@ void main() {
     final s = RecurringSummary.fromJson(recurringSummaryJson())!;
     expect(s.due30dTotal, 6860);
     expect(s.awaitingAmountCount, 3);
-    expect(s.byKind[RecurringKind.subscription]?.yearly, 5028);
+    expect(s.byKind[RecurringKind.expense]?.yearly, 5028);
     expect(s.nextAmount, 419);
   });
 
@@ -63,13 +63,13 @@ void main() {
 
   test('the write: a bill sends its line with amount 0, no trial', () {
     final draft = RecurringDraft.blank(
-      preset: const RecurringPreset(kind: RecurringKind.bill),
+      preset: const RecurringPreset(kind: RecurringKind.expense),
     ).copyWith(name: 'Water', accountId: 'a1');
     final body = draft.toWrite().toJson();
-    expect(body['type'], 'bill');
+    expect(body['type'], 'expense');
     expect(body.containsKey('trial_until'), isFalse);
-    final line = (body['lines'] as List).single as Map<String, dynamic>;
-    expect(line['amount'], 0);
+    final line = (body['reminders'] as List).single as Map<String, dynamic>;
+    expect(line['amount_mode'], 'ask');
     expect(line['source'], {'account_id': 'a1'});
   });
 
@@ -89,7 +89,7 @@ void main() {
     expect(AmountInput.parse(d.amount), 30000);
     final body = d.toWrite().toJson();
     expect(body['category_id'], 'c9');
-    expect(((body['lines'] as List).single as Map)['source'], {
+    expect(((body['reminders'] as List).single as Map)['source'], {
       'account_id': 'a1',
     });
     expect(body['type'], 'income');

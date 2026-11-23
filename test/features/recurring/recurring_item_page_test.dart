@@ -35,8 +35,6 @@ Map<String, dynamic> itemPageJson() => {
     'interest_method': 'flat',
     'interest_rate': 2.79,
     'installment_amount': null,
-    'card_account_id': null,
-    'card_account': null,
     'closed': false,
     'done': 12,
     'left_count': 36,
@@ -63,11 +61,11 @@ Map<String, dynamic> itemPageJson() => {
     ],
   },
   'reminders': [
-    {'id': 'rm1', 'anchor': 'due', 'days_before': 3, 'time': '09:00'},
-  ],
-  'lines': [
     {
       'id': 'it1',
+      'alerts': [
+        {'id': 'rm1', 'anchor': 'due', 'days_before': 3, 'time': '09:00'},
+      ],
       'amount': 15000,
       'source': {'account_id': 'a1', 'paid_by': null},
       'account': {'id': 'a1', 'name': 'เงินในธนาคาร', 'type': 'bank'},
@@ -114,13 +112,13 @@ Map<String, dynamic> itemPageJson() => {
   'stats': {'paid_count': 12, 'paid_total': 216762},
   'due_count': 0,
   'next': {
-    'recurring_rule_id': 'it1',
+    'recurring_reminder_id': 'it1',
     'date': '2026-11-25',
     'amount': 15000,
     'days_until': 8,
   },
   'month_total': 18063.5,
-  'actions': {'pause': true, 'archive': true, 'add_line': true},
+  'actions': {'pause': true, 'archive': true, 'add_reminder': true},
   'account_balances': [
     {'account_id': 'a1', 'balance': 90036.5},
   ],
@@ -172,24 +170,5 @@ void main() {
       'contact_id': 'c1',
       'person_name': null,
     });
-  });
-
-  test('a card plan sends no line', () {
-    final d =
-        RecurringDraft.blank(
-          preset: const RecurringPreset(kind: RecurringKind.debt),
-        ).withPlan(
-          RecurringPlanDraft(
-            start: DateTime(2026, 11, 25),
-            principal: '9000',
-            count: 3,
-            cardAccountId: 'card1',
-          ),
-        );
-    expect(d.cardPlan, isTrue);
-    final w = d.toWrite().toJson();
-    expect(w['lines'], isEmpty);
-    expect((w['plan'] as Map)['card_account_id'], 'card1');
-    expect((w['plan'] as Map)['principal'], 9000);
   });
 }

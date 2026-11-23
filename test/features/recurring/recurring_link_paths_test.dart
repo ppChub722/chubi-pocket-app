@@ -48,7 +48,7 @@ void main() {
       'id': 'item1',
       'current_occurrence': {
         'item_id': null,
-        'recurring_rule_id': 'line2',
+        'recurring_reminder_id': 'line2',
         'slot': '2026-11-20',
         'date': '2026-11-20',
         'days_until': 2,
@@ -65,7 +65,7 @@ void main() {
       'item_id': 'row9',
       'recurring': {
         'id': 'item7',
-        'recurring_rule_id': 'line8',
+        'recurring_reminder_id': 'line8',
         'name': 'ค่าเช่า',
       },
       'slot': '2026-11-01',
@@ -74,7 +74,7 @@ void main() {
     expect(link.recurringRuleId, 'line8');
   });
 
-  test('link / unlink a round go to /recurring/{item}/lines/{line}', () async {
+  test('link / unlink a round go to /recurring/{item}/reminders/{line}', () async {
     final http = _Adapter();
     final dio = Dio(BaseOptions(baseUrl: 'http://x'))..httpClientAdapter = http;
     final repo = RecurringLinkRepository(client: _FakeApi(dio));
@@ -84,35 +84,35 @@ void main() {
       ...prodRecurringJson(),
       'id': 'item1',
       'current_occurrence': {
-        'recurring_rule_id': 'line2',
+        'recurring_reminder_id': 'line2',
         'slot': '2026-11-20',
         'date': '2026-11-20',
         'status': 'upcoming',
       },
     });
     RecurringItemLink.fromJson({
-      'recurring': {'id': 'item7', 'recurring_rule_id': 'line8'},
+      'recurring': {'id': 'item7', 'recurring_reminder_id': 'line8'},
       'slot': '2026-11-01',
     });
 
     await repo.linkOccurrence('line2', '2026-11-20', 'tx1');
     expect(
       http.last!.path,
-      '/recurring/item1/lines/line2/occurrences/2026-11-20/link',
+      '/recurring/item1/reminders/line2/occurrences/2026-11-20/link',
     );
     expect(http.last!.data, {'transaction_id': 'tx1'});
 
     await repo.unlinkOccurrence('line8', '2026-11-01');
     expect(
       http.last!.path,
-      '/recurring/item7/lines/line8/occurrences/2026-11-01/unlink',
+      '/recurring/item7/reminders/line8/occurrences/2026-11-01/unlink',
     );
 
     // A line never seen is its own item (a migrated one keeps its rule's id).
     await repo.unlinkOccurrence('r1', '2026-11-03');
     expect(
       http.last!.path,
-      '/recurring/r1/lines/r1/occurrences/2026-11-03/unlink',
+      '/recurring/r1/reminders/r1/occurrences/2026-11-03/unlink',
     );
   });
 }

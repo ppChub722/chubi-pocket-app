@@ -13554,6 +13554,330 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reminders before a round is due, as each recurring item sets them'**
   String get notifSetRecurringDueSoonHint;
+
+  /// No description provided for @debtsSectionCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards / PayLater'**
+  String get debtsSectionCards;
+
+  /// No description provided for @debtCardOwed.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed on the card'**
+  String get debtCardOwed;
+
+  /// No description provided for @debtCardBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Last bill'**
+  String get debtCardBill;
+
+  /// No description provided for @debtCardSpending.
+  ///
+  /// In en, this message translates to:
+  /// **'Spent in the cycle'**
+  String get debtCardSpending;
+
+  /// No description provided for @debtCardBilledInstallments.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments in the cycle'**
+  String get debtCardBilledInstallments;
+
+  /// No description provided for @debtCardPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get debtCardPaid;
+
+  /// No description provided for @debtCardLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left to pay'**
+  String get debtCardLeft;
+
+  /// No description provided for @debtCardUnbilled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments not billed yet'**
+  String get debtCardUnbilled;
+
+  /// No description provided for @debtCardPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments on this card'**
+  String get debtCardPlans;
+
+  /// No description provided for @debtCardDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String debtCardDue(String date);
+
+  /// No description provided for @debtCardBillReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a bill reminder'**
+  String get debtCardBillReminder;
+
+  /// No description provided for @debtCardBillReminderSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill reminder'**
+  String get debtCardBillReminderSet;
+
+  /// No description provided for @debtPlanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment plan'**
+  String get debtPlanTitle;
+
+  /// No description provided for @debtPlanProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{count} paid'**
+  String debtPlanProgress(String done, String count);
+
+  /// No description provided for @debtPlanLeftTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Left (principal + interest)'**
+  String get debtPlanLeftTotal;
+
+  /// No description provided for @debtPlanLeftPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal left'**
+  String get debtPlanLeftPrincipal;
+
+  /// No description provided for @debtPlanLeftInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest left'**
+  String get debtPlanLeftInterest;
+
+  /// No description provided for @debtPlanNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next installment'**
+  String get debtPlanNext;
+
+  /// No description provided for @debtPlanPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay this installment'**
+  String get debtPlanPay;
+
+  /// No description provided for @debtPlanPayFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay from'**
+  String get debtPlanPayFrom;
+
+  /// No description provided for @debtPlanPaidByBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid with the card bill'**
+  String get debtPlanPaidByBill;
+
+  /// No description provided for @debtPlanInstallments.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments'**
+  String get debtPlanInstallments;
+
+  /// No description provided for @debtPlanInstallmentRow.
+  ///
+  /// In en, this message translates to:
+  /// **'#{seq} · {date}'**
+  String debtPlanInstallmentRow(String seq, String date);
+
+  /// No description provided for @debtPlanInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'interest {amount}'**
+  String debtPlanInterest(String amount);
+
+  /// No description provided for @debtPlanClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the plan early'**
+  String get debtPlanClose;
+
+  /// No description provided for @debtPlanDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the plan'**
+  String get debtPlanDelete;
+
+  /// No description provided for @debtPlanDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this plan? Its debt rows stay.'**
+  String get debtPlanDeleteConfirm;
+
+  /// No description provided for @debtPlanReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a reminder'**
+  String get debtPlanReminder;
+
+  /// No description provided for @debtPlanReminderOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Its reminder'**
+  String get debtPlanReminderOpen;
+
+  /// No description provided for @debtPlanClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get debtPlanClosed;
+
+  /// No description provided for @debtPlanNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New installment plan'**
+  String get debtPlanNew;
+
+  /// No description provided for @debtPlanCreditor.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed to'**
+  String get debtPlanCreditor;
+
+  /// No description provided for @debtPlanCreditorCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Card / PayLater'**
+  String get debtPlanCreditorCard;
+
+  /// No description provided for @debtPlanCreditorInstitution.
+  ///
+  /// In en, this message translates to:
+  /// **'Institution'**
+  String get debtPlanCreditorInstitution;
+
+  /// No description provided for @debtPlanCreditorPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Person'**
+  String get debtPlanCreditorPerson;
+
+  /// No description provided for @debtPlanOrigin.
+  ///
+  /// In en, this message translates to:
+  /// **'What it is'**
+  String get debtPlanOrigin;
+
+  /// No description provided for @debtPlanOriginPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'A purchase (full price is an expense today)'**
+  String get debtPlanOriginPurchase;
+
+  /// No description provided for @debtPlanOriginCash.
+  ///
+  /// In en, this message translates to:
+  /// **'A cash loan (money into a wallet)'**
+  String get debtPlanOriginCash;
+
+  /// No description provided for @debtPlanPrincipal.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal'**
+  String get debtPlanPrincipal;
+
+  /// No description provided for @debtPlanCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments'**
+  String get debtPlanCount;
+
+  /// No description provided for @debtPlanStart.
+  ///
+  /// In en, this message translates to:
+  /// **'First due date'**
+  String get debtPlanStart;
+
+  /// No description provided for @debtPlanRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest % a year'**
+  String get debtPlanRate;
+
+  /// No description provided for @debtPlanMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get debtPlanMethod;
+
+  /// No description provided for @debtPlanMethodNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No interest'**
+  String get debtPlanMethodNone;
+
+  /// No description provided for @debtPlanMethodFlat.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat rate'**
+  String get debtPlanMethodFlat;
+
+  /// No description provided for @debtPlanMethodReducing.
+  ///
+  /// In en, this message translates to:
+  /// **'Reducing balance'**
+  String get debtPlanMethodReducing;
+
+  /// No description provided for @debtPlanMethodFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed installment'**
+  String get debtPlanMethodFixed;
+
+  /// No description provided for @debtPlanInstallmentAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment amount'**
+  String get debtPlanInstallmentAmount;
+
+  /// No description provided for @debtPlanOpeningWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Money went into'**
+  String get debtPlanOpeningWallet;
+
+  /// No description provided for @debtPlanSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get debtPlanSave;
+
+  /// No description provided for @recurringRepaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back'**
+  String get recurringRepaysLabel;
+
+  /// No description provided for @recurringRepaysNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No (a plain expense)'**
+  String get recurringRepaysNone;
+
+  /// No description provided for @recurringRepaysTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay back {name}'**
+  String recurringRepaysTo(String name);
+
+  /// No description provided for @errRecurringTypeFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'A recurring item keeps its type. Delete it and create a new one.'**
+  String get errRecurringTypeFixed;
 }
 
 class _AppLocalizationsDelegate

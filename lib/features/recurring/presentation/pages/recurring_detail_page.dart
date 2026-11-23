@@ -1795,6 +1795,19 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     );
   }
 
+  /// The item's person-paid lines other than the one in the form.
+  List<RecurringLine> _paidByLines(RecurringDraft w) => [
+    for (final line in _detail?.page?.lines ?? const <RecurringLine>[])
+      if (line.paidBy != null && line.id != w.lineId) line,
+  ];
+
+  String _repaysLabel(AppLocalizations l, RecurringDraft w) {
+    final id = w.repaysReminderId;
+    if (id == null) return l.recurringRepaysNone;
+    final line = _paidByLines(w).where((x) => x.id == id).firstOrNull;
+    return l.recurringRepaysTo(line?.paidBy?.name ?? '');
+  }
+
   /// Edit: what it is and its options. ประเภท and แบบ drop down in place.
   Widget _detailSection(AppLocalizations l) {
     final w = working;
@@ -1812,12 +1825,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             if (k != w.kind) _change(w.withKind(k));
           },
           options: [
-            // A saved rule can't switch between ออมเงิน / หนี้ and a money
-            // kind.
+            // 0.4.3: the type is fixed once the item exists (delete and
+            // create a new one to change it).
             for (final k in RecurringKind.values)
-              if (_recurring == null ||
-                  ((k == RecurringKind.saving) == _recurring!.isSaving &&
-                      (k == RecurringKind.debt) == _recurring!.isDebt))
+              if (_recurring == null || k == w.kind)
                 SheetOption(
                   value: k,
                   label: recurringKindLabel(l, k),
@@ -1845,20 +1856,21 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               SheetOption(value: true, label: l.recurringSourcePaidBy),
             ],
           ),
-        if (w.isDebt)
-          SettingDropdownRow<DebtEntrySub>(
-            key: const ValueKey('debtSubRow'),
-            label: l.fpRecurringFieldMode,
-            value: w.debtSub == DebtEntrySub.record
-                ? l.debtRecordChip
-                : l.debtSettleChip,
-            icon: AppIcons.debt,
-            selected: w.debtSub,
+        if (w.canPaidBy && w.paidBy == null && _paidByLines(w).isNotEmpty)
+          SettingDropdownRow<String>(
+            key: const ValueKey('repaysRow'),
+            label: l.recurringRepaysLabel,
+            value: _repaysLabel(l, w),
+            selected: w.repaysReminderId ?? '',
             submits: false,
-            onSelected: (s) => _change(w.withDebt(sub: s)),
+            onSelected: (id) => _change(w.withRepays(id.isEmpty ? null : id)),
             options: [
-              SheetOption(value: DebtEntrySub.record, label: l.debtRecordChip),
-              SheetOption(value: DebtEntrySub.repay, label: l.debtSettleChip),
+              SheetOption(value: '', label: l.recurringRepaysNone),
+              for (final line in _paidByLines(w))
+                SheetOption(
+                  value: line.id,
+                  label: l.recurringRepaysTo(line.paidBy?.name ?? ''),
+                ),
             ],
           ),
         SettingToggleRow(

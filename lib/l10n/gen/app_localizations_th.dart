@@ -7814,4 +7814,178 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get notifSetRecurringDueSoonHint =>
       'เตือนก่อนถึงกำหนดตามที่ตั้งไว้ในแต่ละรายการประจำ';
+
+  @override
+  String get debtsSectionCards => 'บัตร / PayLater';
+
+  @override
+  String get debtCardOwed => 'ยอดค้างในบัตร';
+
+  @override
+  String get debtCardBill => 'บิลรอบล่าสุด';
+
+  @override
+  String get debtCardSpending => 'ใช้จ่ายในรอบ';
+
+  @override
+  String get debtCardBilledInstallments => 'งวดผ่อนในรอบ';
+
+  @override
+  String get debtCardPaid => 'จ่ายแล้ว';
+
+  @override
+  String get debtCardLeft => 'ค้างจ่าย';
+
+  @override
+  String get debtCardUnbilled => 'ผ่อนที่ยังไม่เข้าบิล';
+
+  @override
+  String get debtCardPlans => 'ผ่อนบนบัตรนี้';
+
+  @override
+  String debtCardDue(String date) {
+    return 'ครบกำหนด $date';
+  }
+
+  @override
+  String get debtCardBillReminder => 'ตั้ง reminder จ่ายบิล';
+
+  @override
+  String get debtCardBillReminderSet => 'reminder จ่ายบิล';
+
+  @override
+  String get debtPlanTitle => 'แผนผ่อน';
+
+  @override
+  String debtPlanProgress(String done, String count) {
+    return 'จ่ายแล้ว $done/$count งวด';
+  }
+
+  @override
+  String get debtPlanLeftTotal => 'เหลือ (ต้น + ดอก)';
+
+  @override
+  String get debtPlanLeftPrincipal => 'เงินต้นคงเหลือ';
+
+  @override
+  String get debtPlanLeftInterest => 'ดอกเบี้ยคงเหลือ';
+
+  @override
+  String get debtPlanNext => 'งวดถัดไป';
+
+  @override
+  String get debtPlanPay => 'จ่ายงวดนี้';
+
+  @override
+  String get debtPlanPayFrom => 'จ่ายจากกระเป๋า';
+
+  @override
+  String get debtPlanPaidByBill => 'จ่ายรวมในบิลบัตร';
+
+  @override
+  String get debtPlanInstallments => 'งวดผ่อน';
+
+  @override
+  String debtPlanInstallmentRow(String seq, String date) {
+    return 'งวด $seq · $date';
+  }
+
+  @override
+  String debtPlanInterest(String amount) {
+    return 'ดอก $amount';
+  }
+
+  @override
+  String get debtPlanClose => 'ปิดแผนก่อนกำหนด';
+
+  @override
+  String get debtPlanDelete => 'ลบแผน';
+
+  @override
+  String get debtPlanDeleteConfirm =>
+      'ลบแผนนี้? รายการหนี้ที่บันทึกแล้วยังอยู่';
+
+  @override
+  String get debtPlanReminder => 'ตั้ง reminder';
+
+  @override
+  String get debtPlanReminderOpen => 'reminder ของแผนนี้';
+
+  @override
+  String get debtPlanClosed => 'ปิดแล้ว';
+
+  @override
+  String get debtPlanNew => 'จดหนี้ผ่อนใหม่';
+
+  @override
+  String get debtPlanCreditor => 'เจ้าหนี้';
+
+  @override
+  String get debtPlanCreditorCard => 'บัตร / PayLater';
+
+  @override
+  String get debtPlanCreditorInstitution => 'สถาบัน';
+
+  @override
+  String get debtPlanCreditorPerson => 'บุคคล';
+
+  @override
+  String get debtPlanOrigin => 'เป็นหนี้จาก';
+
+  @override
+  String get debtPlanOriginPurchase => 'ซื้อของผ่อน (นับรายจ่ายเต็มวันนี้)';
+
+  @override
+  String get debtPlanOriginCash => 'กู้เงินสด (เงินเข้ากระเป๋า)';
+
+  @override
+  String get debtPlanPrincipal => 'เงินต้น';
+
+  @override
+  String get debtPlanCount => 'จำนวนงวด';
+
+  @override
+  String get debtPlanStart => 'วันครบงวดแรก';
+
+  @override
+  String get debtPlanRate => 'ดอกเบี้ย % ต่อปี';
+
+  @override
+  String get debtPlanMethod => 'วิธีคิดดอก';
+
+  @override
+  String get debtPlanMethodNone => 'ไม่มีดอก';
+
+  @override
+  String get debtPlanMethodFlat => 'คงที่ (flat)';
+
+  @override
+  String get debtPlanMethodReducing => 'ลดต้นลดดอก';
+
+  @override
+  String get debtPlanMethodFixed => 'ค่างวดคงที่';
+
+  @override
+  String get debtPlanInstallmentAmount => 'ค่างวด';
+
+  @override
+  String get debtPlanOpeningWallet => 'เงินเข้ากระเป๋า';
+
+  @override
+  String get debtPlanSave => 'บันทึก';
+
+  @override
+  String get recurringRepaysLabel => 'คืนคนจ่ายแทน';
+
+  @override
+  String get recurringRepaysNone => 'ไม่ใช่ (รายจ่ายปกติ)';
+
+  @override
+  String recurringRepaysTo(String name) {
+    return 'คืน $name';
+  }
+
+  @override
+  String get errRecurringTypeFixed =>
+      'เปลี่ยนประเภทรายการไม่ได้ ถ้าจะเปลี่ยนให้ลบแล้วสร้างใหม่';
 }

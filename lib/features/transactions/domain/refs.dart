@@ -157,7 +157,7 @@ class RecurringItemLink extends Equatable {
   /// The recurring item (`/recurring/{id}`, 0.4.3).
   final String? recurringId;
 
-  /// Its line (`recurring_rule_id`): the round is addressed by line + slot.
+  /// Its line (`recurring_reminder_id`): the round is addressed by line + slot.
   final String? recurringRuleId;
   final String? recurringName;
   final PpForgeIconCode? recurringIconCode;
@@ -171,7 +171,7 @@ class RecurringItemLink extends Equatable {
     final r = json['recurring'];
     final rec = r is Map ? r.cast<String, dynamic>() : null;
     final itemId = rec?['id'] as String? ?? json['rule_id'] as String?;
-    final ruleId = rec?['recurring_rule_id'] as String? ?? itemId;
+    final ruleId = rec?['recurring_reminder_id'] as String? ?? itemId;
     if (ruleId != null && itemId != null) {
       RecurringLineIndex.remember(line: ruleId, item: itemId);
     }

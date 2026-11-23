@@ -94,6 +94,7 @@ class RecurringLine extends Equatable {
     required this.view,
     required this.json,
     this.paidBy,
+    this.repaysReminderId,
     this.actions = const RecurringLineActions(),
   });
 
@@ -109,6 +110,7 @@ class RecurringLine extends Equatable {
       paidBy: paidBy is Map<String, dynamic>
           ? EmbeddedPerson.fromJson(paidBy)
           : null,
+      repaysReminderId: json['repays_reminder_id'] as String?,
       actions: RecurringLineActions.fromJson(json['actions']),
     );
   }
@@ -121,6 +123,10 @@ class RecurringLine extends Equatable {
 
   /// คนจ่ายแทน: the person who pays for me; null = a wallet line.
   final EmbeddedPerson? paidBy;
+
+  /// คืนคนจ่ายแทน (0.4.3): the person-paid line of the item this one pays
+  /// back (each round = that line's latest round).
+  final String? repaysReminderId;
   final RecurringLineActions actions;
 
   RecurrenceRule get rule => view.rule;
@@ -131,6 +137,7 @@ class RecurringLine extends Equatable {
   /// This line as a `LineInput` (unchanged), for a whole-item PUT.
   Map<String, dynamic> toInput() => {
     'id': id,
+    'repays_reminder_id': ?repaysReminderId,
     'amount': json['amount'],
     'source': json['source'],
     'to_account_id': json['to_account_id'],
@@ -288,6 +295,7 @@ class PlanPurchase extends Equatable {
 /// debt rows only.
 class RecurringPlan extends Equatable {
   const RecurringPlan({
+    this.id,
     required this.principal,
     required this.count,
     required this.start,
@@ -313,15 +321,17 @@ class RecurringPlan extends Equatable {
 
   static RecurringPlan? tryParse(Object? json) {
     if (json is! Map<String, dynamic> || json['count'] is! num) return null;
-    final card = json['card_account'];
+    final creditor = json['creditor'];
+    final card = creditor is Map ? creditor['account'] : null;
     return RecurringPlan(
+      id: json['id'] as String?,
       principal: (json['principal'] as num?)?.toDouble() ?? 0,
       count: (json['count'] as num).toInt(),
       start: parseYmd(json['start_date'] as String?) ?? today(),
       method: PlanInterestMethod.fromJson(json['interest_method']),
       rate: (json['interest_rate'] as num?)?.toDouble(),
       installmentAmount: (json['installment_amount'] as num?)?.toDouble(),
-      cardAccountId: json['card_account_id'] as String?,
+      cardAccountId: card is Map ? card['id'] as String? : null,
       cardAccount: card is Map<String, dynamic>
           ? AccountRef.fromJson(card)
           : null,
@@ -359,6 +369,9 @@ class RecurringPlan extends Equatable {
   final PlanInterestMethod method;
   final double? rate;
   final double? installmentAmount;
+  /// The debt plan (0.4.3: /debt-plans/{id}).
+  final String? id;
+
   final String? cardAccountId;
   final AccountRef? cardAccount;
 
@@ -457,7 +470,7 @@ class RecurringItemActions extends Equatable {
       archive: j['archive'] == true,
       restore: j['restore'] == true,
       delete: j['delete'] == true,
-      addLine: j['add_line'] == true,
+      addLine: j['add_reminder'] == true,
     );
   }
 
@@ -470,6 +483,15 @@ class RecurringItemActions extends Equatable {
 
   @override
   List<Object?> get props => [pause, resume, archive, restore, delete, addLine];
+}
+
+/// The first reminder's alerts (the form edits one set for every reminder).
+List<Object?> _firstAlerts(Object? reminders) {
+  if (reminders is List && reminders.isNotEmpty) {
+    final first = reminders.first;
+    if (first is Map && first['alerts'] is List) return first['alerts'] as List;
+  }
+  return const [];
 }
 
 /// `GET /recurring/{id}` and every item write (BE `ItemPage`, 0.4.3).
@@ -508,12 +530,13 @@ class RecurringPage extends Equatable {
           ? DebtEntryDirection.parse(json['debt_direction'] as String)
           : null,
       plan: RecurringPlan.tryParse(json['plan']),
+      // 0.4.3: alerts sit on each reminder; the page shows the first one's
       reminders: [
-        for (final r in (json['reminders'] as List?) ?? const [])
+        for (final r in _firstAlerts(json['reminders']))
           if (r is Map<String, dynamic>) RecurringReminder.fromJson(r),
       ],
       lines: [
-        for (final l in (json['lines'] as List?) ?? const [])
+        for (final l in (json['reminders'] as List?) ?? const [])
           if (l is Map<String, dynamic> && l['id'] is String)
             RecurringLine.fromJson(l, item: json),
       ],
@@ -521,7 +544,7 @@ class RecurringPage extends Equatable {
           ? RecurringStats.fromJson(json['stats'] as Map<String, dynamic>)
           : null,
       dueCount: (json['due_count'] as num?)?.toInt() ?? 0,
-      nextLineId: next is Map ? next['recurring_rule_id'] as String? : null,
+      nextLineId: next is Map ? next['recurring_reminder_id'] as String? : null,
       nextDate: next is Map ? parseYmd(next['date'] as String?) : null,
       nextAmount: next is Map ? (next['amount'] as num?)?.toDouble() : null,
       monthTotal: (json['month_total'] as num?)?.toDouble() ?? 0,

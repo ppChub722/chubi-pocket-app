@@ -2,6 +2,24 @@ import 'package:equatable/equatable.dart';
 
 import 'recurring.dart';
 
+/// The BE totals by its round kinds (subscription / installment / reminder /
+/// income / saving / debt) folded into the 5 item types (0.4.3).
+KindTotals _kindTotals(Map<String, dynamic> kinds, RecurringKind k) {
+  final keys = switch (k) {
+    RecurringKind.expense => const ['subscription', 'installment', 'reminder'],
+    _ => [k.name],
+  };
+  var count = 0;
+  num monthly = 0, yearly = 0;
+  for (final key in keys) {
+    final t = KindTotals.fromJson(kinds[key]);
+    count += t.count;
+    monthly += t.monthly;
+    yearly += t.yearly;
+  }
+  return KindTotals(count: count, monthly: monthly, yearly: yearly);
+}
+
 class KindTotals extends Equatable {
   const KindTotals({this.count = 0, this.monthly = 0, this.yearly = 0});
 
@@ -46,9 +64,7 @@ class RecurringSummary extends Equatable {
           (json['awaiting_amount_count'] as num?)?.toInt() ?? 0,
       byKind: {
         for (final k in RecurringKind.values)
-          k: KindTotals.fromJson(
-            kinds is Map<String, dynamic> ? kinds[k.name] : null,
-          ),
+          k: _kindTotals(kinds is Map<String, dynamic> ? kinds : const {}, k),
       },
       nextName: next is Map<String, dynamic> ? next['name'] as String? : null,
       nextDate: next is Map<String, dynamic>

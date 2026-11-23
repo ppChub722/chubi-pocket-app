@@ -181,7 +181,7 @@ Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
   try {
     await repo.extend(
       id,
-      lineId: n.payload['recurring_rule_id'] as String?,
+      lineId: n.payload['recurring_reminder_id'] as String?,
       end: extendedEnd(n.payload),
     );
     await _reload(inboxCubit);

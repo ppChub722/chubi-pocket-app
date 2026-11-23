@@ -7972,4 +7972,178 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notifSetRecurringDueSoonHint =>
       'Reminders before a round is due, as each recurring item sets them';
+
+  @override
+  String get debtsSectionCards => 'Cards / PayLater';
+
+  @override
+  String get debtCardOwed => 'Owed on the card';
+
+  @override
+  String get debtCardBill => 'Last bill';
+
+  @override
+  String get debtCardSpending => 'Spent in the cycle';
+
+  @override
+  String get debtCardBilledInstallments => 'Installments in the cycle';
+
+  @override
+  String get debtCardPaid => 'Paid';
+
+  @override
+  String get debtCardLeft => 'Left to pay';
+
+  @override
+  String get debtCardUnbilled => 'Installments not billed yet';
+
+  @override
+  String get debtCardPlans => 'Installments on this card';
+
+  @override
+  String debtCardDue(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get debtCardBillReminder => 'Set a bill reminder';
+
+  @override
+  String get debtCardBillReminderSet => 'Bill reminder';
+
+  @override
+  String get debtPlanTitle => 'Installment plan';
+
+  @override
+  String debtPlanProgress(String done, String count) {
+    return '$done/$count paid';
+  }
+
+  @override
+  String get debtPlanLeftTotal => 'Left (principal + interest)';
+
+  @override
+  String get debtPlanLeftPrincipal => 'Principal left';
+
+  @override
+  String get debtPlanLeftInterest => 'Interest left';
+
+  @override
+  String get debtPlanNext => 'Next installment';
+
+  @override
+  String get debtPlanPay => 'Pay this installment';
+
+  @override
+  String get debtPlanPayFrom => 'Pay from';
+
+  @override
+  String get debtPlanPaidByBill => 'Paid with the card bill';
+
+  @override
+  String get debtPlanInstallments => 'Installments';
+
+  @override
+  String debtPlanInstallmentRow(String seq, String date) {
+    return '#$seq · $date';
+  }
+
+  @override
+  String debtPlanInterest(String amount) {
+    return 'interest $amount';
+  }
+
+  @override
+  String get debtPlanClose => 'Close the plan early';
+
+  @override
+  String get debtPlanDelete => 'Delete the plan';
+
+  @override
+  String get debtPlanDeleteConfirm => 'Delete this plan? Its debt rows stay.';
+
+  @override
+  String get debtPlanReminder => 'Set a reminder';
+
+  @override
+  String get debtPlanReminderOpen => 'Its reminder';
+
+  @override
+  String get debtPlanClosed => 'Closed';
+
+  @override
+  String get debtPlanNew => 'New installment plan';
+
+  @override
+  String get debtPlanCreditor => 'Owed to';
+
+  @override
+  String get debtPlanCreditorCard => 'Card / PayLater';
+
+  @override
+  String get debtPlanCreditorInstitution => 'Institution';
+
+  @override
+  String get debtPlanCreditorPerson => 'Person';
+
+  @override
+  String get debtPlanOrigin => 'What it is';
+
+  @override
+  String get debtPlanOriginPurchase =>
+      'A purchase (full price is an expense today)';
+
+  @override
+  String get debtPlanOriginCash => 'A cash loan (money into a wallet)';
+
+  @override
+  String get debtPlanPrincipal => 'Principal';
+
+  @override
+  String get debtPlanCount => 'Installments';
+
+  @override
+  String get debtPlanStart => 'First due date';
+
+  @override
+  String get debtPlanRate => 'Interest % a year';
+
+  @override
+  String get debtPlanMethod => 'Interest';
+
+  @override
+  String get debtPlanMethodNone => 'No interest';
+
+  @override
+  String get debtPlanMethodFlat => 'Flat rate';
+
+  @override
+  String get debtPlanMethodReducing => 'Reducing balance';
+
+  @override
+  String get debtPlanMethodFixed => 'Fixed installment';
+
+  @override
+  String get debtPlanInstallmentAmount => 'Installment amount';
+
+  @override
+  String get debtPlanOpeningWallet => 'Money went into';
+
+  @override
+  String get debtPlanSave => 'Save';
+
+  @override
+  String get recurringRepaysLabel => 'Pay back';
+
+  @override
+  String get recurringRepaysNone => 'No (a plain expense)';
+
+  @override
+  String recurringRepaysTo(String name) {
+    return 'Pay back $name';
+  }
+
+  @override
+  String get errRecurringTypeFixed =>
+      'A recurring item keeps its type. Delete it and create a new one.';
 }

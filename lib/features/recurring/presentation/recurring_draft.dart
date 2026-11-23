@@ -186,7 +186,7 @@ class RecurringPlanDraft extends Equatable {
 class RecurringDraft extends Equatable {
   const RecurringDraft({
     required this.rule,
-    this.kind = RecurringKind.subscription,
+    this.kind = RecurringKind.expense,
     this.name = '',
     this.description = '',
     this.note = '',
@@ -204,6 +204,7 @@ class RecurringDraft extends Equatable {
     this.debtSub = DebtEntrySub.record,
     this.direction = DebtEntryDirection.paid,
     this.paidBy,
+    this.repaysReminderId,
     this.lineId,
     this.otherLines = const [],
     this.plan,
@@ -211,7 +212,7 @@ class RecurringDraft extends Equatable {
   });
 
   factory RecurringDraft.blank({
-    RecurringKind kind = RecurringKind.subscription,
+    RecurringKind kind = RecurringKind.expense,
     RecurringPreset preset = const RecurringPreset(),
   }) {
     final k =
@@ -269,6 +270,8 @@ class RecurringDraft extends Equatable {
       clearPerson: cp == null || cp.isInstitution,
       institution: cp?.institution,
       paidBy: main?.paidBy,
+      repaysReminderId: main?.repaysReminderId,
+      clearRepays: main?.repaysReminderId == null,
       lineId: main?.id,
       otherLines: [
         for (final l in page.lines)
@@ -322,6 +325,9 @@ class RecurringDraft extends Equatable {
   /// The main line's id (null = a new line).
   final String? lineId;
 
+  /// คืนคนจ่ายแทน (0.4.3): the item's person-paid line this one pays back.
+  final String? repaysReminderId;
+
   /// The item's other lines as `LineInput` JSON, sent back unchanged.
   final List<Map<String, dynamic>> otherLines;
 
@@ -370,11 +376,7 @@ class RecurringDraft extends Equatable {
 
   /// คนจ่ายแทน is for my expenses (and a debt): รายจ่าย / ค่าสมาชิก / บิล /
   /// หนี้.
-  bool get canPaidBy =>
-      kind == RecurringKind.expense ||
-      kind == RecurringKind.subscription ||
-      kind == RecurringKind.bill ||
-      isDebt;
+  bool get canPaidBy => kind == RecurringKind.expense;
 
   /// ผ่อนผ่านบัตร: the item has no line (paid with the card's statement).
   bool get cardPlan => isDebt && (plan?.onCard ?? false);
@@ -407,11 +409,7 @@ class RecurringDraft extends Equatable {
     // ออมเงิน / หนี้ / โอน have no category; ออมเงิน / หนี้ no tags.
     final noCategory =
         saving || debt || transfer || k.defaultType != kind.defaultType;
-    final paid =
-        k == RecurringKind.expense ||
-        k == RecurringKind.subscription ||
-        k == RecurringKind.bill ||
-        debt;
+    final paid = k == RecurringKind.expense;
     return _copy(
       kind: k,
       clearToAccount: !transfer,
@@ -445,8 +443,19 @@ class RecurringDraft extends Equatable {
       _copy(institution: i, clearPerson: true);
 
   /// คนจ่ายแทน (null = back to a wallet).
-  RecurringDraft withPaidBy(EmbeddedPerson? p) =>
-      _copy(paidBy: p, clearPaidBy: p == null, clearAccount: p != null);
+  RecurringDraft withPaidBy(EmbeddedPerson? p) => _copy(
+    paidBy: p,
+    clearPaidBy: p == null,
+    clearAccount: p != null,
+    clearRepays: p != null,
+  );
+
+  /// คืนคนจ่ายแทน: pays back that person-paid line (null = a plain expense).
+  RecurringDraft withRepays(String? lineId) => _copy(
+    repaysReminderId: lineId,
+    clearRepays: lineId == null,
+    clearPaidBy: lineId != null,
+  );
 
   /// Picks the goal (null = ยังไม่จัดสรร).
   RecurringDraft withGoal(String? id) =>
@@ -469,7 +478,9 @@ class RecurringDraft extends Equatable {
       paidByContactId: paidBy?.contactId,
       paidByName: paidBy?.name,
       toAccountId: isTransfer ? toAccountId : null,
-      debtSub: isDebt ? debtSub : null,
+      // 0.4.3: a debt item's rounds pay its debt back (repay / collect)
+      debtSub: isDebt ? DebtEntrySub.repay : null,
+      repaysReminderId: paidBy == null ? repaysReminderId : null,
       rule: rule,
       autoCreate: autoCreate && canAutoCreate,
     );
@@ -555,6 +566,8 @@ class RecurringDraft extends Equatable {
     DebtEntryDirection? direction,
     EmbeddedPerson? paidBy,
     bool clearPaidBy = false,
+    String? repaysReminderId,
+    bool clearRepays = false,
     String? lineId,
     List<Map<String, dynamic>>? otherLines,
     RecurringPlanDraft? plan,
@@ -580,6 +593,9 @@ class RecurringDraft extends Equatable {
     debtSub: debtSub ?? this.debtSub,
     direction: direction ?? this.direction,
     paidBy: clearPaidBy ? null : (paidBy ?? this.paidBy),
+    repaysReminderId: clearRepays
+        ? null
+        : (repaysReminderId ?? this.repaysReminderId),
     lineId: lineId ?? this.lineId,
     otherLines: otherLines ?? this.otherLines,
     plan: clearPlan ? null : (plan ?? this.plan),

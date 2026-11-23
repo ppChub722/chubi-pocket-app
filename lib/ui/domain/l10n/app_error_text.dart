@@ -101,7 +101,8 @@ final Map<String, String Function(AppLocalizations l)> _specific = {
   'ITEM_ALREADY_LINKED': (l) => l.recurringLinkAlreadyLinked,
   // debts + recurring 0.4.3
   'INSTITUTION_IN_USE': (l) => l.errInstitutionInUse,
-  'RECURRING_LAST_LINE': (l) => l.errRecurringLastLine,
+  'RECURRING_LAST_REMINDER': (l) => l.errRecurringLastLine,
+  'RECURRING_TYPE_FIXED': (l) => l.errRecurringTypeFixed,
   'INSTALLMENT_NEEDS_INSTITUTION': (l) => l.errInstallmentNeedsInstitution,
   // events
   'PROJECT_LOCKED': (l) => l.eventErrLocked,
@@ -155,7 +156,7 @@ const Map<String, ErrorGroup> _groups = {
   'DEBT_NOT_FOUND': ErrorGroup.notFound,
   'PROJECT_NOT_FOUND': ErrorGroup.notFound,
   'INSTITUTION_NOT_FOUND': ErrorGroup.notFound,
-  'RECURRING_LINE_NOT_FOUND': ErrorGroup.notFound,
+  'RECURRING_REMINDER_NOT_FOUND': ErrorGroup.notFound,
   'INSTALLMENT_NOT_FOUND': ErrorGroup.notFound,
   'TX_NOT_IN_PROJECT': ErrorGroup.notFound,
   'MEMBER_NOT_IN_PROJECT': ErrorGroup.notFound,

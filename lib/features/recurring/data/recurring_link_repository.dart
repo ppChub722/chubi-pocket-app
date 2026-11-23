@@ -27,12 +27,12 @@ class LinkOccurrence {
   factory LinkOccurrence.fromJson(Map<String, dynamic> json) => LinkOccurrence(
     itemId:
         json['item_id'] as String? ??
-        'slot:${json['recurring_rule_id'] ?? json['rule_id']}:${json['slot']}',
+        'slot:${json['recurring_reminder_id'] ?? json['rule_id']}:${json['slot']}',
     date: parseYmd(json['date'] as String?) ?? DateTime.now(),
     daysUntil: (json['days_until'] as num?)?.toInt() ?? 0,
     status: (json['status'] as String?) ?? 'upcoming',
     amount: (json['amount'] as num?)?.toDouble(),
-    ruleId: (json['recurring_rule_id'] ?? json['rule_id']) as String?,
+    ruleId: (json['recurring_reminder_id'] ?? json['rule_id']) as String?,
     slot: json['slot'] as String?,
   );
 
@@ -156,7 +156,7 @@ class RecurringLinkRepository {
 
   /// A round's address (0.4.3): its item, its line ([ruleId]) and its slot.
   String _occ(String ruleId, String slot) =>
-      '/recurring/${RecurringLineIndex.itemOf(ruleId)}/lines/$ruleId'
+      '/recurring/${RecurringLineIndex.itemOf(ruleId)}/reminders/$ruleId'
       '/occurrences/$slot';
 
   Future<LinkResult> linkOccurrence(

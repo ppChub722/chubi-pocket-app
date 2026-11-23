@@ -956,13 +956,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     double sum(double? Function(Recurring r) of) =>
         rules.fold(0, (s, r) => s + (of(r) ?? 0));
     final totals = switch (kind) {
-      RecurringKind.subscription => l.recurringHomePerMonthYear(
-        _money(sum((r) => r.monthlyAmount)),
-        _money(sum((r) => r.yearlyCost)),
-      ),
-      RecurringKind.bill => l.recurringHomeAvgPerMonth(
-        _money(sum((r) => r.monthTotal ?? r.avgAmount ?? r.monthlyAmount)),
-      ),
       _ => l.recurringHomePerMonth(
         _money(sum((r) => r.monthTotal ?? r.monthlyAmount)),
       ),

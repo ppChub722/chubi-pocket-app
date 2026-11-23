@@ -23,6 +23,7 @@ import '../../../transactions/domain/refs.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 
 import '../../data/personal_debts_repository.dart';
+import '../../domain/debt_plans.dart';
 import '../../domain/debt_ledger.dart';
 import '../cubit/debt_people_cubit.dart';
 import '../cubit/debt_person_cubit.dart';
@@ -65,6 +66,55 @@ class _PersonViewState extends State<_PersonView> {
   final _toolbar = PpForgeListToolbarState.local();
   bool _linking = false;
   bool _showEarlier = false;
+
+  /// 0.4.3: this counterparty's debt plans that no reminder pays (those that
+  /// one pays show in the รายการประจำ section).
+  List<DebtPlan> _plans = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlans();
+  }
+
+  Future<void> _loadPlans() async {
+    final key = context.findAncestorWidgetOfExactType<DebtPersonPage>()?.personKey;
+    final repo = context.read<PersonalDebtsRepository>();
+    try {
+      final all = await repo.plans();
+      if (mounted) {
+        setState(
+          () => _plans = [
+            for (final p in all)
+              if (p.creditorKey == key && p.recurringId == null) p,
+          ],
+        );
+      }
+    } catch (_) {
+      // the page shows without them
+    }
+  }
+
+  Widget? _plansSection(AppLocalizations l) {
+    if (_plans.isEmpty) return null;
+    return SectionCard(
+      key: const ValueKey('debtPlans'),
+      title: '${l.debtPlanTitle} | ${_plans.length}',
+      children: [
+        for (final p in _plans)
+          InfoRow(
+            key: ValueKey('debtPlan-${p.id}'),
+            label: '${p.name} · ${p.plan.done}/${p.plan.count}',
+            valueWidget: MoneyText(p.plan.leftTotal),
+            showChevron: true,
+            onTap: () async {
+              await context.push('/personal-debts/plans/${p.id}');
+              if (mounted) _loadPlans();
+            },
+          ),
+      ],
+    );
+  }
 
   @override
   void dispose() {
@@ -268,6 +318,7 @@ class _PersonViewState extends State<_PersonView> {
           ],
         ),
       ?_recurringSection(l, s),
+      ?_plansSection(l),
       PpForgeListToolbar(
         state: _toolbar,
         search: ListToolbarSearch(
