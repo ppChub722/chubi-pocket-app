@@ -62,6 +62,9 @@ class _PeopleViewState extends State<_PeopleView> {
   /// หนี้แบบที่ 1 (0.4.3): my cards / PayLater wallets holding a debt.
   List<CardSummary> _cards = const [];
 
+  /// My open plans I owe (the hero's ผ่อนต่อเดือน).
+  List<DebtPlan> _plans = const [];
+
   @override
   void initState() {
     super.initState();
@@ -69,8 +72,20 @@ class _PeopleViewState extends State<_PeopleView> {
   }
 
   Future<void> _loadCards() async {
+    final repo = context.read<PersonalDebtsRepository>();
     try {
-      final cards = await context.read<PersonalDebtsRepository>().cardSummaries();
+      final plans = await repo.plans();
+      if (mounted) {
+        setState(
+          () => _plans = [
+            for (final p in plans)
+              if (p.iOwe && !p.plan.closed && p.plan.next != null) p,
+          ],
+        );
+      }
+    } catch (_) {}
+    try {
+      final cards = await repo.cardSummaries();
       if (mounted) {
         setState(
           () => _cards = [
@@ -84,18 +99,72 @@ class _PeopleViewState extends State<_PeopleView> {
     }
   }
 
-  Widget _cardRow(AppLocalizations l, CardSummary c) => PpForgeListRow(
-    key: ValueKey('debtCard-${c.account.id}'),
-    leading: const PpForgeIcon(AppIcons.wallet, size: PpForgeIconSize.md),
-    title: c.account.name,
-    line2: c.bill.left > 0.005
-        ? ListRowLine(parts: [l.debtCardLeft], tone: Tone.warning)
-        : null,
-    trailing: ListRowTrailing.value(MoneyText(c.owed, tone: MoneyTone.expense)),
-    onTap: () {
-      openPage(context, '/personal-debts/cards/${c.account.id}');
-    },
-  );
+  /// One card (S-Debts): its bill and due date, what it holds; under it the
+  /// bill to pay and its plans (n/N, the next round billed).
+  Widget _cardRow(AppLocalizations l, CardSummary c) {
+    final symbol = debtCurrencySymbol(context);
+    String money(double v) => moneyString(context, v, symbol: symbol);
+    String day(DateTime d) => DateFormatter.friendly(
+      d,
+      today: l.commonToday,
+      yesterday: l.commonYesterday,
+      locale: Localizations.localeOf(context).languageCode,
+    );
+    final due = c.bill.dueDate;
+    final summary = [
+      '${l.debtCardBill} ${money(c.bill.left)}',
+      if (due != null && c.bill.left > 0.005) l.debtCardDue(day(due)),
+    ].join(' · ');
+    void open() => openPage(context, '/personal-debts/cards/${c.account.id}');
+    return CollapsibleSection(
+      key: ValueKey('debtCard-${c.account.id}'),
+      title: c.account.name,
+      summary: summary,
+      leading: const PpForgeIcon(AppIcons.wallet, size: PpForgeIconSize.md),
+      trailing: MoneyText(c.owed, tone: MoneyTone.expense),
+      children: [
+        if (c.bill.left > 0.005)
+          PpForgeListRow(
+            key: ValueKey('debtCardBill-${c.account.id}'),
+            leading: const PpForgeIcon(AppIcons.date, size: PpForgeIconSize.md),
+            title: l.debtCardBill,
+            line2: due == null
+                ? null
+                : ListRowLine(
+                    parts: [l.debtCardDue(day(due))],
+                    tone: Tone.warning,
+                  ),
+            trailing: ListRowTrailing.value(
+              MoneyText(c.bill.left, tone: MoneyTone.expense),
+            ),
+            onTap: open,
+          ),
+        for (final p in c.plans)
+          PpForgeListRow(
+            key: ValueKey('debtCardPlan-${p.id}'),
+            leading: const PpForgeIcon(
+              AppIcons.payLater,
+              size: PpForgeIconSize.md,
+            ),
+            title: p.name,
+            line2: ListRowLine(
+              parts: [
+                '${p.plan.done}/${p.plan.count}',
+                if (p.plan.next != null)
+                  '${day(p.plan.next!.dueDate)} · ${money(p.plan.next!.amount)}',
+              ],
+            ),
+            trailing: ListRowTrailing.value(MoneyText(p.plan.leftTotal)),
+            onTap: () => openPage(context, '/personal-debts/plans/${p.id}'),
+          ),
+        DueMoreRow(
+          key: ValueKey('debtCardOpen-${c.account.id}'),
+          label: l.debtsOpenPage,
+          onTap: open,
+        ),
+      ],
+    );
+  }
 
   @override
   void dispose() {
@@ -303,7 +372,23 @@ class _PeopleViewState extends State<_PeopleView> {
     final counts = s.counts;
     int count(DebtListFilter f) => counts[f] ?? 0;
     final palette = Theme.of(context).extension<PpForgeColors>()!;
-    final net = t.net;
+    // 0.4.3 (S-Debts): a card's balance is a debt I owe; its bill due this
+    // month is money to pay this month.
+    final now = DateTime.now();
+    var cardsOwed = 0.0, cardsDue = 0.0;
+    for (final c in _cards) {
+      cardsOwed += c.owed;
+      final due = c.bill.dueDate;
+      if (due != null && due.year == now.year && due.month == now.month) {
+        cardsDue += c.bill.left;
+      }
+    }
+    var perMonth = 0.0;
+    for (final p in _plans) {
+      perMonth += p.plan.next?.amount ?? 0;
+    }
+    final net = t.net - cardsOwed;
+    final payThisMonth = (t.payThisMonth ?? 0) + cardsDue;
     return PpForgeHeroCard(
       // The จดหนี้ button's colour, so the page reads as the debt module.
       style: HeroStyle.tinted(color: ModuleColors.of(context).debt),
@@ -349,16 +434,22 @@ class _PeopleViewState extends State<_PeopleView> {
             ),
             HeroFact(
               l.fpDebtsIOweTile(count(DebtListFilter.payable)),
-              moneyString(context, t.iOwe, symbol: symbol),
+              moneyString(context, t.iOwe + cardsOwed, symbol: symbol),
               icon: AppIcons.flowOut,
               iconColor: palette.expense,
               color: palette.expense,
             ),
-            if (t.payThisMonth != null)
+            if (t.payThisMonth != null || cardsDue > 0)
               HeroFact(
                 l.debtsThisMonthPay,
-                moneyString(context, t.payThisMonth!, symbol: symbol),
+                moneyString(context, payThisMonth, symbol: symbol),
                 icon: AppIcons.date,
+              ),
+            if (_plans.isNotEmpty)
+              HeroFact(
+                l.debtsPlansPerMonth(_plans.length),
+                moneyString(context, perMonth, symbol: symbol),
+                icon: AppIcons.payLater,
               ),
             if (t.receiveThisMonth != null)
               HeroFact(

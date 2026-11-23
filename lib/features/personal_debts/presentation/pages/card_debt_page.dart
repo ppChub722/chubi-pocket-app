@@ -8,6 +8,10 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
+import '../../../recurring/domain/recurring_page.dart';
+import '../../../transactions/data/transactions_repository.dart';
+import '../../../transactions/domain/transaction.dart';
+import '../../../transactions/presentation/widgets/transaction_tile.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_plans.dart';
 
@@ -27,6 +31,9 @@ class CardDebtPage extends StatefulWidget {
 
 class _CardDebtPageState extends State<CardDebtPage> {
   CardSummary? _card;
+
+  /// The rows of the bill's cycle (D-Card รายการในรอบบิลนี้).
+  List<Transaction> _rows = const [];
   Object? _error;
   bool _busy = false;
 
@@ -41,6 +48,16 @@ class _CardDebtPageState extends State<CardDebtPage> {
   Future<void> _load() async {
     try {
       final c = await _repo.cardSummary(widget.accountId);
+      final start = c.bill.cycleStart;
+      if (start != null && mounted) {
+        final page = await context.read<TransactionsRepository>().list(
+          accountId: widget.accountId,
+          from: _ymd(start),
+          to: _ymd(c.bill.cycleEnd),
+          perPage: 10,
+        );
+        _rows = page.transactions;
+      }
       if (mounted) {
         setState(() {
           _card = c;
@@ -77,6 +94,11 @@ class _CardDebtPageState extends State<CardDebtPage> {
     }
   }
 
+  static String _ymd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
   String _date(DateTime d) =>
       DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(d);
 
@@ -85,7 +107,10 @@ class _CardDebtPageState extends State<CardDebtPage> {
     final l = AppLocalizations.of(context)!;
     final c = _card;
     return Scaffold(
-      appBar: AppTopBar(title: c?.account.name ?? l.debtsSectionCards, showBack: true),
+      appBar: AppTopBar(
+        title: c?.account.name ?? l.debtsSectionCards,
+        showBack: true,
+      ),
       body: c == null
           ? (_error != null
                 ? EmptyView.compact(message: '$_error')
@@ -94,89 +119,176 @@ class _CardDebtPageState extends State<CardDebtPage> {
               onRefresh: _load,
               child: ListView(
                 padding: const EdgeInsets.all(PpForgeSpacing.md),
-                children: [
-                  SectionCard(
-                    first: true,
-                    children: [
-                      InfoRow(
-                        label: l.debtCardOwed,
-                        valueWidget: MoneyText(c.owed, tone: MoneyTone.expense),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: PpForgeSpacing.md),
-                  SectionCard(
-                    title: l.debtCardBill,
-                    description: c.bill.dueDate == null
-                        ? null
-                        : l.debtCardDue(_date(c.bill.dueDate!)),
-                    children: [
-                      InfoRow(
-                        label: l.debtCardSpending,
-                        valueWidget: MoneyText(c.bill.spending),
-                      ),
-                      InfoRow(
-                        label: l.debtCardBilledInstallments,
-                        valueWidget: MoneyText(c.bill.installments),
-                      ),
-                      InfoRow(
-                        label: l.debtCardPaid,
-                        valueWidget: MoneyText(c.bill.paid),
-                      ),
-                      InfoRow(
-                        label: l.debtCardLeft,
-                        valueWidget: MoneyText(
-                          c.bill.left,
-                          tone: c.bill.left > 0
-                              ? MoneyTone.expense
-                              : MoneyTone.plain,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: PpForgeSpacing.md),
-                  SectionCard(
-                    children: [
-                      if (c.recurringId != null)
-                        InfoRow(
-                          label: l.debtCardBillReminderSet,
-                          showChevron: true,
-                          onTap: () => openPage(context, '/recurring/${c.recurringId}'),
-                        )
-                      else
-                        InfoRow(
-                          key: const ValueKey('cardBillReminderAdd'),
-                          label: l.debtCardBillReminder,
-                          showChevron: true,
-                          onTap: _busy ? null : () => _addReminder(c),
-                        ),
-                    ],
-                  ),
-                  if (c.plans.isNotEmpty) ...[
-                    const SizedBox(height: PpForgeSpacing.md),
-                    SectionCard(
-                      title: l.debtCardPlans,
-                      description: '${l.debtCardUnbilled} '
-                          '${NumberFormat('#,##0.##').format(c.unbilled)}',
-                      children: [
-                        for (final p in c.plans)
-                          InfoRow(
-                            key: ValueKey('cardPlan-${p.id}'),
-                            label:
-                                '${p.name} · ${p.plan.done}/${p.plan.count}',
-                            valueWidget: MoneyText(p.plan.next?.amount ?? 0),
-                            showChevron: true,
-                            onTap: () async {
-                              await context.push('/personal-debts/plans/${p.id}');
-                              if (mounted) _load();
-                            },
-                          ),
-                      ],
-                    ),
-                  ],
-                ],
+                children: _body(l, c),
               ),
             ),
     );
   }
+
+  /// D-Card: what the card holds (and of its limit), the bill (spending + each
+  /// plan's round billed), the plan principal not billed yet; ชำระบัตร (its
+  /// bill reminder); its plans (+ ผ่อนใหม่); its rows (the wallet page).
+  List<Widget> _body(AppLocalizations l, CardSummary c) {
+    final limit = c.creditLimit;
+    final used = limit == null || limit <= 0
+        ? null
+        : (c.owed / limit * 100).round();
+    String m(double v) => moneyString(context, v);
+    return [
+      SectionCard(
+        first: true,
+        title: c.account.name,
+        description: limit == null ? null : l.debtCardLimit(m(limit)),
+        children: [
+          InfoRow(
+            label: l.debtCardOwed,
+            valueWidget: MoneyText(c.owed, tone: MoneyTone.expense),
+          ),
+          if (used != null) InfoRow(label: l.debtCardUsed('$used')),
+        ],
+      ),
+      const SizedBox(height: PpForgeSpacing.md),
+      SectionCard(
+        title: l.debtCardBillOf(_date(c.bill.cycleEnd)),
+        description: c.bill.dueDate == null
+            ? null
+            : l.debtCardDue(_date(c.bill.dueDate!)),
+        children: [
+          InfoRow(
+            label: l.debtCardSpending,
+            valueWidget: MoneyText(c.bill.spending),
+          ),
+          for (final p in c.plans)
+            if (p.installments.any(
+              (i) =>
+                  !i.dueDate.isAfter(c.bill.cycleEnd) &&
+                  i.dueDate.isAfter(
+                    c.bill.cycleEnd.subtract(const Duration(days: 31)),
+                  ),
+            ))
+              InfoRow(
+                label: '${p.name} · ${l.debtCardPlanRound(_billedSeq(p, c))}',
+                valueWidget: MoneyText(_billedAmount(p, c)),
+              ),
+          InfoRow(label: l.debtCardPaid, valueWidget: MoneyText(c.bill.paid)),
+          InfoRow(
+            label: l.debtCardLeft,
+            valueWidget: MoneyText(
+              c.bill.left,
+              tone: c.bill.left > 0 ? MoneyTone.expense : MoneyTone.plain,
+            ),
+          ),
+          InfoRow(
+            label: l.debtCardUnbilled,
+            valueWidget: MoneyText(c.unbilled),
+          ),
+        ],
+      ),
+      const SizedBox(height: PpForgeSpacing.md),
+      SectionCard(
+        title: l.debtCardPay,
+        children: [
+          if (c.recurringId != null)
+            InfoRow(
+              label: l.debtCardBillReminderSet,
+              value: '✓',
+              showChevron: true,
+              onTap: () => openPage(context, '/recurring/${c.recurringId}'),
+            )
+          else
+            InfoRow(
+              key: const ValueKey('cardBillReminderAdd'),
+              label: '+ ${l.debtCardBillReminder}',
+              showChevron: true,
+              onTap: _busy ? null : () => _addReminder(c),
+            ),
+        ],
+      ),
+      const SizedBox(height: PpForgeSpacing.md),
+      SectionCard(
+        title: '${l.debtCardPlans} | ${c.plans.length}',
+        children: [
+          for (final p in c.plans)
+            PpForgeListRow(
+              key: ValueKey('cardPlan-${p.id}'),
+              leading: const PpForgeIcon(
+                AppIcons.payLater,
+                size: PpForgeIconSize.md,
+              ),
+              title: p.name,
+              line2: ListRowLine(
+                parts: [
+                  '${p.plan.done}/${p.plan.count}',
+                  if (p.plan.purchase != null)
+                    l.debtCardPlanBought(
+                      _date(p.plan.purchase!.date),
+                      m(p.plan.purchase!.amount),
+                    ),
+                  l.debtPlanLeftToPay,
+                  m(p.plan.leftTotal),
+                ],
+              ),
+              trailing: ListRowTrailing.value(
+                MoneyText(p.plan.next?.amount ?? 0),
+              ),
+              onTap: () async {
+                await context.push('/personal-debts/plans/${p.id}');
+                if (mounted) _load();
+              },
+            ),
+          DueMoreRow(
+            key: const ValueKey('cardPlanNew'),
+            label: '+ ${l.debtCardNewPlan}',
+            onTap: () async {
+              await context.push(
+                Uri(
+                  path: '/personal-debts/plans/new',
+                  queryParameters: {
+                    'card': c.account.id,
+                    'card_name': c.account.name,
+                  },
+                ).toString(),
+              );
+              if (mounted) _load();
+            },
+          ),
+        ],
+      ),
+      const SizedBox(height: PpForgeSpacing.md),
+      SectionCard(
+        key: const ValueKey('cardCycleRows'),
+        title: l.debtCardCycleRows,
+        children: [
+          for (final t in _rows)
+            TransactionTile(
+              transaction: t,
+              showAccount: false,
+              showDate: true,
+              onTap: () => openPage(context, '/transactions/${t.id}'),
+            ),
+          DueMoreRow(
+            key: const ValueKey('cardRows'),
+            label: l.debtPlanAll,
+            onTap: () => openPage(context, '/accounts/${c.account.id}'),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  PlanInstallment? _billed(DebtPlan p, CardSummary c) {
+    final end = c.bill.cycleEnd;
+    for (final i in p.installments) {
+      if (!i.dueDate.isAfter(end) &&
+          i.dueDate.isAfter(end.subtract(const Duration(days: 31)))) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  String _billedSeq(DebtPlan p, CardSummary c) =>
+      '${_billed(p, c)?.seq ?? 0}/${p.plan.count}';
+
+  double _billedAmount(DebtPlan p, CardSummary c) => _billed(p, c)?.amount ?? 0;
 }

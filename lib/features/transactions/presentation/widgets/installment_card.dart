@@ -14,12 +14,16 @@ class QuickInstallment {
     this.method = PlanInterestMethod.none,
     this.rate = '',
     this.installmentAmount = '',
+    this.firstDue,
   });
 
   final int count;
   final PlanInterestMethod method;
   final String rate;
   final String installmentAmount;
+
+  /// งวดแรกเข้าบิล (null = the card's next statement day, the BE's default).
+  final DateTime? firstDue;
 
   bool get ok =>
       count > 0 &&
@@ -41,6 +45,11 @@ class QuickInstallment {
       'interest_rate': double.tryParse(rate.trim()),
     if (method == PlanInterestMethod.fixed)
       'installment_amount': AmountInput.parse(installmentAmount),
+    if (firstDue != null)
+      'first_due':
+          '${firstDue!.year.toString().padLeft(4, '0')}-'
+          '${firstDue!.month.toString().padLeft(2, '0')}-'
+          '${firstDue!.day.toString().padLeft(2, '0')}',
   };
 
   QuickInstallment copyWith({
@@ -48,11 +57,14 @@ class QuickInstallment {
     PlanInterestMethod? method,
     String? rate,
     String? installmentAmount,
+    DateTime? firstDue,
+    bool clearFirstDue = false,
   }) => QuickInstallment(
     count: count ?? this.count,
     method: method ?? this.method,
     rate: rate ?? this.rate,
     installmentAmount: installmentAmount ?? this.installmentAmount,
+    firstDue: clearFirstDue ? null : (firstDue ?? this.firstDue),
   );
 }
 
@@ -166,6 +178,38 @@ class _QuickInstallmentCardState extends State<QuickInstallmentCard> {
               ),
               onChanged: (s) =>
                   widget.onChanged(v.copyWith(installmentAmount: s)),
+            ),
+          // D-Quick: งวดแรกเข้าบิล (empty = the card's next statement)
+          InfoRow(
+            key: const ValueKey('quickInstallmentFirstDue'),
+            label: l.quickInstallmentFirstDue,
+            valueWidget: DatePickChip(
+              date: v.firstDue,
+              emptyLabel: l.quickInstallmentFirstDueAuto,
+              onClear: v.firstDue == null
+                  ? null
+                  : () => widget.onChanged(v.copyWith(clearFirstDue: true)),
+              onPick: () async {
+                final r = await PpForgeDatePicker.show(
+                  context,
+                  initial: v.firstDue ?? DateTime.now(),
+                  first: DateTime.now().subtract(const Duration(days: 60)),
+                  last: DateTime.now().add(const Duration(days: 400)),
+                );
+                if (r is PpForgeDatePicked) {
+                  widget.onChanged(v.copyWith(firstDue: r.date));
+                }
+              },
+            ),
+          ),
+          // D-Quick: what the save books
+          if (amount != null && amount > 0 && v.count > 0)
+            InfoRow(
+              key: const ValueKey('quickInstallmentSummary'),
+              label: l.quickInstallmentSummary(
+                moneyString(context, amount, symbol: symbol),
+                '${v.count}',
+              ),
             ),
         ],
       ],

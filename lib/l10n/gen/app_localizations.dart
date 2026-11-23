@@ -13878,6 +13878,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A recurring item keeps its type. Delete it and create a new one.'**
   String get errRecurringTypeFixed;
+
+  /// No description provided for @debtsPlansPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments a month · {count} plans'**
+  String debtsPlansPerMonth(int count);
+
+  /// No description provided for @debtPlanCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} installments'**
+  String debtPlanCountLabel(String count);
+
+  /// No description provided for @debtPlanProgressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid installments'**
+  String get debtPlanProgressLabel;
+
+  /// No description provided for @debtPlanLeftToPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Left to pay'**
+  String get debtPlanLeftToPay;
+
+  /// No description provided for @debtPlanLastDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Last installment'**
+  String get debtPlanLastDate;
+
+  /// No description provided for @debtPlanNextIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Next #{seq}/{count} · in {days} days'**
+  String debtPlanNextIn(String seq, String count, String days);
+
+  /// No description provided for @debtPlanSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal {principal} → debt down · interest {interest} → expense'**
+  String debtPlanSplit(String principal, String interest);
+
+  /// No description provided for @debtPlanSplitShort.
+  ///
+  /// In en, this message translates to:
+  /// **'principal {principal} · interest {interest}'**
+  String debtPlanSplitShort(String principal, String interest);
+
+  /// No description provided for @debtPlanSeq.
+  ///
+  /// In en, this message translates to:
+  /// **'#{seq}/{count}'**
+  String debtPlanSeq(String seq, String count);
+
+  /// No description provided for @debtPlanSeqPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'#{seq}/{count} · paid'**
+  String debtPlanSeqPaid(String seq, String count);
+
+  /// No description provided for @debtPlanNoReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder yet: on the day, tap \"Pay this installment\" yourself'**
+  String get debtPlanNoReminder;
+
+  /// No description provided for @debtPlanPrincipalTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount financed'**
+  String get debtPlanPrincipalTotal;
+
+  /// No description provided for @debtPlanInterestTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest over the contract'**
+  String get debtPlanInterestTotal;
+
+  /// No description provided for @debtPlanPaidSplitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal / interest paid'**
+  String get debtPlanPaidSplitLabel;
+
+  /// No description provided for @debtPlanUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get debtPlanUpcoming;
+
+  /// No description provided for @debtPlanPast.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get debtPlanPast;
+
+  /// No description provided for @debtPlanAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get debtPlanAll;
+
+  /// No description provided for @debtPlanLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get debtPlanLess;
+
+  /// No description provided for @debtCardLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit {amount}'**
+  String debtCardLimit(String amount);
+
+  /// No description provided for @debtCardUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% of the limit used'**
+  String debtCardUsed(String pct);
+
+  /// No description provided for @debtCardBillOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill of this cycle (closed {date})'**
+  String debtCardBillOf(String date);
+
+  /// No description provided for @debtCardPlanRound.
+  ///
+  /// In en, this message translates to:
+  /// **'round {round}'**
+  String debtCardPlanRound(String round);
+
+  /// No description provided for @debtCardPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Paying the card'**
+  String get debtCardPay;
+
+  /// No description provided for @debtCardNewPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'New installment'**
+  String get debtCardNewPlan;
+
+  /// No description provided for @debtCardPlanBought.
+  ///
+  /// In en, this message translates to:
+  /// **'bought {date} {amount}'**
+  String debtCardPlanBought(String date, String amount);
+
+  /// No description provided for @debtCardRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows on this card'**
+  String get debtCardRows;
+
+  /// No description provided for @debtPlanDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Direction'**
+  String get debtPlanDirection;
+
+  /// No description provided for @debtPlanIOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'I owe them'**
+  String get debtPlanIOwe;
+
+  /// No description provided for @debtPlanTheyOwe.
+  ///
+  /// In en, this message translates to:
+  /// **'They owe me'**
+  String get debtPlanTheyOwe;
+
+  /// No description provided for @debtPlanDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get debtPlanDescription;
+
+  /// No description provided for @debtPlanCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get debtPlanCategory;
+
+  /// No description provided for @debtPlanHintCard.
+  ///
+  /// In en, this message translates to:
+  /// **'A purchase on a card: use quick create (pick the card → ผ่อน); the debt stays in the card\'s balance.'**
+  String get debtPlanHintCard;
+
+  /// No description provided for @debtPlanHintReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'After saving: tap \"Set a reminder\" on the plan to be reminded or to pay it automatically.'**
+  String get debtPlanHintReminder;
+
+  /// No description provided for @quickInstallmentSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Records {amount} on the card today + a {count}-installment plan on it · the debt stays in the card\'s balance, no separate debt'**
+  String quickInstallmentSummary(String amount, String count);
+
+  /// No description provided for @recurringNotifyOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify only'**
+  String get recurringNotifyOnly;
+
+  /// No description provided for @recurringNotifyOnlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Books nothing; only its alerts go out'**
+  String get recurringNotifyOnlyHint;
+
+  /// No description provided for @recurringTagAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'auto'**
+  String get recurringTagAuto;
+
+  /// No description provided for @recurringTagRemind.
+  ///
+  /// In en, this message translates to:
+  /// **'remind'**
+  String get recurringTagRemind;
+
+  /// No description provided for @debtPlanEditOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this one'**
+  String get debtPlanEditOne;
+
+  /// No description provided for @debtPlanSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get debtPlanSkip;
+
+  /// No description provided for @debtPlanSkipConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip installment #{seq}? It moves to the end of the plan.'**
+  String debtPlanSkipConfirm(String seq);
+
+  /// No description provided for @debtPlanChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Principal and interest paid'**
+  String get debtPlanChart;
+
+  /// No description provided for @debtPlanInterestLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get debtPlanInterestLabel;
+
+  /// No description provided for @debtCardCycleRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows in this bill'**
+  String get debtCardCycleRows;
+
+  /// No description provided for @quickInstallmentFirstDue.
+  ///
+  /// In en, this message translates to:
+  /// **'First installment billed'**
+  String get quickInstallmentFirstDue;
+
+  /// No description provided for @quickInstallmentFirstDueAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Next statement'**
+  String get quickInstallmentFirstDueAuto;
+
+  /// No description provided for @recurringHeroOwePeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed to people'**
+  String get recurringHeroOwePeople;
+
+  /// No description provided for @recurringHeroCardBills.
+  ///
+  /// In en, this message translates to:
+  /// **'Card bills'**
+  String get recurringHeroCardBills;
 }
 
 class _AppLocalizationsDelegate

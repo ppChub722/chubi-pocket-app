@@ -8,6 +8,8 @@ import '../../../../ui/ui.dart';
 import '../../../accounts/domain/account.dart';
 import '../../../accounts/domain/account_type.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
+import '../../../categories/domain/category_type.dart';
+import '../../../categories/presentation/widgets/category_picker.dart';
 import '../../../institutions/domain/institution.dart';
 import '../../../institutions/presentation/widgets/institution_picker.dart';
 import '../../../recurring/presentation/recurring_draft.dart';
@@ -23,7 +25,11 @@ enum _Creditor { card, institution, person }
 /// plan (principal, installments, first due date, interest). A card plan
 /// books nothing (the purchase is on the card already).
 class NewDebtPlanPage extends StatefulWidget {
-  const NewDebtPlanPage({super.key});
+  const NewDebtPlanPage({this.cardId, this.cardName, super.key});
+
+  /// ผ่อนใหม่ from a card page: the card is the creditor.
+  final String? cardId;
+  final String? cardName;
 
   @override
   State<NewDebtPlanPage> createState() => _NewDebtPlanPageState();
@@ -31,8 +37,15 @@ class NewDebtPlanPage extends StatefulWidget {
 
 class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
   final _name = TextEditingController();
+  final _description = TextEditingController();
+
+  /// ทิศ: true = เราติดเขา (received), false = เขาติดเรา (paid).
+  bool _iOwe = true;
+  String? _categoryId;
+  String? _categoryName;
   _Creditor _creditor = _Creditor.person;
-  Account? _card;
+  String? _cardId;
+  String? _cardName;
   InstitutionRef? _institution;
   DebtPick? _person;
   bool _cash = false;
@@ -43,14 +56,25 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.cardId != null) {
+      _creditor = _Creditor.card;
+      _cardId = widget.cardId;
+      _cardName = widget.cardName;
+    }
+  }
+
+  @override
   void dispose() {
     _name.dispose();
+    _description.dispose();
     super.dispose();
   }
 
   bool get _ready {
     final creditor = switch (_creditor) {
-      _Creditor.card => _card != null,
+      _Creditor.card => _cardId != null,
       _Creditor.institution => _institution != null,
       _Creditor.person => _person != null,
     };
@@ -61,14 +85,20 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
     final l = AppLocalizations.of(context)!;
     switch (_creditor) {
       case _Creditor.card:
-        final r = await AccountPicker.one(context, title: l.debtPlanCreditorCard);
+        final r = await AccountPicker.one(
+          context,
+          title: l.debtPlanCreditorCard,
+        );
         if (!mounted || r is! AccountPicked) return;
         final t = r.account.type;
         if (t != AccountType.creditCard && t != AccountType.payLater) {
           showErrorSnackBar(context, l.debtPlanCreditorCard);
           return;
         }
-        setState(() => _card = r.account);
+        setState(() {
+          _cardId = r.account.id;
+          _cardName = r.account.name;
+        });
       case _Creditor.institution:
         final r = await InstitutionPicker.one(
           context,
@@ -79,6 +109,28 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
         final r = await showDebtPersonPicker(context, selected: _person);
         if (mounted && r != null) setState(() => _person = r);
     }
+  }
+
+  Future<void> _pickCategory() async {
+    final l = AppLocalizations.of(context)!;
+    final r = await CategoryPicker.one(
+      context,
+      types: {CategoryType.expense},
+      selectedId: _categoryId,
+      allowNone: true,
+      title: l.debtPlanCategory,
+    );
+    if (!mounted || r == null) return;
+    setState(() {
+      switch (r) {
+        case CategoryPicked(:final category):
+          _categoryId = category.id;
+          _categoryName = category.name;
+        case CategoryPickedNone():
+          _categoryId = null;
+          _categoryName = null;
+      }
+    });
   }
 
   Future<void> _pickOpening() async {
@@ -95,10 +147,15 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
     try {
       final p = await context.read<PersonalDebtsRepository>().createPlan({
         'name': _name.text.trim(),
-        'direction': 'received',
-        'origin': card || !_cash ? 'purchase' : 'cash',
+        'description': _description.text.trim().isEmpty
+            ? null
+            : _description.text.trim(),
+        'category_id': card || !_cash ? _categoryId : null,
+        'direction': card || _iOwe ? 'received' : 'paid',
+        // they owe me: always money I lent (a cash loan)
+        'origin': card || (!_cash && _iOwe) ? 'purchase' : 'cash',
         'creditor': {
-          'account_id': card ? _card?.id : null,
+          'account_id': card ? _cardId : null,
           'institution_id': _creditor == _Creditor.institution
               ? _institution?.id
               : null,
@@ -131,7 +188,7 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
   };
 
   String? _creditorValue() => switch (_creditor) {
-    _Creditor.card => _card?.name,
+    _Creditor.card => _cardName,
     _Creditor.institution => _institution?.name,
     _Creditor.person => _person?.person.name,
   };
@@ -157,6 +214,23 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
                   onChanged: (_) => setState(() {}),
                 ),
               ),
+              SettingDropdownRow<bool>(
+                key: const ValueKey('debtPlanDirection'),
+                label: l.debtPlanDirection,
+                value: _iOwe ? l.debtPlanIOwe : l.debtPlanTheyOwe,
+                selected: _iOwe,
+                submits: false,
+                onSelected: (v) => setState(() {
+                  _iOwe = v;
+                  if (!v && _creditor == _Creditor.card) {
+                    _creditor = _Creditor.person;
+                  }
+                }),
+                options: [
+                  SheetOption(value: true, label: l.debtPlanIOwe),
+                  SheetOption(value: false, label: l.debtPlanTheyOwe),
+                ],
+              ),
               SettingDropdownRow<_Creditor>(
                 key: const ValueKey('debtPlanCreditorKind'),
                 label: l.debtPlanCreditor,
@@ -166,7 +240,8 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
                 onSelected: (c) => setState(() => _creditor = c),
                 options: [
                   for (final c in _Creditor.values)
-                    SheetOption(value: c, label: _creditorLabel(l, c)),
+                    if (_iOwe || c != _Creditor.card)
+                      SheetOption(value: c, label: _creditorLabel(l, c)),
                 ],
               ),
               InfoRow(
@@ -176,7 +251,18 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
                 showChevron: true,
                 onTap: _pickCreditor,
               ),
-              if (!card)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PpForgeSpacing.md,
+                  vertical: PpForgeSpacing.sm,
+                ),
+                child: PpForgeInput(
+                  key: const ValueKey('debtPlanDescription'),
+                  controller: _description,
+                  label: l.debtPlanDescription,
+                ),
+              ),
+              if (!card && _iOwe)
                 SettingDropdownRow<bool>(
                   key: const ValueKey('debtPlanOrigin'),
                   label: l.debtPlanOrigin,
@@ -191,7 +277,15 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
                     SheetOption(value: true, label: l.debtPlanOriginCash),
                   ],
                 ),
-              if (!card && _cash)
+              if (card || (!_cash && _iOwe))
+                InfoRow(
+                  key: const ValueKey('debtPlanCategory'),
+                  label: l.debtPlanCategory,
+                  value: _categoryName ?? '—',
+                  showChevron: true,
+                  onTap: _pickCategory,
+                ),
+              if (!card && (_cash || !_iOwe))
                 InfoRow(
                   key: const ValueKey('debtPlanOpening'),
                   label: l.debtPlanOpeningWallet,
@@ -205,6 +299,13 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
           RecurringPlanForm(
             plan: _plan,
             onChanged: (p) => setState(() => _plan = p),
+          ),
+          const SizedBox(height: PpForgeSpacing.md),
+          InfoBox(
+            rows: [
+              if (card) InfoRow(label: l.debtPlanHintCard),
+              InfoRow(label: l.debtPlanHintReminder),
+            ],
           ),
           const SizedBox(height: PpForgeSpacing.lg),
           PpForgeButton(

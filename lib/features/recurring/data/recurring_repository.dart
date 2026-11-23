@@ -87,7 +87,11 @@ class RecurringRepository {
 
   /// The item's plan written (created, or its installments worked out again);
   /// its id, or null when the item has none.
-  Future<String?> _savePlan(Dio dio, RecurringWrite write, String? planId) async {
+  Future<String?> _savePlan(
+    Dio dio,
+    RecurringWrite write,
+    String? planId,
+  ) async {
     final plan = write.plan;
     if (write.kind != RecurringKind.debt || plan == null) return planId;
     if (planId != null) {
@@ -167,8 +171,9 @@ class RecurringRepository {
 
   // ---- lines (0.4.3) ----
 
-  Future<RecurringDetail> addLine(String id, RecurringLineWrite line) =>
-      _write((dio) => dio.post('/recurring/$id/reminders', data: line.toJson()));
+  Future<RecurringDetail> addLine(String id, RecurringLineWrite line) => _write(
+    (dio) => dio.post('/recurring/$id/reminders', data: line.toJson()),
+  );
 
   Future<RecurringDetail> updateLine(
     String id,
@@ -449,7 +454,11 @@ class RecurringRepository {
     'action': action.wire,
     'items': [
       for (final i in items)
-        {'recurring_reminder_id': i.ruleId, 'slot': i.slot, 'amount': ?i.amount},
+        {
+          'recurring_reminder_id': i.ruleId,
+          'slot': i.slot,
+          'amount': ?i.amount,
+        },
     ],
   });
 

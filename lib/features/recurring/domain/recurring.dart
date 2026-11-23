@@ -692,6 +692,7 @@ class RecurringLineWrite extends Equatable {
     this.toAccountId,
     this.debtSub,
     this.repaysReminderId,
+    this.notifyOnly = false,
     this.autoCreate = false,
   });
 
@@ -705,6 +706,9 @@ class RecurringLineWrite extends Equatable {
   final String? paidByName;
   final String? toAccountId;
   final DebtEntrySub? debtSub;
+
+  /// แค่แจ้งเตือน: nothing is booked.
+  final bool notifyOnly;
   final RecurrenceRule rule;
   final bool autoCreate;
 
@@ -715,8 +719,12 @@ class RecurringLineWrite extends Equatable {
   Map<String, dynamic> toJson() => {
     'id': ?id,
     if ((amount ?? 0) > 0) 'amount': amount,
-    if ((amount ?? 0) <= 0 && debtSub == null && repaysReminderId == null)
+    if ((amount ?? 0) <= 0 &&
+        debtSub == null &&
+        repaysReminderId == null &&
+        !notifyOnly)
       'amount_mode': 'ask',
+    'notify_only': notifyOnly,
     'repays_reminder_id': ?repaysReminderId,
     'source': paidBy
         ? {

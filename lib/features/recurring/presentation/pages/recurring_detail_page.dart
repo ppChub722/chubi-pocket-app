@@ -842,6 +842,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ?banner,
         ?_notice(l, r),
         ?_focusCard(l, r),
+        ?_aheadCard(l, r),
         if (d.page?.plan case final plan?)
           RecurringPlanSection(plan: plan, onTable: _openPlanTable),
         if (d.page case final page? when page.lines.isNotEmpty)
@@ -850,13 +851,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             onMenu: (line, a) => unawaited(_lineMenu(line, a)),
             onAdd: page.actions.addLine ? () => _editLine(newLine: true) : null,
           ),
-        NoteSection(
-          label: l.commonNote,
-          editing: false,
-          text: r.note,
-          hint: l.commonLongPressToEdit,
-          onLongPress: () => enterEdit(focus: _noteFocus),
-        ),
       ],
       tabs: [
         PpForgeTab(
@@ -941,6 +935,30 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   /// Under the hero: what to do (a due occurrence, or this month's coming
   /// one with no amount yet) as the list page's รอยืนยัน box, for any count
   /// (plan E). Nothing to do: nothing here; the next one is in the hero.
+  /// ที่จะมา (S-Elec): the next 3 rounds not waiting in ต้องทำ; ดูทั้งหมด = the
+  /// ที่จะมา tab.
+  Widget? _aheadCard(AppLocalizations l, Recurring r) {
+    final next = [
+      for (final i in _upcoming.items)
+        if (i.state == OccurrenceState.upcoming && !i.needsAmount) i,
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    if (next.isEmpty) return null;
+    return SectionCard(
+      key: const ValueKey('recurringAhead'),
+      title: l.debtPlanUpcoming,
+      children: [
+        for (final i in next.take(3))
+          _occurrenceRow(l, r, i, onTap: () => _openOccurrence(i)),
+        if (next.length > 3)
+          DueMoreRow(
+            key: const ValueKey('recurringAheadAll'),
+            label: l.debtPlanAll,
+            onTap: () => _onTab(_Tab.upcoming),
+          ),
+      ],
+    );
+  }
+
   Widget? _focusCard(AppLocalizations l, Recurring r) {
     final due = [
       for (final i in _produced.items)
@@ -1839,7 +1857,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
                 ),
           ],
         ),
-        if (w.canPaidBy && !w.cardPlan)
+        if (w.canPaidBy && !w.cardPlan && !w.notifyOnly)
           SettingDropdownRow<bool>(
             key: const ValueKey('sourceRow'),
             label: l.recurringSourceLabel,
@@ -1856,7 +1874,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               SheetOption(value: true, label: l.recurringSourcePaidBy),
             ],
           ),
-        if (w.canPaidBy && w.paidBy == null && _paidByLines(w).isNotEmpty)
+        if (w.canPaidBy &&
+            w.paidBy == null &&
+            !w.notifyOnly &&
+            _paidByLines(w).isNotEmpty)
           SettingDropdownRow<String>(
             key: const ValueKey('repaysRow'),
             label: l.recurringRepaysLabel,
@@ -1874,17 +1895,26 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             ],
           ),
         SettingToggleRow(
-          key: const ValueKey('autoCreateRow'),
-          label: l.fpRecurringAutoCreate,
-          caption: w.canAutoCreate
-              ? l.fpRecurringAutoCreateHint
-              : l.fpRecurringAutoCreateNeedsWallet,
-          value: w.autoCreate && w.canAutoCreate,
+          key: const ValueKey('notifyOnlyRow'),
+          label: l.recurringNotifyOnly,
+          caption: l.recurringNotifyOnlyHint,
+          value: w.notifyOnly,
           submits: false,
-          onChanged: w.canAutoCreate
-              ? (v) => _change(w.copyWith(autoCreate: v))
-              : null,
+          onChanged: (v) => _change(w.withNotifyOnly(v)),
         ),
+        if (!w.notifyOnly)
+          SettingToggleRow(
+            key: const ValueKey('autoCreateRow'),
+            label: l.fpRecurringAutoCreate,
+            caption: w.canAutoCreate
+                ? l.fpRecurringAutoCreateHint
+                : l.fpRecurringAutoCreateNeedsWallet,
+            value: w.autoCreate && w.canAutoCreate,
+            submits: false,
+            onChanged: w.canAutoCreate
+                ? (v) => _change(w.copyWith(autoCreate: v))
+                : null,
+          ),
         if (w.autoCreateWarns)
           Padding(
             key: const ValueKey('autoCreateZeroWarn'),
@@ -2040,7 +2070,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     return ListPageBody(
       loading: false,
       error: null,
-      isEmpty: items.isEmpty,
+      // S-Elec: the note closes the page, after ที่ผ่านมา
+      isEmpty: items.isEmpty && (r.note ?? '').trim().isEmpty,
       onRetry: _load,
       rowCards: true,
       topInset: PpForgeSpacing.sm,
@@ -2053,6 +2084,14 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       children: [
         for (final item in items)
           _occurrenceRow(l, r, item, onTap: () => _openOccurrence(item)),
+        NoteSection(
+          key: const ValueKey('recurringNote'),
+          label: l.commonNote,
+          editing: false,
+          text: r.note,
+          hint: l.commonLongPressToEdit,
+          onLongPress: () => enterEdit(focus: _noteFocus),
+        ),
       ],
     );
   }

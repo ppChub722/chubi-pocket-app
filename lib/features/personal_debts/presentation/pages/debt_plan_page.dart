@@ -8,6 +8,7 @@ import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
+import '../../../recurring/domain/recurring.dart' show PlanInterestMethod;
 import '../../../recurring/domain/recurring_page.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_plans.dart';
@@ -29,6 +30,8 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
   DebtPlan? _plan;
   Object? _error;
   bool _busy = false;
+  bool _allUpcoming = false;
+  bool _allPast = false;
 
   PersonalDebtsRepository get _repo => context.read<PersonalDebtsRepository>();
 
@@ -76,6 +79,122 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
     await _run(() => _repo.payInstallment(widget.id, accountId: acc));
   }
 
+  /// ตั้ง reminder: a debt item paying this plan from the wallet picked,
+  /// monthly from the next installment for what is left.
+  Future<void> _addReminder(DebtPlan p) async {
+    final l = AppLocalizations.of(context)!;
+    final next = p.plan.next;
+    if (next == null) return;
+    final r = await AccountPicker.one(context, title: l.debtPlanPayFrom);
+    if (!mounted || r is! AccountPicked) return;
+    setState(() => _busy = true);
+    try {
+      final id = await _repo.createPlanReminder(
+        planId: p.id,
+        name: p.name,
+        fromAccountId: r.account.id,
+        first: next.dueDate,
+        left: p.plan.leftCount,
+      );
+      await _load();
+      if (mounted) openPage(context, '/recurring/$id');
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// แก้งวดนี้: its due date, amount and interest (principal = the rest).
+  Future<void> _editOne(PlanInstallment i) async {
+    final l = AppLocalizations.of(context)!;
+    final amount = TextEditingController(text: _plain(i.amount));
+    final interest = TextEditingController(text: _plain(i.interest));
+    var due = i.dueDate;
+    final ok = await showPpForgeSheet<bool>(
+      context,
+      title: l.debtPlanEditOne,
+      padded: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, set) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InfoRow(
+              label: l.debtPlanStart,
+              valueWidget: DatePickChip(
+                date: due,
+                onPick: () async {
+                  final r = await PpForgeDatePicker.show(
+                    ctx,
+                    initial: due,
+                    first: DateTime(2000),
+                    last: DateTime(2100),
+                  );
+                  if (r is PpForgeDatePicked) set(() => due = r.date);
+                },
+              ),
+            ),
+            const SizedBox(height: PpForgeSpacing.sm),
+            PpForgeInput(
+              controller: amount,
+              label: l.debtPlanInstallmentAmount,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: PpForgeSpacing.sm),
+            PpForgeInput(
+              controller: interest,
+              label: l.debtPlanInterestLabel,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: PpForgeSpacing.md),
+            PpForgeButton(
+              key: const ValueKey('debtPlanEditSave'),
+              label: l.debtPlanSave,
+              expand: true,
+              onPressed: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
+        ),
+      ),
+    );
+    final a = AmountInput.parse(amount.text);
+    final it = AmountInput.parse(interest.text);
+    amount.dispose();
+    interest.dispose();
+    if (ok != true || !mounted) return;
+    await _run(
+      () => _repo.editInstallment(
+        widget.id,
+        i.seq,
+        dueDate: due,
+        amount: a,
+        interest: it,
+      ),
+    );
+  }
+
+  /// ข้าม: not paid now; it moves to the end of the plan.
+  Future<void> _skip(PlanInstallment i) async {
+    final l = AppLocalizations.of(context)!;
+    final ok = await showConfirmDialog(
+      context,
+      title: l.debtPlanSkip,
+      message: l.debtPlanSkipConfirm('${i.seq}'),
+      confirmLabel: l.debtPlanSkip,
+    );
+    if (ok && mounted) {
+      await _run(() => _repo.skipInstallment(widget.id, i.seq));
+    }
+  }
+
+  static String _plain(double v) =>
+      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
   Future<void> _close() async {
     final l = AppLocalizations.of(context)!;
     final ok = await showConfirmDialog(
@@ -111,8 +230,6 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
   String _date(DateTime d) =>
       DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(d);
 
-  Widget _money(double v) => MoneyText(v);
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -133,71 +250,243 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
     );
   }
 
+  String _m(double v) => moneyString(context, v);
+
+  String _method(AppLocalizations l, RecurringPlan v) => switch (v.method) {
+    PlanInterestMethod.none => l.debtPlanMethodNone,
+    PlanInterestMethod.flat => '${l.debtPlanMethodFlat} ${v.rate ?? 0}%',
+    PlanInterestMethod.reducing =>
+      '${l.debtPlanMethodReducing} ${v.rate ?? 0}%',
+    PlanInterestMethod.fixed => l.debtPlanMethodFixed,
+    _ => '',
+  };
+
+  String _creditorKind(AppLocalizations l, DebtPlan p) =>
+      switch (p.creditorKind) {
+        'card' => l.debtPlanCreditorCard,
+        'institution' => l.debtPlanCreditorInstitution,
+        _ => l.debtPlanCreditorPerson,
+      };
+
+  /// An installment row (ที่จะมา / ที่ผ่านมา): date, งวด n/N, ต้น · ดอก.
+  Widget _installmentRow(AppLocalizations l, DebtPlan p, PlanInstallment i) =>
+      PpForgeListRow(
+        key: ValueKey('debtPlanInstallment-${i.seq}'),
+        leading: DateTile(date: i.dueDate),
+        title: i.paid
+            ? l.debtPlanSeqPaid('${i.seq}', '${p.plan.count}')
+            : l.debtPlanSeq('${i.seq}', '${p.plan.count}'),
+        line2: ListRowLine(
+          parts: [l.debtPlanSplitShort(_m(i.principal), _m(i.interest))],
+        ),
+        trailing: ListRowTrailing.value(MoneyText(i.amount)),
+      );
+
+  /// D-Car: the hero (creditor, n/N, paid / left / last installment, principal
+  /// and interest left), the next installment with its split and จ่ายงวดนี้,
+  /// the reminder box, the contract's totals, ที่จะมา (3) and ที่ผ่านมา.
   List<Widget> _body(AppLocalizations l, DebtPlan p) {
     final v = p.plan;
     final next = v.next;
+    final today = DateUtils.dateOnly(DateTime.now());
+    final upcoming = [
+      for (final i in p.installments)
+        if (!i.paid &&
+            i.status != InstallmentStatus.skipped &&
+            i.seq != next?.seq)
+          i,
+    ];
+    final past = [
+      for (final i in p.installments.reversed)
+        if (i.paid) i,
+    ];
+    final interestAll = p.installments.fold<double>(
+      0,
+      (s, i) => s + i.interest,
+    );
+    final paidInterest = v.paidTotal - v.paidPrincipal;
     return [
       SectionCard(
         first: true,
-        title: p.creditorName,
-        description: p.plan.closed ? l.debtPlanClosed : null,
+        title: p.name,
+        description: [
+          _creditorKind(l, p),
+          l.debtPlanCountLabel('${v.count}'),
+          _method(l, v),
+          if (v.closed) l.debtPlanClosed,
+        ].where((x) => x.isNotEmpty).join(' · '),
         children: [
+          InfoRow(label: l.debtPlanCreditor, value: p.creditorName),
           InfoRow(
-            label: l.debtPlanProgress('${v.done}', '${v.count}'),
-            valueWidget: _money(v.leftTotal),
+            label: l.debtPlanProgressLabel,
+            value: '${v.done}/${v.count}',
           ),
+          InfoRow(label: l.debtCardPaid, valueWidget: MoneyText(v.paidTotal)),
+          InfoRow(
+            label: l.debtPlanLeftToPay,
+            valueWidget: MoneyText(v.leftTotal),
+          ),
+          if (v.lastDate != null)
+            InfoRow(label: l.debtPlanLastDate, value: _date(v.lastDate!)),
           InfoRow(
             label: l.debtPlanLeftPrincipal,
-            valueWidget: _money(v.leftPrincipal),
+            valueWidget: MoneyText(v.leftPrincipal),
           ),
-          if (v.leftInterest > 0)
-            InfoRow(
-              label: l.debtPlanLeftInterest,
-              valueWidget: _money(v.leftInterest),
-            ),
-          if (next != null)
-            InfoRow(
-              label: '${l.debtPlanNext} · ${_date(next.dueDate)}',
-              valueWidget: _money(next.amount),
-            ),
+          InfoRow(
+            label: l.debtPlanLeftInterest,
+            valueWidget: MoneyText(v.leftInterest),
+          ),
         ],
       ),
-      const SizedBox(height: PpForgeSpacing.md),
-      if (p.isCard)
-        SectionCard(children: [InfoRow(label: l.debtPlanPaidByBill)])
-      else if (!v.closed && next != null)
-        PpForgeButton(
-          key: const ValueKey('debtPlanPay'),
-          label: l.debtPlanPay,
-          expand: true,
-          loading: _busy,
-          onPressed: _busy ? null : _pay,
-        ),
-      if (!p.isCard && p.recurringId != null) ...[
+      if (next != null && !v.closed) ...[
         const SizedBox(height: PpForgeSpacing.md),
         SectionCard(
+          key: const ValueKey('debtPlanNextCard'),
+          title: l.debtPlanNextIn(
+            '${next.seq}',
+            '${v.count}',
+            '${DateUtils.dateOnly(next.dueDate).difference(today).inDays}',
+          ),
+          description: _date(next.dueDate),
           children: [
             InfoRow(
-              label: l.debtPlanReminderOpen,
-              showChevron: true,
-              onTap: () => openPage(context, '/recurring/${p.recurringId}'),
+              label: l.debtPlanSplit(_m(next.principal), _m(next.interest)),
+              valueWidget: MoneyText(next.amount),
+            ),
+            if (p.isCard) InfoRow(label: l.debtPlanPaidByBill),
+            Padding(
+              padding: const EdgeInsets.all(PpForgeSpacing.md),
+              child: Row(
+                children: [
+                  if (!p.isCard) ...[
+                    Expanded(
+                      child: PpForgeButton(
+                        key: const ValueKey('debtPlanPay'),
+                        label: l.debtPlanPay,
+                        expand: true,
+                        loading: _busy,
+                        onPressed: _busy ? null : _pay,
+                      ),
+                    ),
+                    const SizedBox(width: PpForgeSpacing.sm),
+                  ],
+                  Expanded(
+                    child: PpForgeButton(
+                      key: const ValueKey('debtPlanEdit'),
+                      label: l.debtPlanEditOne,
+                      variant: PpForgeButtonVariant.outlined,
+                      expand: true,
+                      onPressed: _busy ? null : () => _editOne(next),
+                    ),
+                  ),
+                  const SizedBox(width: PpForgeSpacing.sm),
+                  Expanded(
+                    child: PpForgeButton(
+                      key: const ValueKey('debtPlanSkip'),
+                      label: l.debtPlanSkip,
+                      variant: PpForgeButtonVariant.outlined,
+                      expand: true,
+                      onPressed: _busy ? null : () => _skip(next),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+      if (!p.isCard &&
+          (p.recurringId != null || (!v.closed && next != null))) ...[
+        const SizedBox(height: PpForgeSpacing.md),
+        SectionCard(
+          description: p.recurringId == null ? l.debtPlanNoReminder : null,
+          children: [
+            if (p.recurringId != null)
+              InfoRow(
+                label: l.debtPlanReminderOpen,
+                value: '✓',
+                showChevron: true,
+                onTap: () => openPage(context, '/recurring/${p.recurringId}'),
+              )
+            else
+              InfoRow(
+                key: const ValueKey('debtPlanReminderAdd'),
+                label: '+ ${l.debtPlanReminder}',
+                showChevron: true,
+                onTap: _busy ? null : () => _addReminder(p),
+              ),
+          ],
+        ),
+      ],
+      if (past.isNotEmpty) ...[
+        const SizedBox(height: PpForgeSpacing.md),
+        SectionCard(
+          key: const ValueKey('debtPlanChart'),
+          title: l.debtPlanChart,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(PpForgeSpacing.md),
+              child: PairedBarChart(
+                groups: [
+                  for (final i in past.reversed)
+                    BarPair(label: '${i.seq}', a: i.principal, b: i.interest),
+                ],
+                colorA: Theme.of(context).colorScheme.primary,
+                colorB: Tone.warning.color(context),
+              ),
             ),
           ],
         ),
       ],
       const SizedBox(height: PpForgeSpacing.md),
       SectionCard(
-        title: l.debtPlanInstallments,
         children: [
-          for (final i in p.installments)
-            InfoRow(
-              key: ValueKey('debtPlanInstallment-${i.seq}'),
-              label: l.debtPlanInstallmentRow('${i.seq}', _date(i.dueDate)),
-              value: _status(l, i),
-              valueWidget: _money(i.amount),
-            ),
+          InfoRow(
+            label: l.debtPlanPrincipalTotal,
+            valueWidget: MoneyText(v.principal),
+          ),
+          InfoRow(
+            label: l.debtPlanInterestTotal,
+            valueWidget: MoneyText(interestAll),
+          ),
+          InfoRow(
+            label: l.debtPlanPaidSplitLabel,
+            value: '${_m(v.paidPrincipal)} / ${_m(paidInterest)}',
+          ),
         ],
       ),
+      if (upcoming.isNotEmpty) ...[
+        const SizedBox(height: PpForgeSpacing.md),
+        SectionCard(
+          title: l.debtPlanUpcoming,
+          children: [
+            for (final i in upcoming.take(_allUpcoming ? upcoming.length : 3))
+              _installmentRow(l, p, i),
+            if (upcoming.length > 3)
+              DueMoreRow(
+                key: const ValueKey('debtPlanAllUpcoming'),
+                label: _allUpcoming ? l.debtPlanLess : l.debtPlanAll,
+                onTap: () => setState(() => _allUpcoming = !_allUpcoming),
+              ),
+          ],
+        ),
+      ],
+      if (past.isNotEmpty) ...[
+        const SizedBox(height: PpForgeSpacing.md),
+        SectionCard(
+          title: l.debtPlanPast,
+          children: [
+            for (final i in past.take(_allPast ? past.length : 3))
+              _installmentRow(l, p, i),
+            if (past.length > 3)
+              DueMoreRow(
+                key: const ValueKey('debtPlanAllPast'),
+                label: _allPast ? l.debtPlanLess : l.debtPlanAll,
+                onTap: () => setState(() => _allPast = !_allPast),
+              ),
+          ],
+        ),
+      ],
       const SizedBox(height: PpForgeSpacing.md),
       SectionCard(
         children: [
@@ -208,11 +497,4 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
       ),
     ];
   }
-
-  String? _status(AppLocalizations l, PlanInstallment i) => switch (i.status) {
-    InstallmentStatus.paid => '✓',
-    _ => i.interest > 0 ? l.debtPlanInterest(_fmt(i.interest)) : null,
-  };
-
-  String _fmt(double v) => NumberFormat('#,##0.##').format(v);
 }

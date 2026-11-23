@@ -7669,7 +7669,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String recurringLinesCount(int n) {
-    return '$n รายการ';
+    return '$n reminders';
   }
 
   @override
@@ -7988,4 +7988,179 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get errRecurringTypeFixed =>
       'เปลี่ยนประเภทรายการไม่ได้ ถ้าจะเปลี่ยนให้ลบแล้วสร้างใหม่';
+
+  @override
+  String debtsPlansPerMonth(int count) {
+    return 'ผ่อนต่อเดือน · $count แผน';
+  }
+
+  @override
+  String debtPlanCountLabel(String count) {
+    return '$count งวด';
+  }
+
+  @override
+  String get debtPlanProgressLabel => 'งวดที่จ่ายแล้ว';
+
+  @override
+  String get debtPlanLeftToPay => 'เหลือจ่าย';
+
+  @override
+  String get debtPlanLastDate => 'งวดสุดท้าย';
+
+  @override
+  String debtPlanNextIn(String seq, String count, String days) {
+    return 'งวดถัดไป $seq/$count · อีก $days วัน';
+  }
+
+  @override
+  String debtPlanSplit(String principal, String interest) {
+    return 'ต้น $principal → ลดหนี้ · ดอก $interest → รายจ่าย';
+  }
+
+  @override
+  String debtPlanSplitShort(String principal, String interest) {
+    return 'ต้น $principal · ดอก $interest';
+  }
+
+  @override
+  String debtPlanSeq(String seq, String count) {
+    return 'งวด $seq/$count';
+  }
+
+  @override
+  String debtPlanSeqPaid(String seq, String count) {
+    return 'งวด $seq/$count · จ่ายแล้ว';
+  }
+
+  @override
+  String get debtPlanNoReminder =>
+      'ยังไม่มี reminder · ถึงวันต้องมากด \"จ่ายงวดนี้\" เอง';
+
+  @override
+  String get debtPlanPrincipalTotal => 'ยอดจัด';
+
+  @override
+  String get debtPlanInterestTotal => 'ดอกเบี้ยทั้งสัญญา';
+
+  @override
+  String get debtPlanPaidSplitLabel => 'จ่ายต้นแล้ว / ดอกแล้ว';
+
+  @override
+  String get debtPlanUpcoming => 'ที่จะมา';
+
+  @override
+  String get debtPlanPast => 'ที่ผ่านมา';
+
+  @override
+  String get debtPlanAll => 'ดูทั้งหมด';
+
+  @override
+  String get debtPlanLess => 'ย่อ';
+
+  @override
+  String debtCardLimit(String amount) {
+    return 'วงเงิน $amount';
+  }
+
+  @override
+  String debtCardUsed(String pct) {
+    return 'ใช้ไป $pct%';
+  }
+
+  @override
+  String debtCardBillOf(String date) {
+    return 'บิลรอบนี้ (ตัด $date)';
+  }
+
+  @override
+  String debtCardPlanRound(String round) {
+    return 'งวด $round';
+  }
+
+  @override
+  String get debtCardPay => 'ชำระบัตร';
+
+  @override
+  String get debtCardNewPlan => 'ผ่อนใหม่';
+
+  @override
+  String debtCardPlanBought(String date, String amount) {
+    return 'ซื้อ $date $amount';
+  }
+
+  @override
+  String get debtCardRows => 'รายการในบัตร';
+
+  @override
+  String get debtPlanDirection => 'ทิศ';
+
+  @override
+  String get debtPlanIOwe => 'เราติดเขา';
+
+  @override
+  String get debtPlanTheyOwe => 'เขาติดเรา';
+
+  @override
+  String get debtPlanDescription => 'คำอธิบาย';
+
+  @override
+  String get debtPlanCategory => 'หมวด';
+
+  @override
+  String get debtPlanHintCard =>
+      'บัตร / PayLater: ซื้อผ่อนผ่าน quick create (เลือกบัตร → ผ่อน) หนี้ไปอยู่ในยอดกระเป๋า';
+
+  @override
+  String get debtPlanHintReminder =>
+      'หลังบันทึก: กด \"ตั้ง reminder\" ที่หน้าแผน ถ้าอยากให้เตือนหรือจ่ายให้อัตโนมัติ';
+
+  @override
+  String quickInstallmentSummary(String amount, String count) {
+    return 'บันทึกรายจ่าย $amount เข้าบัตรวันนี้ + แผนผ่อน $count งวดในบัตร · หนี้อยู่ในยอดบัตร ไม่สร้างหนี้แยก';
+  }
+
+  @override
+  String get recurringNotifyOnly => 'แจ้งเตือนอย่างเดียว';
+
+  @override
+  String get recurringNotifyOnlyHint => 'ไม่บันทึกเงิน ส่งแค่การแจ้งเตือน';
+
+  @override
+  String get recurringTagAuto => 'อัตโนมัติ';
+
+  @override
+  String get recurringTagRemind => 'เตือน';
+
+  @override
+  String get debtPlanEditOne => 'แก้งวดนี้';
+
+  @override
+  String get debtPlanSkip => 'ข้าม';
+
+  @override
+  String debtPlanSkipConfirm(String seq) {
+    return 'ข้ามงวด $seq? งวดนี้จะไปต่อท้ายแผน';
+  }
+
+  @override
+  String get debtPlanChart => 'ต้นกับดอกที่จ่ายไป';
+
+  @override
+  String get debtPlanInterestLabel => 'ดอกเบี้ย';
+
+  @override
+  String get debtCardCycleRows => 'รายการในรอบบิลนี้';
+
+  @override
+  String get quickInstallmentFirstDue => 'งวดแรกเข้าบิล';
+
+  @override
+  String get quickInstallmentFirstDueAuto => 'รอบตัดถัดไป';
+
+  @override
+  String get recurringHeroOwePeople => 'ติดคน';
+
+  @override
+  String get recurringHeroCardBills => 'บิลบัตร';
 }

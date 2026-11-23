@@ -340,6 +340,44 @@ class PersonalDebtsRepository {
         return DebtPlan.tryParse(res.data)!;
       });
 
+  /// แก้งวดนี้: its due date and / or money (amount + interest; principal =
+  /// amount − interest).
+  Future<DebtPlan> editInstallment(
+    String id,
+    int seq, {
+    DateTime? dueDate,
+    double? amount,
+    double? interest,
+  }) => _call(() async {
+    final res = await _client.dio.put<Map<String, dynamic>>(
+      '/debt-plans/$id/installments/$seq',
+      data: {
+        if (dueDate != null) 'due_date': _ymd(dueDate),
+        'amount': ?amount,
+        'interest': ?interest,
+      },
+    );
+    return DebtPlan.tryParse(res.data)!;
+  });
+
+  /// ข้าม: the installment moves to the end of the plan.
+  Future<DebtPlan> skipInstallment(String id, int seq) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/debt-plans/$id/installments/$seq/skip',
+    );
+    return DebtPlan.tryParse(res.data)!;
+  });
+
+  /// What I owe people now (the recurring hero's ติดคน).
+  Future<double> iOwePeople() => _call(() async {
+    final res = await _client.dio.get<Map<String, dynamic>>(
+      '/personal-debts/people',
+      queryParameters: {'section': 'person', 'per_page': 1},
+    );
+    final t = res.data?['totals'];
+    return t is Map ? ((t['i_owe'] as num?)?.toDouble() ?? 0) : 0;
+  });
+
   Future<DebtPlan> closePlan(String id) => _call(() async {
     final res = await _client.dio.post<Map<String, dynamic>>(
       '/debt-plans/$id/close',
@@ -349,6 +387,45 @@ class PersonalDebtsRepository {
 
   Future<void> deletePlan(String id) =>
       _call(() => _client.dio.delete<void>('/debt-plans/$id'));
+
+  /// ตั้ง reminder of a plan (0.4.3): a debt item paying it, monthly on
+  /// [day] from [fromAccountId] for the [left] installments still open (each
+  /// round = the plan's next installment, principal + ดอกเบี้ย). Answers the
+  /// item id.
+  Future<String> createPlanReminder({
+    required String planId,
+    required String name,
+    required String fromAccountId,
+    required DateTime first,
+    required int left,
+  }) => _call(() async {
+    final res = await _client.dio.post<Map<String, dynamic>>(
+      '/recurring',
+      data: {
+        'name': name,
+        'type': 'debt',
+        'debt_plan_id': planId,
+        'reminders': [
+          {
+            'source': {'account_id': fromAccountId},
+            'schedule': {
+              'freq': 'monthly',
+              'interval': 1,
+              'monthly': {'mode': 'day', 'day': first.day},
+              'start_date': _ymd(first),
+              'end': {'kind': 'count', 'count': left},
+            },
+          },
+        ],
+      },
+    );
+    return res.data!['id'] as String;
+  });
+
+  static String _ymd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 
   /// จ่ายบิลบัตร: a debt item paying the card's bill (0.4.3): monthly on
   /// [day] from [fromAccountId], a transfer into the card whose amount is the

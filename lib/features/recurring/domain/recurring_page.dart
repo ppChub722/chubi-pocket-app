@@ -95,6 +95,7 @@ class RecurringLine extends Equatable {
     required this.json,
     this.paidBy,
     this.repaysReminderId,
+    this.notifyOnly = false,
     this.actions = const RecurringLineActions(),
   });
 
@@ -111,6 +112,7 @@ class RecurringLine extends Equatable {
           ? EmbeddedPerson.fromJson(paidBy)
           : null,
       repaysReminderId: json['repays_reminder_id'] as String?,
+      notifyOnly: json['action'] == 'notify',
       actions: RecurringLineActions.fromJson(json['actions']),
     );
   }
@@ -127,6 +129,9 @@ class RecurringLine extends Equatable {
   /// คืนคนจ่ายแทน (0.4.3): the person-paid line of the item this one pays
   /// back (each round = that line's latest round).
   final String? repaysReminderId;
+
+  /// แค่แจ้งเตือน: the rounds book nothing; only the alerts go out.
+  final bool notifyOnly;
   final RecurringLineActions actions;
 
   RecurrenceRule get rule => view.rule;
@@ -138,6 +143,7 @@ class RecurringLine extends Equatable {
   Map<String, dynamic> toInput() => {
     'id': id,
     'repays_reminder_id': ?repaysReminderId,
+    if (notifyOnly) 'notify_only': true,
     'amount': json['amount'],
     'source': json['source'],
     'to_account_id': json['to_account_id'],
@@ -369,6 +375,7 @@ class RecurringPlan extends Equatable {
   final PlanInterestMethod method;
   final double? rate;
   final double? installmentAmount;
+
   /// The debt plan (0.4.3: /debt-plans/{id}).
   final String? id;
 

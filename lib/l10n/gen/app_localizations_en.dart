@@ -8146,4 +8146,179 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errRecurringTypeFixed =>
       'A recurring item keeps its type. Delete it and create a new one.';
+
+  @override
+  String debtsPlansPerMonth(int count) {
+    return 'Installments a month · $count plans';
+  }
+
+  @override
+  String debtPlanCountLabel(String count) {
+    return '$count installments';
+  }
+
+  @override
+  String get debtPlanProgressLabel => 'Paid installments';
+
+  @override
+  String get debtPlanLeftToPay => 'Left to pay';
+
+  @override
+  String get debtPlanLastDate => 'Last installment';
+
+  @override
+  String debtPlanNextIn(String seq, String count, String days) {
+    return 'Next #$seq/$count · in $days days';
+  }
+
+  @override
+  String debtPlanSplit(String principal, String interest) {
+    return 'Principal $principal → debt down · interest $interest → expense';
+  }
+
+  @override
+  String debtPlanSplitShort(String principal, String interest) {
+    return 'principal $principal · interest $interest';
+  }
+
+  @override
+  String debtPlanSeq(String seq, String count) {
+    return '#$seq/$count';
+  }
+
+  @override
+  String debtPlanSeqPaid(String seq, String count) {
+    return '#$seq/$count · paid';
+  }
+
+  @override
+  String get debtPlanNoReminder =>
+      'No reminder yet: on the day, tap \"Pay this installment\" yourself';
+
+  @override
+  String get debtPlanPrincipalTotal => 'Amount financed';
+
+  @override
+  String get debtPlanInterestTotal => 'Interest over the contract';
+
+  @override
+  String get debtPlanPaidSplitLabel => 'Principal / interest paid';
+
+  @override
+  String get debtPlanUpcoming => 'Coming up';
+
+  @override
+  String get debtPlanPast => 'Paid';
+
+  @override
+  String get debtPlanAll => 'See all';
+
+  @override
+  String get debtPlanLess => 'Show less';
+
+  @override
+  String debtCardLimit(String amount) {
+    return 'Limit $amount';
+  }
+
+  @override
+  String debtCardUsed(String pct) {
+    return '$pct% of the limit used';
+  }
+
+  @override
+  String debtCardBillOf(String date) {
+    return 'Bill of this cycle (closed $date)';
+  }
+
+  @override
+  String debtCardPlanRound(String round) {
+    return 'round $round';
+  }
+
+  @override
+  String get debtCardPay => 'Paying the card';
+
+  @override
+  String get debtCardNewPlan => 'New installment';
+
+  @override
+  String debtCardPlanBought(String date, String amount) {
+    return 'bought $date $amount';
+  }
+
+  @override
+  String get debtCardRows => 'Rows on this card';
+
+  @override
+  String get debtPlanDirection => 'Direction';
+
+  @override
+  String get debtPlanIOwe => 'I owe them';
+
+  @override
+  String get debtPlanTheyOwe => 'They owe me';
+
+  @override
+  String get debtPlanDescription => 'Description';
+
+  @override
+  String get debtPlanCategory => 'Category';
+
+  @override
+  String get debtPlanHintCard =>
+      'A purchase on a card: use quick create (pick the card → ผ่อน); the debt stays in the card\'s balance.';
+
+  @override
+  String get debtPlanHintReminder =>
+      'After saving: tap \"Set a reminder\" on the plan to be reminded or to pay it automatically.';
+
+  @override
+  String quickInstallmentSummary(String amount, String count) {
+    return 'Records $amount on the card today + a $count-installment plan on it · the debt stays in the card\'s balance, no separate debt';
+  }
+
+  @override
+  String get recurringNotifyOnly => 'Notify only';
+
+  @override
+  String get recurringNotifyOnlyHint => 'Books nothing; only its alerts go out';
+
+  @override
+  String get recurringTagAuto => 'auto';
+
+  @override
+  String get recurringTagRemind => 'remind';
+
+  @override
+  String get debtPlanEditOne => 'Edit this one';
+
+  @override
+  String get debtPlanSkip => 'Skip';
+
+  @override
+  String debtPlanSkipConfirm(String seq) {
+    return 'Skip installment #$seq? It moves to the end of the plan.';
+  }
+
+  @override
+  String get debtPlanChart => 'Principal and interest paid';
+
+  @override
+  String get debtPlanInterestLabel => 'Interest';
+
+  @override
+  String get debtCardCycleRows => 'Rows in this bill';
+
+  @override
+  String get quickInstallmentFirstDue => 'First installment billed';
+
+  @override
+  String get quickInstallmentFirstDueAuto => 'Next statement';
+
+  @override
+  String get recurringHeroOwePeople => 'Owed to people';
+
+  @override
+  String get recurringHeroCardBills => 'Card bills';
 }

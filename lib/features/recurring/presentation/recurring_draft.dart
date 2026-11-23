@@ -205,6 +205,7 @@ class RecurringDraft extends Equatable {
     this.direction = DebtEntryDirection.paid,
     this.paidBy,
     this.repaysReminderId,
+    this.notifyOnly = false,
     this.lineId,
     this.otherLines = const [],
     this.plan,
@@ -271,6 +272,7 @@ class RecurringDraft extends Equatable {
       institution: cp?.institution,
       paidBy: main?.paidBy,
       repaysReminderId: main?.repaysReminderId,
+      notifyOnly: main?.notifyOnly ?? false,
       clearRepays: main?.repaysReminderId == null,
       lineId: main?.id,
       otherLines: [
@@ -328,6 +330,9 @@ class RecurringDraft extends Equatable {
   /// คืนคนจ่ายแทน (0.4.3): the item's person-paid line this one pays back.
   final String? repaysReminderId;
 
+  /// แค่แจ้งเตือน (0.4.3): the rounds book nothing; only the alerts go out.
+  final bool notifyOnly;
+
   /// The item's other lines as `LineInput` JSON, sent back unchanged.
   final List<Map<String, dynamic>> otherLines;
 
@@ -372,7 +377,7 @@ class RecurringDraft extends Equatable {
 
   bool get goalOk => !isSaving || goalPicked;
 
-  bool get amountOptional => kind.amountOptional;
+  bool get amountOptional => notifyOnly || kind.amountOptional;
 
   /// คนจ่ายแทน is for my expenses (and a debt): รายจ่าย / ค่าสมาชิก / บิล /
   /// หนี้.
@@ -450,6 +455,15 @@ class RecurringDraft extends Equatable {
     clearRepays: p != null,
   );
 
+  /// แค่แจ้งเตือน on / off (a notice: no one pays, nothing is paid back, no
+  /// auto-create).
+  RecurringDraft withNotifyOnly(bool on) => _copy(
+    notifyOnly: on,
+    clearPaidBy: on,
+    clearRepays: on,
+    autoCreate: on ? false : null,
+  );
+
   /// คืนคนจ่ายแทน: pays back that person-paid line (null = a plain expense).
   RecurringDraft withRepays(String? lineId) => _copy(
     repaysReminderId: lineId,
@@ -480,7 +494,8 @@ class RecurringDraft extends Equatable {
       toAccountId: isTransfer ? toAccountId : null,
       // 0.4.3: a debt item's rounds pay its debt back (repay / collect)
       debtSub: isDebt ? DebtEntrySub.repay : null,
-      repaysReminderId: paidBy == null ? repaysReminderId : null,
+      repaysReminderId: paidBy == null && !notifyOnly ? repaysReminderId : null,
+      notifyOnly: notifyOnly,
       rule: rule,
       autoCreate: autoCreate && canAutoCreate,
     );
@@ -568,6 +583,7 @@ class RecurringDraft extends Equatable {
     bool clearPaidBy = false,
     String? repaysReminderId,
     bool clearRepays = false,
+    bool? notifyOnly,
     String? lineId,
     List<Map<String, dynamic>>? otherLines,
     RecurringPlanDraft? plan,
@@ -596,6 +612,7 @@ class RecurringDraft extends Equatable {
     repaysReminderId: clearRepays
         ? null
         : (repaysReminderId ?? this.repaysReminderId),
+    notifyOnly: notifyOnly ?? this.notifyOnly,
     lineId: lineId ?? this.lineId,
     otherLines: otherLines ?? this.otherLines,
     plan: clearPlan ? null : (plan ?? this.plan),

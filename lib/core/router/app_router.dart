@@ -557,7 +557,10 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/personal-debts/plans/new',
       name: 'personal-debt-plan-new',
-      builder: (context, state) => const NewDebtPlanPage(),
+      builder: (context, state) => NewDebtPlanPage(
+        cardId: state.uri.queryParameters['card'],
+        cardName: state.uri.queryParameters['card_name'],
+      ),
     ),
     GoRoute(
       path: '/personal-debts/plans/:id',

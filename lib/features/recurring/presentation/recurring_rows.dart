@@ -123,9 +123,11 @@ class RecurringRow extends StatelessWidget {
               ),
         icon: AppIcons.recurring,
         parts: [
+          recurringKindLabel(l, r.kind),
           many
               ? l.recurringLinesCount(r.linesCount)
               : recurrenceLabel(l, r.rule),
+          r.autoCreate ? l.recurringTagAuto : l.recurringTagRemind,
           if (!many && r.paidBy != null) l.recurringLinePaidBy(r.paidBy!.name),
           // หนี้: with whom, จดหนี้ | จ่ายหนี้.
           if (r.isDebt)

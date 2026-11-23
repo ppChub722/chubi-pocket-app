@@ -78,7 +78,9 @@ class _PersonViewState extends State<_PersonView> {
   }
 
   Future<void> _loadPlans() async {
-    final key = context.findAncestorWidgetOfExactType<DebtPersonPage>()?.personKey;
+    final key = context
+        .findAncestorWidgetOfExactType<DebtPersonPage>()
+        ?.personKey;
     final repo = context.read<PersonalDebtsRepository>();
     try {
       final all = await repo.plans();

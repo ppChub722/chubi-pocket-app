@@ -94,6 +94,7 @@ class DebtPlan extends Equatable {
 class CardBill extends Equatable {
   const CardBill({
     required this.cycleEnd,
+    this.cycleStart,
     this.dueDate,
     this.spending = 0,
     this.installments = 0,
@@ -107,6 +108,7 @@ class CardBill extends Equatable {
     double n(String k) => (j[k] as num?)?.toDouble() ?? 0;
     return CardBill(
       cycleEnd: parseYmd(j['cycle_end'] as String?) ?? DateTime.now(),
+      cycleStart: parseYmd(j['cycle_start'] as String?),
       dueDate: parseYmd(j['due_date'] as String?),
       spending: n('spending'),
       installments: n('installments'),
@@ -117,6 +119,7 @@ class CardBill extends Equatable {
   }
 
   final DateTime cycleEnd;
+  final DateTime? cycleStart;
   final DateTime? dueDate;
   final double spending;
   final double installments;
@@ -142,6 +145,7 @@ class CardSummary extends Equatable {
     required this.account,
     required this.bill,
     this.owed = 0,
+    this.creditLimit,
     this.unbilled = 0,
     this.plans = const [],
     this.recurringId,
@@ -153,6 +157,7 @@ class CardSummary extends Equatable {
       account: AccountRef.fromJson(json['account'] as Map<String, dynamic>),
       bill: CardBill.fromJson(json['bill']),
       owed: (json['owed'] as num?)?.toDouble() ?? 0,
+      creditLimit: (json['credit_limit'] as num?)?.toDouble(),
       unbilled: (json['unbilled'] as num?)?.toDouble() ?? 0,
       plans: [
         for (final p in (json['plans'] as List?) ?? const [])
@@ -165,6 +170,7 @@ class CardSummary extends Equatable {
   final AccountRef account;
   final CardBill bill;
   final double owed;
+  final double? creditLimit;
   final double unbilled;
   final List<DebtPlan> plans;
 
@@ -172,5 +178,12 @@ class CardSummary extends Equatable {
   final String? recurringId;
 
   @override
-  List<Object?> get props => [account, bill, owed, unbilled, plans, recurringId];
+  List<Object?> get props => [
+    account,
+    bill,
+    owed,
+    unbilled,
+    plans,
+    recurringId,
+  ];
 }

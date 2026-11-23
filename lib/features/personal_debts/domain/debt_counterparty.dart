@@ -104,7 +104,8 @@ class DebtRecurringPlan extends Equatable {
       leftPrincipal: (json['left_principal'] as num?)?.toDouble(),
       lastDate: _date(json['last_date']),
       next: DebtInstallmentRef.tryParse(json['next']),
-      cardAccountId: (json['creditor'] is Map && json['creditor']['account'] is Map)
+      cardAccountId:
+          (json['creditor'] is Map && json['creditor']['account'] is Map)
           ? json['creditor']['account']['id'] as String?
           : null,
     );

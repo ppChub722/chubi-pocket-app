@@ -19,6 +19,7 @@ import '../../../preferences/page_prefs.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart' show today;
+import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
 import '../cubit/recurring_directory_cubit.dart';
@@ -74,6 +75,29 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   final _search = TextEditingController();
   final _toolbar = PpForgeListToolbarState.of('recurring');
   String _query = '';
+
+  /// The hero's ติดคน / บิลบัตร (S-List): what I owe people, the cards'
+  /// bills left.
+  double? _owePeople;
+  double? _cardBills;
+
+  Future<void> _loadDebtTiles() async {
+    final repo = context.read<PersonalDebtsRepository>();
+    try {
+      final owe = await repo.iOwePeople();
+      final cards = await repo.cardSummaries();
+      if (!mounted) return;
+      setState(() {
+        _owePeople = owe;
+        _cardBills = cards.fold<double>(0, (s, c) => s + c.bill.left);
+      });
+    } catch (_) {
+      // the hero shows without them
+    }
+  }
+
+  /// รายการทั้งหมด's type chip (null = ทั้งหมด).
+  RecurringKind? _kindFilter;
 
   // The calendar list's 🔍 / filters / sort, behind its own toggle.
   final _monthSearch = TextEditingController();
@@ -207,6 +231,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     await Future.wait([
       _loadMonth(),
       _loadDue(),
+      _loadDebtTiles(),
       context.read<RecurringDirectoryCubit>().load(),
     ]);
   }
@@ -319,6 +344,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
                 const SizedBox(height: PpForgeSpacing.md),
                 _dueCard(l, dir),
               ],
+              ..._upcoming(l, items),
               ..._allRules(l, dir),
             ] else
               ..._calendarList(l, items),
@@ -409,19 +435,47 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           joined: true,
           children: [
             SummaryTileView(
+              key: const ValueKey('heroPaid'),
               tile: SummaryTile(
-                label: l.homeIncome,
-                value: signedMoneyString(
-                  context,
-                  income,
-                  negative: false,
-                  symbol: symbol,
-                ),
-                tone: income > 0
-                    ? SummaryTileTone.green
+                label: l.occurrenceStatePaid,
+                value: _money(paid),
+              ),
+            ),
+            SummaryTileView(
+              key: const ValueKey('heroOwePeople'),
+              tile: SummaryTile(
+                label: l.recurringHeroOwePeople,
+                value: _money(_owePeople ?? 0),
+                tone: (_owePeople ?? 0) > 0
+                    ? SummaryTileTone.red
                     : SummaryTileTone.neutral,
               ),
             ),
+            SummaryTileView(
+              key: const ValueKey('heroCardBills'),
+              tile: SummaryTile(
+                label: l.recurringHeroCardBills,
+                value: _money(_cardBills ?? 0),
+                tone: (_cardBills ?? 0) > 0
+                    ? SummaryTileTone.red
+                    : SummaryTileTone.neutral,
+              ),
+            ),
+            if (income > 0)
+              SummaryTileView(
+                tile: SummaryTile(
+                  label: l.homeIncome,
+                  value: signedMoneyString(
+                    context,
+                    income,
+                    negative: false,
+                    symbol: symbol,
+                  ),
+                  tone: income > 0
+                      ? SummaryTileTone.green
+                      : SummaryTileTone.neutral,
+                ),
+              ),
             if (anySaving)
               SummaryTileView(
                 key: const ValueKey('heroSaved'),
@@ -868,8 +922,32 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     onOpen: (i) => unawaited(_openItem(i)),
   );
 
-  /// รายการประจำทั้งหมด: 🔍 and +, then the rules by kind with each kind's
-  /// totals, the paused ones last. No archived ones.
+  /// ที่จะมา (S-List): the next 3 rounds still to come this month; ดูทั้งหมด
+  /// = the calendar tab.
+  List<Widget> _upcoming(AppLocalizations l, List<RecurringItem> items) {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final next = [
+      for (final i in items)
+        if (i.state == OccurrenceState.upcoming && !i.date.isBefore(today)) i,
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    if (next.isEmpty) return const [];
+    return [
+      PpForgeListHeader(
+        key: const ValueKey('recurringUpcoming'),
+        title: l.debtPlanUpcoming,
+        actions: [
+          ListHeaderAction.link(
+            l.debtPlanAll,
+            onTap: () => setState(() => _tab = RecurringHomeTab.calendar),
+          ),
+        ],
+      ),
+      SectionCard(children: [for (final i in next.take(3)) _monthRow(l, i)]),
+    ];
+  }
+
+  /// รายการประจำทั้งหมด (S-List): 🔍 and +, the type chips, then every item
+  /// by its next date (the paused ones last). No archived ones.
   List<Widget> _allRules(AppLocalizations l, RecurringDirectoryState dir) {
     final needle = _query.trim().toLowerCase();
     final rules = [
@@ -930,13 +1008,40 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       for (final r in rules)
         if (r.status == RecurringStatus.paused) r,
     ];
+    final shown =
+        [
+          for (final r in live)
+            if (_kindFilter == null || r.kind == _kindFilter) r,
+        ]..sort((a, b) {
+          final x = a.nextDate, y = b.nextDate;
+          if (x == null) return y == null ? 0 : 1;
+          if (y == null) return -1;
+          return x.compareTo(y);
+        });
     return [
       ...head,
-      for (final k in RecurringKind.values)
-        ..._kindGroup(l, k, [
-          for (final r in live)
-            if (r.kind == k) r,
-        ]),
+      FilterBar(
+        key: const ValueKey('recurringKindChips'),
+        padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
+        chips: [
+          PpForgeChip(
+            label: l.debtsFilterAll,
+            selected: _kindFilter == null,
+            onTap: () => setState(() => _kindFilter = null),
+          ),
+          for (final k in RecurringKind.values)
+            PpForgeChip(
+              label: recurringKindLabel(l, k),
+              selected: _kindFilter == k,
+              onTap: () => setState(() => _kindFilter = k),
+            ),
+        ],
+      ),
+      if (shown.isNotEmpty)
+        SectionCard(
+          key: const ValueKey('recurringAll'),
+          children: [for (final r in shown) _ruleRow(r)],
+        ),
       if (paused.isNotEmpty) ...[
         PpForgeListHeader(
           title: l.fpRecurringPausedGroup,
@@ -944,29 +1049,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
         ),
         SectionCard(children: [for (final r in paused) _ruleRow(r)]),
       ],
-    ];
-  }
-
-  List<Widget> _kindGroup(
-    AppLocalizations l,
-    RecurringKind kind,
-    List<Recurring> rules,
-  ) {
-    if (rules.isEmpty) return const [];
-    double sum(double? Function(Recurring r) of) =>
-        rules.fold(0, (s, r) => s + (of(r) ?? 0));
-    final totals = switch (kind) {
-      _ => l.recurringHomePerMonth(
-        _money(sum((r) => r.monthTotal ?? r.monthlyAmount)),
-      ),
-    };
-    return [
-      PpForgeListHeader(
-        title: recurringKindLabel(l, kind),
-        count: rules.length,
-        trailing: ListHeaderTrailing.text(totals),
-      ),
-      SectionCard(children: [for (final r in rules) _ruleRow(r)]),
     ];
   }
 
