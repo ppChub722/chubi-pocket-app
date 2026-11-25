@@ -7,7 +7,7 @@ import '../../ui/ui.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
 import 'tab_nav.dart';
-import 'tab_root_scaffold.dart';
+import 'app_page.dart';
 import '../../core/network/api_client.dart';
 import '../../features/me_counts/cubit/me_counts_cubit.dart';
 import '../../features/me_counts/data/me_counts_repository.dart';
@@ -233,7 +233,7 @@ class _MoreView extends StatelessWidget {
       ),
     ].where((g) => g.$3.isNotEmpty).toList();
 
-    return TabRootScaffold(
+    return AppPage(
       topBar: topBar,
       body: Builder(
         builder: (context) => PullToRefresh(

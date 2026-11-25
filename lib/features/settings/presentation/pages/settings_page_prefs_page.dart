@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/nav_layout.dart';
 import '../../../../app/shell/tab_nav.dart';
@@ -62,9 +63,8 @@ class SettingsPagePrefsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final layout = NavLayoutScope.of(context);
-    return Scaffold(
-      appBar: AppTopBar(title: l.settingsGroupPagePrefs, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.settingsGroupPagePrefs, showBack: true),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final user = signedInUser(state);
@@ -164,9 +164,8 @@ class SettingsPagePrefPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final page = pagePrefPage(pageId);
-    return Scaffold(
-      appBar: AppTopBar(title: page.title(l), showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: page.title(l), showBack: true),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, state) {
           final user = signedInUser(state);

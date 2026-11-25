@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -44,84 +44,81 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: l.settingsTitle),
-      extendBodyBehindAppBar: true,
-      body: TabSwitchBody(
-        child: BlocBuilder<AuthCubit, AuthState>(
-          builder: (context, state) {
-            final user = signedInUser(state);
-            if (user == null) return const SizedBox.shrink();
-            final inset = MediaQuery.paddingOf(context);
-            final changedPages = pagePrefPages
-                .where((p) => p.changed(user.pagePref(p.id)))
-                .length;
-            return DetailPageBody(
-              onRefresh: _refresh,
-              physics: const AlwaysScrollableScrollPhysics(),
-              topInset: inset.top + PpForgeSpacing.sm,
-              bottomInset: PpForgeSpacing.huge + inset.bottom,
-              hero: _profileCard(context, user),
-              sections: [
-                (first) => SectionCard(
-                  first: first,
-                  title: l.settingsSectionSettings,
-                  children: [
-                    SettingsGroupRow(
-                      icon: AppIcons.colorPicker,
-                      label: l.settingsSectionApp,
-                      summary: appSummary(context, l),
-                      onTap: () => context.push('/settings/app'),
-                    ),
-                    SettingsGroupRow(
-                      icon: AppIcons.currency,
-                      label: l.settingsSectionMoney,
-                      summary: moneySummary(l, user),
-                      onTap: () => context.push('/settings/money'),
-                    ),
-                    SettingsGroupRow(
-                      icon: AppIcons.notifications,
-                      label: l.settingsNotifications,
-                      summary: notificationsSummary(l, user),
-                      onTap: () => context.push('/settings/notifications'),
-                    ),
-                    SettingsGroupRow(
-                      icon: AppIcons.filter,
-                      label: l.settingsGroupPagePrefs,
-                      summary: l.settingsPagePrefsChangedSummary(changedPages),
-                      onTap: () => context.push('/settings/page-prefs'),
-                    ),
-                  ],
-                ),
-                (first) => SectionCard(
-                  first: first,
-                  title: l.settingsSectionData,
-                  children: [
-                    PpForgeDetailRow(
-                      leading: const PpForgeIcon(AppIcons.archive),
-                      label: l.settingsArchived,
-                      helper: l.settingsArchivedHint,
-                      showChevron: true,
-                      // Inside the settings tab, like the other groups.
-                      onTap: () => context.push('/archived'),
-                    ),
-                    PpForgeDetailRow(
-                      leading: const PpForgeIcon(AppIcons.download),
-                      label: l.settingsExportCsv,
-                      comingSoon: true,
-                    ),
-                    const _VersionRow(),
-                  ],
-                ),
-              ],
-              manage: DangerRow(
-                icon: AppIcons.logout,
-                label: l.settingsLogout,
-                onTap: () => _confirmLogout(context),
+    return AppPage(
+      topBar: AppTopBar(title: l.settingsTitle),
+      body: BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, state) {
+          final user = signedInUser(state);
+          if (user == null) return const SizedBox.shrink();
+          final inset = MediaQuery.paddingOf(context);
+          final changedPages = pagePrefPages
+              .where((p) => p.changed(user.pagePref(p.id)))
+              .length;
+          return DetailPageBody(
+            onRefresh: _refresh,
+            physics: const AlwaysScrollableScrollPhysics(),
+            topInset: inset.top + PpForgeSpacing.sm,
+            bottomInset: PpForgeSpacing.huge + inset.bottom,
+            hero: _profileCard(context, user),
+            sections: [
+              (first) => SectionCard(
+                first: first,
+                title: l.settingsSectionSettings,
+                children: [
+                  SettingsGroupRow(
+                    icon: AppIcons.colorPicker,
+                    label: l.settingsSectionApp,
+                    summary: appSummary(context, l),
+                    onTap: () => context.push('/settings/app'),
+                  ),
+                  SettingsGroupRow(
+                    icon: AppIcons.currency,
+                    label: l.settingsSectionMoney,
+                    summary: moneySummary(l, user),
+                    onTap: () => context.push('/settings/money'),
+                  ),
+                  SettingsGroupRow(
+                    icon: AppIcons.notifications,
+                    label: l.settingsNotifications,
+                    summary: notificationsSummary(l, user),
+                    onTap: () => context.push('/settings/notifications'),
+                  ),
+                  SettingsGroupRow(
+                    icon: AppIcons.filter,
+                    label: l.settingsGroupPagePrefs,
+                    summary: l.settingsPagePrefsChangedSummary(changedPages),
+                    onTap: () => context.push('/settings/page-prefs'),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+              (first) => SectionCard(
+                first: first,
+                title: l.settingsSectionData,
+                children: [
+                  PpForgeDetailRow(
+                    leading: const PpForgeIcon(AppIcons.archive),
+                    label: l.settingsArchived,
+                    helper: l.settingsArchivedHint,
+                    showChevron: true,
+                    // Inside the settings tab, like the other groups.
+                    onTap: () => context.push('/archived'),
+                  ),
+                  PpForgeDetailRow(
+                    leading: const PpForgeIcon(AppIcons.download),
+                    label: l.settingsExportCsv,
+                    comingSoon: true,
+                  ),
+                  const _VersionRow(),
+                ],
+              ),
+            ],
+            manage: DangerRow(
+              icon: AppIcons.logout,
+              label: l.settingsLogout,
+              onTap: () => _confirmLogout(context),
+            ),
+          );
+        },
       ),
     );
   }

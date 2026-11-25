@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/tab_nav.dart';
@@ -62,6 +62,7 @@ class _PersonView extends StatefulWidget {
 }
 
 class _PersonViewState extends State<_PersonView> {
+  final _heroKey = GlobalKey();
   final _search = TextEditingController();
   final _toolbar = PpForgeListToolbarState.local();
   bool _linking = false;
@@ -267,10 +268,11 @@ class _PersonViewState extends State<_PersonView> {
         final notFound = s.error?.statusCode == 404;
         return QuickCreatePresetScope(
           preset: _preset(s),
-          child: Scaffold(
-            appBar: AppTopBar(title: _name(s), showBack: true),
-            extendBodyBehindAppBar: true,
-            body: TabSwitchBody(
+          child: AppPage(
+            topBar: AppTopBar(title: _name(s), showBack: true),
+            body: CompactHeroScope(
+              heroKey: _heroKey,
+              bar: s.balance == null ? null : _compactBar(context, s),
               child: ListPageBody(
                 loading: s.firstLoad,
                 error: notFound ? null : s.error,
@@ -304,7 +306,7 @@ class _PersonViewState extends State<_PersonView> {
     final l = AppLocalizations.of(context)!;
     final q = s.query;
     return [
-      _hero(context, s),
+      KeyedSubtree(key: _heroKey, child: _hero(context, s)),
       if (s.balance!.person.contactId == null && !s.balance!.isInstitution)
         SectionCard(
           children: [
@@ -490,6 +492,39 @@ class _PersonViewState extends State<_PersonView> {
           },
         },
       ).toString(),
+    );
+  }
+
+  /// The hero, small: the person (or institution), name and the net.
+  PpForgeCompactHeroCard _compactBar(BuildContext context, DebtPersonState s) {
+    final b = s.balance!;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    final color = switch (NetSide.of(b.net)) {
+      NetSide.owedToMe => palette.income,
+      NetSide.iOwe => palette.expense,
+      NetSide.even => null,
+    };
+    return PpForgeCompactHeroCard(
+      style: color == null
+          ? const HeroStyle.plain()
+          : HeroStyle.tinted(color: color),
+      leading: b.institution != null
+          ? InstitutionMark(
+              name: b.institution!.name,
+              iconCode: b.institution!.iconCode,
+              size: 28,
+            )
+          : PersonMark(
+              level: debtPersonLevel(b.person),
+              avatar: b.person.avatar,
+              size: 28,
+            ),
+      title: PpForgeText(b.person.name, role: PpForgeTextRole.title),
+      trailing: PpForgeText(
+        moneyString(context, b.net.abs(), symbol: debtCurrencySymbol(context)),
+        role: PpForgeTextRole.money,
+        color: color,
+      ),
     );
   }
 

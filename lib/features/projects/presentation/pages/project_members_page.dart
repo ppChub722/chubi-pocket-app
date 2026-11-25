@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/network/api_exception.dart';
@@ -416,8 +417,8 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
         ],
       ),
     );
-    return Scaffold(
-      appBar: AppTopBar(
+    return AppPage(
+      topBar: AppTopBar(
         title: l.projectMembersTitle,
         showBack: true,
         parent: p == null
@@ -428,7 +429,6 @@ class _ProjectMembersPageState extends State<ProjectMembersPage> {
                 routeName: 'project-detail',
               ),
       ),
-      extendBodyBehindAppBar: true,
       body: body,
     );
   }

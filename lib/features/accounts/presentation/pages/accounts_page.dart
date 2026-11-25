@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../app/shell/tab_root_scaffold.dart';
+import '../../../../app/shell/app_page.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
@@ -208,7 +208,7 @@ class _AccountsPageState extends State<AccountsPage> {
   Widget _page(BuildContext context, AppLocalizations l) {
     return BusyScope(
       busy: _savingOrder,
-      child: TabRootScaffold(
+      child: AppPage(
         title: l.navAccounts,
         body: BlocBuilder<AccountsCubit, AccountsState>(
           builder: (context, state) {

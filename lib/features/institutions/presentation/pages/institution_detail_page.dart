@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
@@ -259,9 +260,8 @@ class _InstitutionDetailPageState extends State<InstitutionDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     if (!widget.isCreate && _detail == null) {
-      return Scaffold(
-        appBar: AppTopBar(title: l.institutionTitle, showBack: true),
-        extendBodyBehindAppBar: true,
+      return AppPage(
+        topBar: AppTopBar(title: l.institutionTitle, showBack: true),
         body: AsyncStateView.fallback(
           loading: _loading || _error == null,
           error: _error,
@@ -278,14 +278,13 @@ class _InstitutionDetailPageState extends State<InstitutionDetailPage>
     return editScope(
       BusyScope(
         busy: isSaving,
-        child: Scaffold(
-          appBar: AppTopBar(
+        child: AppPage(
+          topBar: AppTopBar(
             title: inst?.name ?? l.institutionNewTitle,
             showBack: true,
             editing: isEditing,
             onBack: handleBack,
           ),
-          extendBodyBehindAppBar: true,
           body: Form(
             key: _formKey,
             child: Builder(
@@ -294,6 +293,7 @@ class _InstitutionDetailPageState extends State<InstitutionDetailPage>
                 refreshEnabled: !isEditing,
                 bottomInset:
                     PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom,
+                compactBar: _compactBar(),
                 hero: _hero(l),
                 info: _info(l),
                 note: NoteSection(
@@ -327,9 +327,29 @@ class _InstitutionDetailPageState extends State<InstitutionDetailPage>
               ),
             ),
           ),
-          bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+          bottomBar: isEditing ? editActionBar(onSave: _save) : null,
         ),
       ),
+    );
+  }
+
+  /// The hero, small (view mode only): the mark and the name.
+  PpForgeCompactHeroCard? _compactBar() {
+    final inst = _inst;
+    if (inst == null || isEditing || widget.isCreate) return null;
+    final color =
+        InstitutionMark.parseHex(inst.provider?.color) ??
+        Theme.of(context).colorScheme.primary;
+    return PpForgeCompactHeroCard(
+      style: HeroStyle.tinted(color: color),
+      leading: InstitutionMark(
+        name: inst.name.isEmpty ? '?' : inst.name,
+        iconCode: inst.iconCode,
+        shortName: inst.provider?.shortName,
+        color: color,
+        size: 28,
+      ),
+      title: PpForgeText(inst.name, role: PpForgeTextRole.title),
     );
   }
 

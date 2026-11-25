@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
 import '../../../../app/shell/tab_nav.dart';
@@ -513,52 +513,49 @@ class _PeopleViewState extends State<_PeopleView> {
       preset: const QuickCreatePreset.debt().withLook(
         QuickCreateLook.debt(context),
       ),
-      child: Scaffold(
-        appBar: AppTopBar(title: l.moreDebts, showBack: true),
-        extendBodyBehindAppBar: true,
-        body: TabSwitchBody(
-          child: BlocBuilder<DebtPeopleCubit, DebtPeopleState>(
-            builder: (context, s) => ListPageBody(
-              loading:
-                  s.status == DebtLoadStatus.initial ||
-                  s.status == DebtLoadStatus.loading,
-              error: s.error,
-              isEmpty: s.items.isEmpty,
-              onRetry: cubit.load,
-              empty: s.isFiltered
-                  ? EmptyView.compact(message: l.debtsNoMatch)
-                  : EmptyView(
-                      icon: AppIcons.debt,
-                      title: l.debtsEmptyOpenTitle,
-                      message: l.debtsEmptyOpenMessage,
-                      cta: QuickCreateCtaButton(
-                        key: const ValueKey('debtsEmptyAdd'),
-                        mode: QuickCreateMode.debt,
-                        label: l.quickCreateBtnDebt,
-                        onPressed: _create,
-                      ),
+      child: AppPage(
+        topBar: AppTopBar(title: l.moreDebts, showBack: true),
+        body: BlocBuilder<DebtPeopleCubit, DebtPeopleState>(
+          builder: (context, s) => ListPageBody(
+            loading:
+                s.status == DebtLoadStatus.initial ||
+                s.status == DebtLoadStatus.loading,
+            error: s.error,
+            isEmpty: s.items.isEmpty,
+            onRetry: cubit.load,
+            empty: s.isFiltered
+                ? EmptyView.compact(message: l.debtsNoMatch)
+                : EmptyView(
+                    icon: AppIcons.debt,
+                    title: l.debtsEmptyOpenTitle,
+                    message: l.debtsEmptyOpenMessage,
+                    cta: QuickCreateCtaButton(
+                      key: const ValueKey('debtsEmptyAdd'),
+                      mode: QuickCreateMode.debt,
+                      label: l.quickCreateBtnDebt,
+                      onPressed: _create,
                     ),
-              hasMore: s.hasMore,
-              loadingMore: s.loadingMore,
-              onLoadMore: cubit.loadMore,
-              loadMoreError: s.moreError,
-              // ONE card of people (mock).
-              rowCards: true,
-              rowDividers: true,
-              topInset: PpForgeSpacing.sm,
-              header: [
-                _hero(l, s, symbol),
-                PpForgeListToolbar(
-                  state: _toolbar,
-                  search: ListToolbarSearch(
-                    controller: _search,
-                    onChanged: cubit.search,
-                    hint: l.debtsSearchHint,
                   ),
+            hasMore: s.hasMore,
+            loadingMore: s.loadingMore,
+            onLoadMore: cubit.loadMore,
+            loadMoreError: s.moreError,
+            // ONE card of people (mock).
+            rowCards: true,
+            rowDividers: true,
+            topInset: PpForgeSpacing.sm,
+            header: [
+              _hero(l, s, symbol),
+              PpForgeListToolbar(
+                state: _toolbar,
+                search: ListToolbarSearch(
+                  controller: _search,
+                  onChanged: cubit.search,
+                  hint: l.debtsSearchHint,
                 ),
-              ],
-              children: _sections(l, s, symbol),
-            ),
+              ),
+            ],
+            children: _sections(l, s, symbol),
           ),
         ),
       ),

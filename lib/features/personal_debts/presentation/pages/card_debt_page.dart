@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -106,8 +107,8 @@ class _CardDebtPageState extends State<CardDebtPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final c = _card;
-    return Scaffold(
-      appBar: AppTopBar(
+    return AppPage(
+      topBar: AppTopBar(
         title: c?.account.name ?? l.debtsSectionCards,
         showBack: true,
       ),
@@ -117,9 +118,11 @@ class _CardDebtPageState extends State<CardDebtPage> {
                 : const Center(child: PpForgeSpinner()))
           : RefreshIndicator(
               onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(PpForgeSpacing.md),
-                children: _body(l, c),
+              child: Builder(
+                builder: (context) => ListView(
+                  padding: AppPage.scrollPadding(context),
+                  children: _body(l, c),
+                ),
               ),
             ),
     );

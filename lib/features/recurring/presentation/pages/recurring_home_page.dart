@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/data/write_effects.dart';
 import '../../../../core/network/api_exception.dart';
@@ -56,6 +56,9 @@ class RecurringHomePage extends StatefulWidget {
 
 class _RecurringHomePageState extends State<RecurringHomePage> {
   late RecurringHomeTab _tab = widget.initialTab;
+  late final _pages = PageController(
+    initialPage: RecurringHomeTab.values.indexOf(widget.initialTab),
+  );
   late DateTime _month = _thisMonth;
 
   /// Null: the calendar lists the whole month.
@@ -168,6 +171,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   @override
   void dispose() {
     _offEffects?.call();
+    _pages.dispose();
     _search.dispose();
     _monthSearch.dispose();
     super.dispose();
@@ -298,48 +302,36 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final l = AppLocalizations.of(context)!;
     final dir = context.watch<RecurringDirectoryCubit>().state;
     final items = _items ?? const <RecurringItem>[];
-    return Scaffold(
-      appBar: AppTopBar(title: l.recurringTitle, showBack: true),
-      extendBodyBehindAppBar: true,
-      body: TabSwitchBody(
-        child: ListPageBody(
+    // Swipe tabs (owner 2026-11-25): each tab is its own list, the month's
+    // hero on top of it; the tab bar scrolls away and floats back.
+    return AppPage(
+      topBar: AppTopBar(title: l.recurringTitle, showBack: true),
+      body: TabbedListPageBody<RecurringHomeTab>(
+        controller: _pages,
+        selected: _tab,
+        onChanged: (t) => setState(() => _tab = t),
+        tabs: [
+          PpForgeTab(
+            value: RecurringHomeTab.overview,
+            label: l.recurringHomeTabOverview,
+            icon: AppIcons.pie,
+          ),
+          PpForgeTab(
+            value: RecurringHomeTab.calendar,
+            label: l.fpRecurringTabCalendar,
+            icon: AppIcons.date,
+          ),
+        ],
+        pageBuilder: (context, t) => ListPageBody(
           loading: _items == null && _itemsError == null,
           error: _items == null ? _itemsError : null,
           // Until the month is in: the skeleton, or the error with a retry.
           isEmpty: _items == null,
           onRetry: _refresh,
           empty: EmptyView.compact(message: l.recurringEmptyTitle),
-          topInset: PpForgeSpacing.md,
-          // The tabs stay on screen while the month scrolls under them.
-          header: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                PpForgeSpacing.lg,
-                PpForgeSpacing.sm,
-                PpForgeSpacing.lg,
-                0,
-              ),
-              child: PpForgeTabBar<RecurringHomeTab>(
-                tabs: [
-                  PpForgeTab(
-                    value: RecurringHomeTab.overview,
-                    label: l.recurringHomeTabOverview,
-                    icon: AppIcons.pie,
-                  ),
-                  PpForgeTab(
-                    value: RecurringHomeTab.calendar,
-                    label: l.fpRecurringTabCalendar,
-                    icon: AppIcons.date,
-                  ),
-                ],
-                selected: _tab,
-                onChanged: (t) => setState(() => _tab = t),
-              ),
-            ),
-          ],
           children: [
-            _hero(l, items),
-            if (_tab == RecurringHomeTab.overview) ...[
+            _hero(l, items, t),
+            if (t == RecurringHomeTab.overview) ...[
               if (_due.isNotEmpty) ...[
                 const SizedBox(height: PpForgeSpacing.md),
                 _dueCard(l, dir),
@@ -372,7 +364,11 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   /// the month's income, its ออมเงิน (saved / planned) and count in one box
   /// (ต้องจัดการ below says what waits). ออมเงิน is none of the money out,
   /// the bar or the count.
-  Widget _hero(AppLocalizations l, List<RecurringItem> items) {
+  Widget _hero(
+    AppLocalizations l,
+    List<RecurringItem> items,
+    RecurringHomeTab tab,
+  ) {
     var pay = 0.0;
     var paid = 0.0;
     var income = 0.0;
@@ -400,7 +396,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       }
     }
     final symbol = context.readUserCurrencySymbol;
-    final captions = _tab == RecurringHomeTab.calendar
+    final captions = tab == RecurringHomeTab.calendar
         ? _captions(l, items)
         : const <int, CalendarCaption>{};
     return PpForgeHeroCard(
@@ -492,7 +488,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
             ),
           ],
         ),
-        if (_tab == RecurringHomeTab.calendar)
+        if (tab == RecurringHomeTab.calendar)
           MonthCalendar(
             month: _month,
             showStepper: false,

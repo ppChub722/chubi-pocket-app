@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -197,125 +198,130 @@ class _NewDebtPlanPageState extends State<NewDebtPlanPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final card = _creditor == _Creditor.card;
-    return Scaffold(
-      appBar: AppTopBar(title: l.debtPlanNew, showBack: true),
-      body: ListView(
-        padding: const EdgeInsets.all(PpForgeSpacing.md),
-        children: [
-          SectionCard(
-            first: true,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(PpForgeSpacing.md),
-                child: PpForgeInput(
-                  key: const ValueKey('debtPlanName'),
-                  controller: _name,
-                  label: l.commonName,
-                  onChanged: (_) => setState(() {}),
+    return AppPage(
+      topBar: AppTopBar(title: l.debtPlanNew, showBack: true),
+      body: Builder(
+        builder: (context) => ListView(
+          padding: AppPage.scrollPadding(context),
+          children: [
+            SectionCard(
+              first: true,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(PpForgeSpacing.md),
+                  child: PpForgeInput(
+                    key: const ValueKey('debtPlanName'),
+                    controller: _name,
+                    label: l.commonName,
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ),
-              ),
-              SettingDropdownRow<bool>(
-                key: const ValueKey('debtPlanDirection'),
-                label: l.debtPlanDirection,
-                value: _iOwe ? l.debtPlanIOwe : l.debtPlanTheyOwe,
-                selected: _iOwe,
-                submits: false,
-                onSelected: (v) => setState(() {
-                  _iOwe = v;
-                  if (!v && _creditor == _Creditor.card) {
-                    _creditor = _Creditor.person;
-                  }
-                }),
-                options: [
-                  SheetOption(value: true, label: l.debtPlanIOwe),
-                  SheetOption(value: false, label: l.debtPlanTheyOwe),
-                ],
-              ),
-              SettingDropdownRow<_Creditor>(
-                key: const ValueKey('debtPlanCreditorKind'),
-                label: l.debtPlanCreditor,
-                value: _creditorLabel(l, _creditor),
-                selected: _creditor,
-                submits: false,
-                onSelected: (c) => setState(() => _creditor = c),
-                options: [
-                  for (final c in _Creditor.values)
-                    if (_iOwe || c != _Creditor.card)
-                      SheetOption(value: c, label: _creditorLabel(l, c)),
-                ],
-              ),
-              InfoRow(
-                key: const ValueKey('debtPlanCreditorPick'),
-                label: _creditorLabel(l, _creditor),
-                value: _creditorValue() ?? '—',
-                showChevron: true,
-                onTap: _pickCreditor,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: PpForgeSpacing.md,
-                  vertical: PpForgeSpacing.sm,
-                ),
-                child: PpForgeInput(
-                  key: const ValueKey('debtPlanDescription'),
-                  controller: _description,
-                  label: l.debtPlanDescription,
-                ),
-              ),
-              if (!card && _iOwe)
                 SettingDropdownRow<bool>(
-                  key: const ValueKey('debtPlanOrigin'),
-                  label: l.debtPlanOrigin,
-                  value: _cash
-                      ? l.debtPlanOriginCash
-                      : l.debtPlanOriginPurchase,
-                  selected: _cash,
+                  key: const ValueKey('debtPlanDirection'),
+                  label: l.debtPlanDirection,
+                  value: _iOwe ? l.debtPlanIOwe : l.debtPlanTheyOwe,
+                  selected: _iOwe,
                   submits: false,
-                  onSelected: (v) => setState(() => _cash = v),
+                  onSelected: (v) => setState(() {
+                    _iOwe = v;
+                    if (!v && _creditor == _Creditor.card) {
+                      _creditor = _Creditor.person;
+                    }
+                  }),
                   options: [
-                    SheetOption(value: false, label: l.debtPlanOriginPurchase),
-                    SheetOption(value: true, label: l.debtPlanOriginCash),
+                    SheetOption(value: true, label: l.debtPlanIOwe),
+                    SheetOption(value: false, label: l.debtPlanTheyOwe),
                   ],
                 ),
-              if (card || (!_cash && _iOwe))
-                InfoRow(
-                  key: const ValueKey('debtPlanCategory'),
-                  label: l.debtPlanCategory,
-                  value: _categoryName ?? '—',
-                  showChevron: true,
-                  onTap: _pickCategory,
+                SettingDropdownRow<_Creditor>(
+                  key: const ValueKey('debtPlanCreditorKind'),
+                  label: l.debtPlanCreditor,
+                  value: _creditorLabel(l, _creditor),
+                  selected: _creditor,
+                  submits: false,
+                  onSelected: (c) => setState(() => _creditor = c),
+                  options: [
+                    for (final c in _Creditor.values)
+                      if (_iOwe || c != _Creditor.card)
+                        SheetOption(value: c, label: _creditorLabel(l, c)),
+                  ],
                 ),
-              if (!card && (_cash || !_iOwe))
                 InfoRow(
-                  key: const ValueKey('debtPlanOpening'),
-                  label: l.debtPlanOpeningWallet,
-                  value: _opening?.name ?? '—',
+                  key: const ValueKey('debtPlanCreditorPick'),
+                  label: _creditorLabel(l, _creditor),
+                  value: _creditorValue() ?? '—',
                   showChevron: true,
-                  onTap: _pickOpening,
+                  onTap: _pickCreditor,
                 ),
-            ],
-          ),
-          const SizedBox(height: PpForgeSpacing.md),
-          RecurringPlanForm(
-            plan: _plan,
-            onChanged: (p) => setState(() => _plan = p),
-          ),
-          const SizedBox(height: PpForgeSpacing.md),
-          InfoBox(
-            rows: [
-              if (card) InfoRow(label: l.debtPlanHintCard),
-              InfoRow(label: l.debtPlanHintReminder),
-            ],
-          ),
-          const SizedBox(height: PpForgeSpacing.lg),
-          PpForgeButton(
-            key: const ValueKey('debtPlanSave'),
-            label: l.debtPlanSave,
-            expand: true,
-            loading: _saving,
-            onPressed: _ready && !_saving ? _save : null,
-          ),
-        ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: PpForgeSpacing.md,
+                    vertical: PpForgeSpacing.sm,
+                  ),
+                  child: PpForgeInput(
+                    key: const ValueKey('debtPlanDescription'),
+                    controller: _description,
+                    label: l.debtPlanDescription,
+                  ),
+                ),
+                if (!card && _iOwe)
+                  SettingDropdownRow<bool>(
+                    key: const ValueKey('debtPlanOrigin'),
+                    label: l.debtPlanOrigin,
+                    value: _cash
+                        ? l.debtPlanOriginCash
+                        : l.debtPlanOriginPurchase,
+                    selected: _cash,
+                    submits: false,
+                    onSelected: (v) => setState(() => _cash = v),
+                    options: [
+                      SheetOption(
+                        value: false,
+                        label: l.debtPlanOriginPurchase,
+                      ),
+                      SheetOption(value: true, label: l.debtPlanOriginCash),
+                    ],
+                  ),
+                if (card || (!_cash && _iOwe))
+                  InfoRow(
+                    key: const ValueKey('debtPlanCategory'),
+                    label: l.debtPlanCategory,
+                    value: _categoryName ?? '—',
+                    showChevron: true,
+                    onTap: _pickCategory,
+                  ),
+                if (!card && (_cash || !_iOwe))
+                  InfoRow(
+                    key: const ValueKey('debtPlanOpening'),
+                    label: l.debtPlanOpeningWallet,
+                    value: _opening?.name ?? '—',
+                    showChevron: true,
+                    onTap: _pickOpening,
+                  ),
+              ],
+            ),
+            const SizedBox(height: PpForgeSpacing.md),
+            RecurringPlanForm(
+              plan: _plan,
+              onChanged: (p) => setState(() => _plan = p),
+            ),
+            const SizedBox(height: PpForgeSpacing.md),
+            InfoBox(
+              rows: [
+                if (card) InfoRow(label: l.debtPlanHintCard),
+                InfoRow(label: l.debtPlanHintReminder),
+              ],
+            ),
+            const SizedBox(height: PpForgeSpacing.lg),
+            PpForgeButton(
+              key: const ValueKey('debtPlanSave'),
+              label: l.debtPlanSave,
+              expand: true,
+              loading: _saving,
+              onPressed: _ready && !_saving ? _save : null,
+            ),
+          ],
+        ),
       ),
     );
   }

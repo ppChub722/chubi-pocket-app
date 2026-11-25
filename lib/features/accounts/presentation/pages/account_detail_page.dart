@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
@@ -137,9 +138,8 @@ class _AccountDetailPageState extends State<AccountDetailPage> {
           );
         }
         final notFound = _error?.code == 'NOT_FOUND';
-        return Scaffold(
-          appBar: AppTopBar(title: l.navAccounts, showBack: true),
-          extendBodyBehindAppBar: true,
+        return AppPage(
+          topBar: AppTopBar(title: l.navAccounts, showBack: true),
           body: AsyncStateView.fallback(
             loading: _loading || (_detail == null && _error == null),
             error: notFound ? null : _error,
@@ -282,8 +282,6 @@ class _AccountDetailViewState extends State<_AccountDetailView>
       c.dispose();
     }
     _nameFocus.dispose();
-    _pages.dispose();
-    _outerScroll.dispose();
     _descriptionFocus.dispose();
     _noteFocus.dispose();
     super.dispose();
@@ -687,20 +685,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   Future<void> _refresh() async => widget.onRefresh?.call();
 
   final _heroKey = GlobalKey();
-  final _outerScroll = ScrollController();
 
-  void _scrollToHero() {
-    if (!_outerScroll.hasClients) return;
-    _outerScroll.animateTo(
-      0,
-      duration: MediaQuery.disableAnimationsOf(context)
-          ? Duration.zero
-          : PpForgeDurations.chrome,
-      curve: PpForgeDurations.chromeCurve,
-    );
-  }
-
-  final PageController _pages = PageController();
   AccountDetailTab _tab = AccountDetailTab.overview;
 
   List<AccountDetailTab> get _tabs => const [
@@ -776,9 +761,8 @@ class _AccountDetailViewState extends State<_AccountDetailView>
     final tabs = _tabs;
     if (isEditing || !tabs.contains(_tab)) _tab = AccountDetailTab.overview;
     final page = editScope(
-      Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppTopBar(
+      AppPage(
+        topBar: AppTopBar(
           title: _title(l),
           showBack: true,
           editing: isEditing,
@@ -800,7 +784,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
             },
           ),
         ),
-        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+        bottomBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
     if (a == null) return page;
@@ -826,75 +810,36 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   ) {
     final tabs = _tabs;
     final actions = _actionBar(l, a);
-    return Padding(
-      padding: EdgeInsets.only(top: barInset),
-      child: CompactHeroScope(
-        heroKey: _heroKey,
-        top: PinnedTabBarDelegate.height,
-        bar: walletCompactHero(context, a, onTap: _scrollToHero),
-        child: NestedScrollView(
-          controller: _outerScroll,
-          headerSliverBuilder: (context, _) => [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  PpForgeSpacing.lg,
-                  PpForgeSpacing.lg,
-                  PpForgeSpacing.lg,
-                  0,
-                ),
-                child: KeyedSubtree(key: _heroKey, child: _viewHero(l, a)),
-              ),
-            ),
-            if (actions != null) SliverToBoxAdapter(child: actions),
-            SliverToBoxAdapter(
-              child: SizedBox(height: HeroMetrics.of(context).after),
-            ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: PinnedTabBarDelegate(
-                child: PpForgeTabBar<AccountDetailTab>(
-                  selected: _tab,
-                  onChanged: _goTab,
-                  pager: _pages,
-                  tabs: [
-                    for (final t in tabs)
-                      PpForgeTab(
-                        value: t,
-                        label: _tabLabel(l, t),
-                        icon: switch (t) {
-                          AccountDetailTab.overview => AppIcons.pie,
-                          AccountDetailTab.transactions =>
-                            AppIcons.transactions,
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-          body: PpForgeTabPager<AccountDetailTab>(
-            controller: _pages,
-            values: tabs,
-            selected: _tab,
-            onChanged: _goTab,
-            builder: (context, t) => switch (t) {
-              AccountDetailTab.overview => _overviewTab(l, a, bottom),
-              AccountDetailTab.transactions => BlocProvider(
-                create: (ctx) => TransactionsCubit(
-                  repository: ctx.read<TransactionsRepository>(),
-                ),
-                child: TransactionsListPage(
-                  embedded: true,
-                  lockedAccount: a,
-                  typeFilter: _txType,
-                  period: _period,
-                ),
-              ),
+    return TabbedDetailBody<AccountDetailTab>(
+      hero: _viewHero(l, a),
+      belowHero: [?actions],
+      compactBar: walletCompactHero(context, a),
+      selected: _tab,
+      onChanged: _goTab,
+      tabs: [
+        for (final t in tabs)
+          PpForgeTab(
+            value: t,
+            label: _tabLabel(l, t),
+            icon: switch (t) {
+              AccountDetailTab.overview => AppIcons.pie,
+              AccountDetailTab.transactions => AppIcons.transactions,
             },
           ),
+      ],
+      tabBuilder: (context, t) => switch (t) {
+        AccountDetailTab.overview => _overviewTab(l, a, bottom),
+        AccountDetailTab.transactions => BlocProvider(
+          create: (ctx) =>
+              TransactionsCubit(repository: ctx.read<TransactionsRepository>()),
+          child: TransactionsListPage(
+            embedded: true,
+            lockedAccount: a,
+            typeFilter: _txType,
+            period: _period,
+          ),
         ),
-      ),
+      },
     );
   }
 

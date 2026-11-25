@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/top_bar_crumbs.dart';
 import '../../../../core/network/api_exception.dart';
@@ -166,8 +167,8 @@ class _ConnectionPageState extends State<ConnectionPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final c = _row;
-    return Scaffold(
-      appBar: AppTopBar(
+    return AppPage(
+      topBar: AppTopBar(
         title: c?.name ?? '',
         showBack: true,
         parent: TopBarCrumb(
@@ -176,7 +177,6 @@ class _ConnectionPageState extends State<ConnectionPage> {
           routeName: 'settings-profile',
         ),
       ),
-      extendBodyBehindAppBar: true,
       body: AsyncStateView(
         loading: c == null && _loading,
         error: c == null ? _error : null,
@@ -195,6 +195,18 @@ class _ConnectionPageState extends State<ConnectionPage> {
       onRefresh: _load,
       physics: const AlwaysScrollableScrollPhysics(),
       bottomInset: PpForgeSpacing.huge + inset.bottom,
+      compactBar: PpForgeCompactHeroCard(
+        style: c.linked && c.brand != null
+            ? HeroStyle.tinted(color: c.brand!, glyph: AppIcons.link)
+            : const HeroStyle.plain(),
+        leading: ProviderLogo(
+          url: c.logoUrl,
+          name: c.name,
+          size: 28,
+          grey: !c.linked,
+        ),
+        title: PpForgeText(c.name, role: PpForgeTextRole.title),
+      ),
       hero: ConnectionHeroCard(
         name: c.name,
         logoUrl: c.logoUrl,

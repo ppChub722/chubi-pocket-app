@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -24,9 +25,8 @@ class SettingsAppPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: l.settingsSectionApp, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.settingsSectionApp, showBack: true),
       body: Builder(
         // Inside the Scaffold body: the inset includes the floating top bar.
         builder: (context) {

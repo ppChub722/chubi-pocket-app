@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -234,17 +235,19 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final p = _plan;
-    return Scaffold(
-      appBar: AppTopBar(title: p?.name ?? l.debtPlanTitle, showBack: true),
+    return AppPage(
+      topBar: AppTopBar(title: p?.name ?? l.debtPlanTitle, showBack: true),
       body: p == null
           ? (_error != null
                 ? EmptyView.compact(message: '$_error')
                 : const Center(child: PpForgeSpinner()))
           : RefreshIndicator(
               onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(PpForgeSpacing.md),
-                children: _body(l, p),
+              child: Builder(
+                builder: (context) => ListView(
+                  padding: AppPage.scrollPadding(context),
+                  children: _body(l, p),
+                ),
               ),
             ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -130,9 +131,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
     final loadingExisting = _loading && _isLinkExisting && _existing == null;
     final name = _name.text;
     final name2 = name.isEmpty ? '…' : name;
-    return Scaffold(
-      appBar: AppTopBar(title: title, showBack: true, editing: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: title, showBack: true, editing: true),
       body: Builder(
         builder: (context) {
           final top = MediaQuery.paddingOf(context).top;
@@ -206,7 +206,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
           );
         },
       ),
-      bottomNavigationBar: loadingExisting
+      bottomBar: loadingExisting
           ? null
           : ModeActionBar(
               canSave: !_loading,

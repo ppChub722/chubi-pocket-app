@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../transactions/presentation/save_failure.dart';
@@ -107,55 +108,50 @@ class _PendingBatchAddPageState extends State<PendingBatchAddPage> {
     final n = _filled.length;
     return BusyScope(
       busy: _saving,
-      child: Scaffold(
-        appBar: AppTopBar(
+      child: AppPage(
+        topBar: AppTopBar(
           title: l.pendingAdd,
           showBack: true,
           showUniversal: false,
         ),
-        extendBodyBehindAppBar: true,
         body: Column(
           children: [
-            Builder(
-              builder: (context) =>
-                  SizedBox(height: MediaQuery.paddingOf(context).top),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                PpForgeSpacing.lg,
-                0,
-                PpForgeSpacing.lg,
-                PpForgeSpacing.sm,
-              ),
-              child: PpForgeText(
-                l.pendingBatchHint,
-                role: PpForgeTextRole.caption,
-              ),
-            ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  PpForgeSpacing.lg,
-                  0,
-                  PpForgeSpacing.lg,
-                  PpForgeSpacing.xxl,
-                ),
-                children: [
-                  for (var i = 0; i < _rows.length; i++) ...[
-                    _RowCard(
-                      key: ObjectKey(_rows[i]),
-                      controller: _rows[i],
-                      autofocus: i == _rows.length - 1,
-                      onRemove: _rows.length == 1 ? null : () => _removeRow(i),
-                    ),
-                    const SizedBox(height: PpForgeSpacing.sm),
-                  ],
-                  AddTile(
-                    label: l.pendingAddRow,
-                    variant: AddTileVariant.row,
-                    onTap: _addRow,
+              // The hint scrolls with the rows, under the top bar.
+              child: Builder(
+                builder: (context) => ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    PpForgeSpacing.lg,
+                    MediaQuery.paddingOf(context).top,
+                    PpForgeSpacing.lg,
+                    PpForgeSpacing.xxl,
                   ),
-                ],
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: PpForgeSpacing.sm),
+                      child: PpForgeText(
+                        l.pendingBatchHint,
+                        role: PpForgeTextRole.caption,
+                      ),
+                    ),
+                    for (var i = 0; i < _rows.length; i++) ...[
+                      _RowCard(
+                        key: ObjectKey(_rows[i]),
+                        controller: _rows[i],
+                        autofocus: i == _rows.length - 1,
+                        onRemove: _rows.length == 1
+                            ? null
+                            : () => _removeRow(i),
+                      ),
+                      const SizedBox(height: PpForgeSpacing.sm),
+                    ],
+                    AddTile(
+                      label: l.pendingAddRow,
+                      variant: AddTileVariant.row,
+                      onTap: _addRow,
+                    ),
+                  ],
+                ),
               ),
             ),
             PinnedBar(

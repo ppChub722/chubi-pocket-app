@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/shell/app_page.dart';
 import '../../../app/shell/app_top_bar.dart';
 import '../../../app/shell/tab_nav.dart';
 import '../../../core/network/api_client.dart';
@@ -108,9 +109,8 @@ class _ArchivedView extends StatelessWidget {
     final locale = Localizations.localeOf(context).toString();
     final state = context.watch<ArchivedCubit>().state;
     final hub = state.hub;
-    return Scaffold(
-      appBar: topBar ?? AppTopBar(title: l.settingsArchived, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: topBar ?? AppTopBar(title: l.settingsArchived, showBack: true),
       body: ListPageBody(
         loading: hub == null && state.error == null,
         error: hub == null ? state.error : null,

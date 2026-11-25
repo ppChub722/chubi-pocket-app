@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../tags/presentation/widgets/tag_picker.dart';
@@ -333,72 +333,69 @@ class _ProjectsPageState extends State<ProjectsPage> {
 
   Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: l.navProjects, showBack: true),
-      extendBodyBehindAppBar: true,
-      body: TabSwitchBody(
-        child: BlocBuilder<ProjectsCubit, ProjectsState>(
-          builder: (ctx, state) {
-            final cubit = ctx.read<ProjectsCubit>();
-            if (state.status == ProjectsStatus.loading) _fillFailed = false;
-            _fillScreen();
-            final firstLoad =
-                state.projects.isEmpty &&
-                (state.status == ProjectsStatus.initial ||
-                    state.status == ProjectsStatus.loading);
-            final create = AddTile(label: l.fpEventsCreate, onTap: _create);
-            return ListPageBody(
-              header: [
-                if (state.error != null && state.projects.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: PpForgeSpacing.lg,
-                      vertical: PpForgeSpacing.sm,
-                    ),
-                    child: PpForgeMessage(
-                      message: l.fpEventsLoadFailed,
-                      tone: Tone.warning,
-                      actions: [
-                        PpForgeMessageAction(
-                          label: l.commonRetry,
-                          onPressed: cubit.load,
-                        ),
-                      ],
-                    ),
+    return AppPage(
+      topBar: AppTopBar(title: l.navProjects, showBack: true),
+      body: BlocBuilder<ProjectsCubit, ProjectsState>(
+        builder: (ctx, state) {
+          final cubit = ctx.read<ProjectsCubit>();
+          if (state.status == ProjectsStatus.loading) _fillFailed = false;
+          _fillScreen();
+          final firstLoad =
+              state.projects.isEmpty &&
+              (state.status == ProjectsStatus.initial ||
+                  state.status == ProjectsStatus.loading);
+          final create = AddTile(label: l.fpEventsCreate, onTap: _create);
+          return ListPageBody(
+            header: [
+              if (state.error != null && state.projects.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: PpForgeSpacing.lg,
+                    vertical: PpForgeSpacing.sm,
                   ),
-                _hero(l, state),
-                _toolbar(l, state),
-              ],
-              loading: firstLoad,
-              error: state.projects.isEmpty ? state.error : null,
-              isEmpty: state.projects.isEmpty,
-              onRetry: cubit.load,
-              empty: state.filtered
-                  ? EmptyView(
-                      icon: AppIcons.project,
-                      title: l.projectsNoMatch,
-                      message: '',
-                      cta: create,
-                    )
-                  : EmptyView(
-                      icon: AppIcons.project,
-                      title: l.projectsEmptyTitle,
-                      message: l.projectsEmptyMessage,
-                      cta: create,
-                    ),
-              topInset: PpForgeSpacing.sm,
-              rowCards: true,
-              rowDividers: true,
-              rowDividerIndent:
-                  PpForgeSpacing.lg + EventListRow.iconSize + PpForgeSpacing.md,
-              controller: _scroll,
-              hasMore: state.hasMore,
-              loadingMore: state.loadingMore,
-              onLoadMore: _loadMore,
-              children: _sections(l, state),
-            );
-          },
-        ),
+                  child: PpForgeMessage(
+                    message: l.fpEventsLoadFailed,
+                    tone: Tone.warning,
+                    actions: [
+                      PpForgeMessageAction(
+                        label: l.commonRetry,
+                        onPressed: cubit.load,
+                      ),
+                    ],
+                  ),
+                ),
+              _hero(l, state),
+              _toolbar(l, state),
+            ],
+            loading: firstLoad,
+            error: state.projects.isEmpty ? state.error : null,
+            isEmpty: state.projects.isEmpty,
+            onRetry: cubit.load,
+            empty: state.filtered
+                ? EmptyView(
+                    icon: AppIcons.project,
+                    title: l.projectsNoMatch,
+                    message: '',
+                    cta: create,
+                  )
+                : EmptyView(
+                    icon: AppIcons.project,
+                    title: l.projectsEmptyTitle,
+                    message: l.projectsEmptyMessage,
+                    cta: create,
+                  ),
+            topInset: PpForgeSpacing.sm,
+            rowCards: true,
+            rowDividers: true,
+            rowDividerIndent:
+                PpForgeSpacing.lg + EventListRow.iconSize + PpForgeSpacing.md,
+            controller: _scroll,
+            hasMore: state.hasMore,
+            loadingMore: state.loadingMore,
+            onLoadMore: _loadMore,
+            children: _sections(l, state),
+          );
+        },
       ),
     );
   }

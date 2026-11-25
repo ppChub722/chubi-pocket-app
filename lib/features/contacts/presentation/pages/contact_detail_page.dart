@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
@@ -425,9 +426,8 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         preset: const QuickCreatePreset.debt().withLook(
           QuickCreateLook.debt(context),
         ),
-        child: Scaffold(
-          appBar: AppTopBar(title: l.moreContacts, showBack: true),
-          extendBodyBehindAppBar: true,
+        child: AppPage(
+          topBar: AppTopBar(title: l.moreContacts, showBack: true),
           body: AsyncStateView.fallback(
             loading: _loading,
             error: _error,
@@ -457,15 +457,14 @@ class _ContactDetailPageState extends State<ContactDetailPage>
       child: editScope(
         BusyScope(
           busy: isSaving,
-          child: Scaffold(
-            appBar: AppTopBar(
+          child: AppPage(
+            topBar: AppTopBar(
               // Titles never change with the mode — the action bar shows it.
               title: _isCreate ? l.contactTitleNew : _contact!.name,
               showBack: true,
               editing: isEditing,
               onBack: handleBack,
             ),
-            extendBodyBehindAppBar: true,
             body: Form(
               key: _formKey,
               child: Builder(
@@ -475,6 +474,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                   bottomInset:
                       PpForgeSpacing.huge +
                       MediaQuery.paddingOf(context).bottom,
+                  compactBar: _compactBar(),
                   hero: isEditing ? _editHero(l) : _viewHero(l),
                   info: isEditing ? _editInfo(l) : _viewInfo(l),
                   people: isEditing || _isCreate ? null : _linkSection(l),
@@ -490,9 +490,7 @@ class _ContactDetailPageState extends State<ContactDetailPage>
                 ),
               ),
             ),
-            bottomNavigationBar: isEditing
-                ? editActionBar(onSave: _save)
-                : null,
+            bottomBar: isEditing ? editActionBar(onSave: _save) : null,
           ),
         ),
       ),
@@ -509,6 +507,21 @@ class _ContactDetailPageState extends State<ContactDetailPage>
         surface: Theme.of(context).colorScheme.surface,
       ),
       glyph: AppIcons.contact,
+    );
+  }
+
+  /// The hero, small (view mode only): the person's mark and name.
+  PpForgeCompactHeroCard? _compactBar() {
+    final c = _contact;
+    if (c == null || isEditing || _isCreate) return null;
+    return PpForgeCompactHeroCard(
+      style: _heroStyle(c.avatar),
+      leading: PersonMark(
+        level: c.isLinked ? PersonLevel.linked : PersonLevel.contact,
+        avatar: c.avatar,
+        size: 28,
+      ),
+      title: PpForgeText(_viewName.text, role: PpForgeTextRole.title),
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
@@ -25,6 +26,7 @@ import '../save_failure.dart';
 import '../widgets/debt_entry_form.dart';
 import '../widgets/draft_form.dart';
 import '../widgets/pick_chip_rows.dart';
+import '../widgets/tx_compact_hero.dart';
 import '../widgets/quick_create_sheet.dart';
 
 class DebtEntryDetailPage extends StatefulWidget {
@@ -77,9 +79,8 @@ class _DebtEntryDetailPageState extends State<DebtEntryDetailPage> {
       );
     }
     final missing = _error?.statusCode == 404;
-    return Scaffold(
-      appBar: AppTopBar(title: l.debtEntryTitle, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.debtEntryTitle, showBack: true),
       body: AsyncStateView.fallback(
         loading: _loading,
         error: missing ? null : _error,
@@ -917,14 +918,13 @@ class _DebtEntryViewState extends State<_DebtEntryView>
     return editScope(
       BusyScope(
         busy: isSaving,
-        child: Scaffold(
-          appBar: AppTopBar(
+        child: AppPage(
+          topBar: AppTopBar(
             title: l.debtEntryTitle,
             showBack: true,
             editing: editing,
             onBack: handleBack,
           ),
-          extendBodyBehindAppBar: true,
           body: Builder(
             builder: (context) => ListenableBuilder(
               listenable: _c,
@@ -933,6 +933,16 @@ class _DebtEntryViewState extends State<_DebtEntryView>
                 physics: const AlwaysScrollableScrollPhysics(),
                 topInset: MediaQuery.paddingOf(context).top + PpForgeSpacing.md,
                 bottomInset: 96 + MediaQuery.paddingOf(context).bottom,
+                compactBar: editing
+                    ? null
+                    : txCompactHeroBar(
+                        context,
+                        type: _c.direction == DebtEntryDirection.paid
+                            ? TransactionType.expense
+                            : TransactionType.income,
+                        description: _c.description.text,
+                        amount: _c.amountValue,
+                      ),
                 hero: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -1076,7 +1086,7 @@ class _DebtEntryViewState extends State<_DebtEntryView>
               ),
             ),
           ),
-          bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
+          bottomBar: editing ? editActionBar(onSave: _save) : null,
         ),
       ),
     );

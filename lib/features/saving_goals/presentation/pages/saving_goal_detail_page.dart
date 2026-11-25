@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
@@ -644,9 +645,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
   /// No data yet: skeleton on the first load, error + retry (never lose a
   /// loaded page to a failed refresh).
   Widget _fallback(AppLocalizations l, SavingPageState state) {
-    return Scaffold(
-      appBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
       body: AsyncStateView.fallback(
         loading: state.status == SavingPageStatus.loading,
         error: state.error,
@@ -666,8 +666,8 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
     final editing = isEditing && !spare;
     if (editing) _tab = _GoalTab.overview;
     final page = editScope(
-      Scaffold(
-        appBar: AppTopBar(
+      AppPage(
+        topBar: AppTopBar(
           // Titles never change with the mode.
           title: spare
               ? l.sgv2SpareTitle
@@ -676,7 +676,6 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
           editing: editing,
           onBack: handleBack,
         ),
-        extendBodyBehindAppBar: true,
         body: Form(
           key: _formKey,
           child: Builder(
@@ -685,9 +684,7 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
                 : _viewBody(l, d, s!),
           ),
         ),
-        bottomNavigationBar: editing
-            ? editActionBar(onSave: () => _save(goal))
-            : null,
+        bottomBar: editing ? editActionBar(onSave: () => _save(goal)) : null,
       ),
     );
     return page;

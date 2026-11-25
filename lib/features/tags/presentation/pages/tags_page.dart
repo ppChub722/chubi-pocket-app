@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
@@ -493,62 +493,59 @@ class _TagsPageState extends State<TagsPage>
   Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     return editScope(
-      Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppTopBar(
+      AppPage(
+        topBar: AppTopBar(
           title: l.tagsTitle,
           showBack: true,
           editing: isEditing,
           onBack: isEditing ? handleBack : null,
         ),
-        body: TabSwitchBody(
-          child: BlocBuilder<TagsCubit, TagsState>(
-            builder: (context, state) {
-              final loading =
-                  (state.status == TagsStatus.initial ||
-                      state.status == TagsStatus.loading) &&
-                  state.tags.isEmpty;
-              final isEmpty = !isEditing && state.tags.isEmpty;
-              final visible = isEditing ? _visibleDrafts() : null;
-              return ListPageBody(
-                loading: loading,
-                error: state.tags.isEmpty ? state.error : null,
-                isEmpty: isEmpty,
-                // Pull to refresh reloads in view mode only; a reload under a
-                // batch edit would fight the drafts.
-                refreshEnabled: !isEditing,
-                onRetry: isEditing
-                    ? () async {}
-                    : () async {
-                        setState(() => _stickyIds = null);
-                        await context.read<TagsCubit>().load();
-                      },
-                empty: EmptyView(
-                  icon: AppIcons.tag,
-                  title: l.tagsEmptyTitle,
-                  message: l.tagsEmptyMessage,
-                  cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
-                ),
-                sidePadding: 0,
-                topInset: 0,
-                header: loading || isEmpty
-                    ? const []
-                    : [
-                        isEditing
-                            ? _editBar(l, visible!)
-                            : _viewBar(l, state.tags),
-                      ],
-                // Edit mode needs every row mounted (form validation,
-                // ensureVisible), so it brings its own non-lazy scroll view.
-                builder: isEditing
-                    ? (context, padding) => _editList(l, visible!, padding)
-                    : null,
-                children: isEditing ? const [] : _viewList(l, state.tags),
-              );
-            },
-          ),
+        body: BlocBuilder<TagsCubit, TagsState>(
+          builder: (context, state) {
+            final loading =
+                (state.status == TagsStatus.initial ||
+                    state.status == TagsStatus.loading) &&
+                state.tags.isEmpty;
+            final isEmpty = !isEditing && state.tags.isEmpty;
+            final visible = isEditing ? _visibleDrafts() : null;
+            return ListPageBody(
+              loading: loading,
+              error: state.tags.isEmpty ? state.error : null,
+              isEmpty: isEmpty,
+              // Pull to refresh reloads in view mode only; a reload under a
+              // batch edit would fight the drafts.
+              refreshEnabled: !isEditing,
+              onRetry: isEditing
+                  ? () async {}
+                  : () async {
+                      setState(() => _stickyIds = null);
+                      await context.read<TagsCubit>().load();
+                    },
+              empty: EmptyView(
+                icon: AppIcons.tag,
+                title: l.tagsEmptyTitle,
+                message: l.tagsEmptyMessage,
+                cta: AddTile(label: l.tagsAddNew, onTap: _addTag),
+              ),
+              sidePadding: 0,
+              topInset: 0,
+              header: loading || isEmpty
+                  ? const []
+                  : [
+                      isEditing
+                          ? _editBar(l, visible!)
+                          : _viewBar(l, state.tags),
+                    ],
+              // Edit mode needs every row mounted (form validation,
+              // ensureVisible), so it brings its own non-lazy scroll view.
+              builder: isEditing
+                  ? (context, padding) => _editList(l, visible!, padding)
+                  : null,
+              children: isEditing ? const [] : _viewList(l, state.tags),
+            );
+          },
         ),
-        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+        bottomBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
   }

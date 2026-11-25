@@ -6,8 +6,8 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -376,14 +376,13 @@ class _TransactionsListPageState extends State<TransactionsListPage>
     );
 
     if (widget.embedded) return content;
-    return Scaffold(
+    return AppPage(
       // The list runs under the top bar, like the wallets page.
-      extendBodyBehindAppBar: true,
-      appBar: AppTopBar(
+      topBar: AppTopBar(
         title: widget.title ?? l.navTransactions,
         showBack: widget.title != null,
       ),
-      body: TabSwitchBody(child: content),
+      body: content,
     );
   }
 

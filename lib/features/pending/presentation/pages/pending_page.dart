@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -158,9 +158,8 @@ class _PendingPageState extends State<PendingPage> {
     final canImportSlip = SlipQrReader.isSupported;
     void importSlip() {}
 
-    return Scaffold(
-      appBar: AppTopBar(title: l.pendingTitle),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.pendingTitle),
       floatingActionButton: ChatDial(
         hint: l.pendingChatHint,
         tooltip: l.pendingTypeIt,
@@ -169,7 +168,7 @@ class _PendingPageState extends State<PendingPage> {
       ),
       // One button, only while something is ticked — it takes the shell nav's
       // place instead of stacking on it.
-      bottomNavigationBar: _selected.isEmpty
+      bottomBar: _selected.isEmpty
           ? null
           : ShellChromeHider(
               child: PinnedBar(
@@ -185,124 +184,122 @@ class _PendingPageState extends State<PendingPage> {
             ),
       // Pinned rows clear the floating bar; the list below them must not add
       // the bar height again.
-      body: TabSwitchBody(
-        child: ListPageBody(
-          header: [
-            if (visible.isNotEmpty)
-              SelectionToolbar(
-                selected: pickedVisible,
-                total: visible.length,
-                selectAllTooltip: l.pendingSelectAll,
-                onSelectAll: () => setState(
-                  () => pickedVisible == visible.length
-                      ? _selected.removeAll(visible.map((p) => p.id))
-                      : _selected.addAll(visible.map((p) => p.id)),
-                ),
-                trailing: [
-                  if (canImportSlip)
-                    PpForgeChip(
-                      icon: AppIcons.importSlip,
-                      label: l.pendingImportSlip,
-                      tone: PpForgeChipTone.primary,
-                      selected: true,
-                      onTap: importSlip,
-                    ),
-                ],
-                deleteTooltip: l.commonDelete,
-                onDelete: () => _discardSelected(visible),
+      body: ListPageBody(
+        header: [
+          if (visible.isNotEmpty)
+            SelectionToolbar(
+              selected: pickedVisible,
+              total: visible.length,
+              selectAllTooltip: l.pendingSelectAll,
+              onSelectAll: () => setState(
+                () => pickedVisible == visible.length
+                    ? _selected.removeAll(visible.map((p) => p.id))
+                    : _selected.addAll(visible.map((p) => p.id)),
               ),
-            if (others > 0)
-              FilterBar(
-                chips: [
-                  for (final f in _Filter.values)
-                    PpForgeChip(
-                      trailing: PpForgeChipTrailing.dropdown,
-                      label: switch (f) {
-                        _Filter.all => l.pendingFilterAll(total),
-                        _Filter.manual => l.pendingFilterManual(manual),
-                        _Filter.others => l.pendingFilterOthers(others),
-                      },
-                      selected: _filter == f,
-                      onTap: () {
-                        setState(() {
-                          _filter = f;
-                          final shown = _visible(all).map((p) => p.id);
-                          _selected.retainAll(shown);
-                        });
-                        unawaited(
-                          rememberPagePref(context, PagePrefIds.pending, {
-                            'filter': f.name,
-                          }),
-                        );
-                      },
-                    ),
-                ],
-              ),
-            if (result != null && result.failed > 0)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  PpForgeSpacing.lg,
-                  0,
-                  PpForgeSpacing.lg,
-                  PpForgeSpacing.sm,
-                ),
-                child: PpForgeMessage(
-                  message: l.pendingResult(result.done, result.failed),
-                  tone: Tone.warning,
-                  onClose: () => setState(() => _lastResult = null),
-                ),
-              ),
-          ],
-          loading:
-              state.status == PendingStatus.initial ||
-              state.status == PendingStatus.loading,
-          error: state.error,
-          isEmpty: visible.isEmpty,
-          onRetry: context.read<PendingCubit>().load,
-          topInset: 0,
-          sidePadding: 0,
-          rowDividers: true,
-          empty: EmptyView(
-            icon: AppIcons.empty,
-            title: l.pendingEmptyTitle,
-            message: l.pendingEmptyMessage,
-            cta: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (canImportSlip) ...[
-                  AddTile(
-                    label: l.pendingImportSlip,
+              trailing: [
+                if (canImportSlip)
+                  PpForgeChip(
                     icon: AppIcons.importSlip,
-                    variant: AddTileVariant.row,
+                    label: l.pendingImportSlip,
+                    tone: PpForgeChipTone.primary,
+                    selected: true,
                     onTap: importSlip,
                   ),
-                  const SizedBox(height: PpForgeSpacing.sm),
-                ],
-                AddTile(
-                  label: l.pendingAdd,
-                  onTap: () => context.push('/pending/new'),
-                ),
+              ],
+              deleteTooltip: l.commonDelete,
+              onDelete: () => _discardSelected(visible),
+            ),
+          if (others > 0)
+            FilterBar(
+              chips: [
+                for (final f in _Filter.values)
+                  PpForgeChip(
+                    trailing: PpForgeChipTrailing.dropdown,
+                    label: switch (f) {
+                      _Filter.all => l.pendingFilterAll(total),
+                      _Filter.manual => l.pendingFilterManual(manual),
+                      _Filter.others => l.pendingFilterOthers(others),
+                    },
+                    selected: _filter == f,
+                    onTap: () {
+                      setState(() {
+                        _filter = f;
+                        final shown = _visible(all).map((p) => p.id);
+                        _selected.retainAll(shown);
+                      });
+                      unawaited(
+                        rememberPagePref(context, PagePrefIds.pending, {
+                          'filter': f.name,
+                        }),
+                      );
+                    },
+                  ),
               ],
             ),
-          ),
-          children: [
-            ..._rows(context, visible),
+          if (result != null && result.failed > 0)
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 PpForgeSpacing.lg,
-                PpForgeSpacing.md,
-                PpForgeSpacing.lg,
                 0,
+                PpForgeSpacing.lg,
+                PpForgeSpacing.sm,
               ),
-              child: AddTile(
-                label: l.pendingAdd,
-                variant: AddTileVariant.row,
-                onTap: () => context.push('/pending/new'),
+              child: PpForgeMessage(
+                message: l.pendingResult(result.done, result.failed),
+                tone: Tone.warning,
+                onClose: () => setState(() => _lastResult = null),
               ),
             ),
-          ],
+        ],
+        loading:
+            state.status == PendingStatus.initial ||
+            state.status == PendingStatus.loading,
+        error: state.error,
+        isEmpty: visible.isEmpty,
+        onRetry: context.read<PendingCubit>().load,
+        topInset: 0,
+        sidePadding: 0,
+        rowDividers: true,
+        empty: EmptyView(
+          icon: AppIcons.empty,
+          title: l.pendingEmptyTitle,
+          message: l.pendingEmptyMessage,
+          cta: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (canImportSlip) ...[
+                AddTile(
+                  label: l.pendingImportSlip,
+                  icon: AppIcons.importSlip,
+                  variant: AddTileVariant.row,
+                  onTap: importSlip,
+                ),
+                const SizedBox(height: PpForgeSpacing.sm),
+              ],
+              AddTile(
+                label: l.pendingAdd,
+                onTap: () => context.push('/pending/new'),
+              ),
+            ],
+          ),
         ),
+        children: [
+          ..._rows(context, visible),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              PpForgeSpacing.lg,
+              PpForgeSpacing.md,
+              PpForgeSpacing.lg,
+              0,
+            ),
+            child: AddTile(
+              label: l.pendingAdd,
+              variant: AddTileVariant.row,
+              onTap: () => context.push('/pending/new'),
+            ),
+          ),
+        ],
       ),
     );
   }

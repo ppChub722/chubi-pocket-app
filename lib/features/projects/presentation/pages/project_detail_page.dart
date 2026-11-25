@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../core/network/api_exception.dart';
@@ -821,22 +822,17 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
     final l = AppLocalizations.of(context)!;
     final v = _view;
     if (v == null && !_isCreate) {
-      final loading = Scaffold(
-        appBar: AppTopBar(title: l.navProjects, showBack: true),
-        extendBodyBehindAppBar: true,
-        body: Builder(
-          builder: (context) => Padding(
-            padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
-            child: AsyncStateView.fallback(
-              loading: _error == null,
-              error: _error,
-              onRetry: _load,
-              notFound: EmptyView(
-                icon: AppIcons.empty,
-                title: l.navProjects,
-                message: '',
-              ),
-            ),
+      final loading = AppPage(
+        topBar: AppTopBar(title: l.navProjects, showBack: true),
+        // Like every detail page: the state view clears the bar itself.
+        body: AsyncStateView.fallback(
+          loading: _error == null,
+          error: _error,
+          onRetry: _load,
+          notFound: EmptyView(
+            icon: AppIcons.empty,
+            title: l.navProjects,
+            message: '',
           ),
         ),
       );
@@ -849,15 +845,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
       );
     }
     final page = editScope(
-      Scaffold(
-        appBar: AppTopBar(
+      AppPage(
+        topBar: AppTopBar(
           // The saved name in both modes (titles never change).
           title: _isCreate ? l.projectNewTitle : v!.project.name,
           showBack: true,
           editing: isEditing,
           onBack: handleBack,
         ),
-        extendBodyBehindAppBar: true,
         body: Form(
           key: _formKey,
           child: Builder(
@@ -875,7 +870,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
             },
           ),
         ),
-        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+        bottomBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
     if (v == null || isEditing || _isCreate || !v.canAddTx) return page;
@@ -919,6 +914,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
           );
     return TabbedDetailBody<_Tab>(
       hero: _viewHero(l, v),
+      compactBar: _compactBar(v),
       belowHero: [
         ?banner,
         if (v.isCompleted)
@@ -1020,6 +1016,28 @@ class _ProjectDetailPageState extends State<ProjectDetailPage>
         for (final s in _statusOptions(status))
           SheetOption(value: s, label: projectStatusLabel(l, s), submits: true),
       ],
+    );
+  }
+
+  /// The hero, small: icon, name and the total spent.
+  PpForgeCompactHeroCard _compactBar(ProjectView v) {
+    final p = v.project;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    return PpForgeCompactHeroCard(
+      style: HeroStyle.tinted(
+        color: p.iconCode.tintFor(palette),
+        glyph: AppIcons.project,
+      ),
+      leading: IconDisplay(
+        type: IconType.project,
+        size: 28,
+        iconCode: p.iconCode,
+      ),
+      title: PpForgeText(p.name, role: PpForgeTextRole.title),
+      trailing: MoneyText(
+        p.totalExpense,
+        style: PpForgeTypography.of(context, PpForgeTextRole.money),
+      ),
     );
   }
 

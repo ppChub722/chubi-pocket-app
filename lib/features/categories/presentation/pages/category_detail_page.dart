@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
@@ -454,9 +455,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       listener: (context, state) => _syncFromCubit(state),
       child: _isCreate || _persisted != null
           ? _page(l)
-          : Scaffold(
-              extendBodyBehindAppBar: true,
-              appBar: AppTopBar(title: l.categoriesTitle, showBack: true),
+          : AppPage(
+              topBar: AppTopBar(title: l.categoriesTitle, showBack: true),
               body: BlocBuilder<CategoriesCubit, CategoriesState>(
                 builder: (context, state) => AsyncStateView.fallback(
                   loading:
@@ -482,9 +482,8 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
   }
 
   Widget _scaffold(AppLocalizations l) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppTopBar(
+    return AppPage(
+      topBar: AppTopBar(
         title: _title(l),
         showBack: true,
         editing: isEditing,
@@ -503,7 +502,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
           ),
         ),
       ),
-      bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+      bottomBar: isEditing ? editActionBar(onSave: _save) : null,
     );
   }
 
@@ -576,6 +575,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
       physics: const AlwaysScrollableScrollPhysics(),
       topInset: topInset + PpForgeSpacing.lg,
       bottomInset: PpForgeSpacing.huge + bottomInset,
+      compactBar: _compactBar(),
       hero: _hero(l, all, editing),
       info: InfoBox(
         rows: [
@@ -668,6 +668,36 @@ class _CategoryDetailPageState extends State<CategoryDetailPage>
               context,
               createdAt: _persisted?.createdAt,
               updatedAt: _persisted?.updatedAt,
+            ),
+    );
+  }
+
+  /// The hero, small (view mode only): icon, name and this month's total.
+  PpForgeCompactHeroCard? _compactBar() {
+    if (isEditing || _isCreate) return null;
+    final palette = Theme.of(context).extension<PpForgeColors>()!;
+    final isIncome = working.type == CategoryType.income;
+    final typeColor = isIncome ? palette.income : palette.expense;
+    final iconCode = _resolvedDisplayIconCode();
+    return PpForgeCompactHeroCard(
+      style: HeroStyle.tinted(
+        color: iconCode.tintFor(palette, fallback: typeColor),
+        glyph: AppIcons.category,
+      ),
+      leading: IconDisplay(
+        type: IconType.category,
+        size: 28,
+        iconCode: iconCode,
+      ),
+      title: PpForgeText(working.name, role: PpForgeTextRole.title),
+      trailing: _persisted == null
+          ? null
+          : MoneyText(
+              _monthSpent,
+              style: PpForgeTypography.of(
+                context,
+                PpForgeTextRole.money,
+              )?.copyWith(color: typeColor),
             ),
     );
   }

@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/shell/tab_nav.dart';
-import '../../../../app/shell/tab_root_scaffold.dart';
+import '../../../../app/shell/app_page.dart';
 import '../../../../core/data/sync_coordinator.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> implements ShellSwipeHandler {
   }
 
   @override
-  Widget build(BuildContext context) => TabRootScaffold(
+  Widget build(BuildContext context) => AppPage(
     title: AppLocalizations.of(context)!.navDashboard,
     body: BlocProvider(
       create: (ctx) {

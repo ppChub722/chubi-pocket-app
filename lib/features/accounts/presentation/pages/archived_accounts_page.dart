@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -41,9 +42,8 @@ class _ArchivedAccountsPageState extends State<ArchivedAccountsPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: l.accountsArchivedTitle, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.accountsArchivedTitle, showBack: true),
       body: BlocBuilder<AccountsCubit, AccountsState>(
         builder: (context, state) {
           final list = state.archivedAccounts;

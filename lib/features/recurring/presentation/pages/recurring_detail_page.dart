@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../core/data/write_effects.dart';
@@ -768,9 +769,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     if (!widget.isCreate && _detail == null) {
-      return Scaffold(
-        appBar: AppTopBar(title: l.recurringTitle, showBack: true),
-        extendBodyBehindAppBar: true,
+      return AppPage(
+        topBar: AppTopBar(title: l.recurringTitle, showBack: true),
         body: AsyncStateView.fallback(
           loading: _loading || _error == null,
           error: _error,
@@ -785,9 +785,8 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
     final r = _recurring;
     return editScope(
-      Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppTopBar(
+      AppPage(
+        topBar: AppTopBar(
           // Titles never change with the mode.
           title: r == null ? l.recurringNewTitle : r.name,
           showBack: true,
@@ -811,7 +810,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             ),
           ),
         ),
-        bottomNavigationBar: isEditing ? editActionBar(onSave: _save) : null,
+        bottomBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
   }

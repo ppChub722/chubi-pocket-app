@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../auth/domain/user.dart';
@@ -192,114 +192,110 @@ class _ContactsPageState extends State<ContactsPage> {
       'archived': l.contactsFilterArchived,
       'all': l.contactsFilterAll,
     };
-    return Scaffold(
-      appBar: AppTopBar(title: l.moreContacts, showBack: true),
-      extendBodyBehindAppBar: true,
-      body: TabSwitchBody(
-        child: BlocBuilder<ContactsCubit, ContactsState>(
-          builder: (ctx, state) {
-            final shown = _filter(state.contacts);
-            return ListPageBody(
-              // Only the FIRST load shows the skeleton: a reload keeps the rows
-              // (a skeleton would kill a pull-to-refresh).
-              loading:
-                  (state.status == ContactsStatus.initial ||
-                      state.status == ContactsStatus.loading) &&
-                  state.contacts.isEmpty,
-              error: state.contacts.isEmpty ? state.error : null,
-              isEmpty: shown.isEmpty && _institutions.isEmpty,
-              onRetry: ctx.read<ContactsCubit>().load,
-              empty: _empty(l, state),
-              sidePadding: 0,
-              topInset: 0,
-              header: [
-                PpForgeListToolbar(
-                  search: ListToolbarSearch(
-                    controller: _searchController,
-                    hint: l.contactsSearchHint,
-                    onChanged: (v) => setState(() => _query = v),
+    return AppPage(
+      topBar: AppTopBar(title: l.moreContacts, showBack: true),
+      body: BlocBuilder<ContactsCubit, ContactsState>(
+        builder: (ctx, state) {
+          final shown = _filter(state.contacts);
+          return ListPageBody(
+            // Only the FIRST load shows the skeleton: a reload keeps the rows
+            // (a skeleton would kill a pull-to-refresh).
+            loading:
+                (state.status == ContactsStatus.initial ||
+                    state.status == ContactsStatus.loading) &&
+                state.contacts.isEmpty,
+            error: state.contacts.isEmpty ? state.error : null,
+            isEmpty: shown.isEmpty && _institutions.isEmpty,
+            onRetry: ctx.read<ContactsCubit>().load,
+            empty: _empty(l, state),
+            sidePadding: 0,
+            topInset: 0,
+            header: [
+              PpForgeListToolbar(
+                search: ListToolbarSearch(
+                  controller: _searchController,
+                  hint: l.contactsSearchHint,
+                  onChanged: (v) => setState(() => _query = v),
+                ),
+                trailing: OptionMenuAnchor<_ContactSort>(
+                  selected: _sort,
+                  onSelected: (v) {
+                    setState(() => _sort = v);
+                    _remember({'sort': v.name});
+                  },
+                  options: [
+                    for (final s in _ContactSort.values)
+                      SheetOption(value: s, label: _sortLabel(l, s)),
+                  ],
+                  builder: (context, toggle) => PpForgeChip(
+                    label: _sortLabel(l, _sort),
+                    icon: AppIcons.sort,
+                    trailing: PpForgeChipTrailing.dropdown,
+                    onTap: toggle,
                   ),
-                  trailing: OptionMenuAnchor<_ContactSort>(
-                    selected: _sort,
+                ),
+                filters: [
+                  OptionMenuAnchor<String>(
+                    selected: state.statusFilter,
                     onSelected: (v) {
-                      setState(() => _sort = v);
-                      _remember({'sort': v.name});
+                      ctx.read<ContactsCubit>().setStatusFilter(v);
+                      _remember({'status': v});
                     },
                     options: [
-                      for (final s in _ContactSort.values)
-                        SheetOption(value: s, label: _sortLabel(l, s)),
+                      for (final e in statusLabels.entries)
+                        SheetOption(value: e.key, label: e.value),
                     ],
                     builder: (context, toggle) => PpForgeChip(
-                      label: _sortLabel(l, _sort),
-                      icon: AppIcons.sort,
+                      label:
+                          '${l.contactsStatusLabel}: ${statusLabels[state.statusFilter]}',
+                      selected: state.statusFilter != 'active',
                       trailing: PpForgeChipTrailing.dropdown,
                       onTap: toggle,
                     ),
                   ),
-                  filters: [
-                    OptionMenuAnchor<String>(
-                      selected: state.statusFilter,
-                      onSelected: (v) {
-                        ctx.read<ContactsCubit>().setStatusFilter(v);
-                        _remember({'status': v});
-                      },
-                      options: [
-                        for (final e in statusLabels.entries)
-                          SheetOption(value: e.key, label: e.value),
-                      ],
-                      builder: (context, toggle) => PpForgeChip(
-                        label:
-                            '${l.contactsStatusLabel}: ${statusLabels[state.statusFilter]}',
-                        selected: state.statusFilter != 'active',
-                        trailing: PpForgeChipTrailing.dropdown,
-                        onTap: toggle,
-                      ),
+                  OptionMenuAnchor<_LinkFilter>(
+                    selected: _link,
+                    onSelected: (v) {
+                      setState(() => _link = v);
+                      _remember({'link': v.name});
+                    },
+                    options: [
+                      for (final f in _LinkFilter.values)
+                        SheetOption(value: f, label: _linkLabel(l, f)),
+                    ],
+                    builder: (context, toggle) => PpForgeChip(
+                      label: '${l.contactsLinkLabel}: ${_linkLabel(l, _link)}',
+                      selected: _link != _LinkFilter.all,
+                      trailing: PpForgeChipTrailing.dropdown,
+                      onTap: toggle,
                     ),
-                    OptionMenuAnchor<_LinkFilter>(
-                      selected: _link,
-                      onSelected: (v) {
-                        setState(() => _link = v);
-                        _remember({'link': v.name});
-                      },
-                      options: [
-                        for (final f in _LinkFilter.values)
-                          SheetOption(value: f, label: _linkLabel(l, f)),
-                      ],
-                      builder: (context, toggle) => PpForgeChip(
-                        label:
-                            '${l.contactsLinkLabel}: ${_linkLabel(l, _link)}',
-                        selected: _link != _LinkFilter.all,
-                        trailing: PpForgeChipTrailing.dropdown,
-                        onTap: toggle,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              children: [
-                PpForgeListHeader(
-                  key: const ValueKey('contactsPeople'),
-                  title: l.debtsSectionPeople,
-                  count: shown.length,
-                ),
-                for (var i = 0; i < shown.length; i++) ...[
-                  _ContactRow(contact: shown[i]),
-                  if (i < shown.length - 1) const PpForgeDivider.row(),
-                ],
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    PpForgeSpacing.lg,
-                    PpForgeSpacing.md,
-                    PpForgeSpacing.lg,
-                    0,
                   ),
-                  child: AddTile(label: l.contactsAddNew, onTap: _add),
-                ),
-                ..._institutionSection(l),
+                ],
+              ),
+            ],
+            children: [
+              PpForgeListHeader(
+                key: const ValueKey('contactsPeople'),
+                title: l.debtsSectionPeople,
+                count: shown.length,
+              ),
+              for (var i = 0; i < shown.length; i++) ...[
+                _ContactRow(contact: shown[i]),
+                if (i < shown.length - 1) const PpForgeDivider.row(),
               ],
-            );
-          },
-        ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  PpForgeSpacing.lg,
+                  PpForgeSpacing.md,
+                  PpForgeSpacing.lg,
+                  0,
+                ),
+                child: AddTile(label: l.contactsAddNew, onTap: _add),
+              ),
+              ..._institutionSection(l),
+            ],
+          );
+        },
       ),
     );
   }

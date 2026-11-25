@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
@@ -43,12 +43,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
   late final PageController _pages = PageController(
     initialPage: _types.indexOf(_listType),
   );
-
-  /// One per tab: both pages are built side by side, and a controller can't
-  /// drive two lists.
-  final Map<CategoryType, ScrollController> _scrollControllers = {
-    for (final t in _types) t: ScrollController(),
-  };
 
   final _search = TextEditingController();
   String _query = '';
@@ -148,9 +142,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
   void dispose() {
     _shellNav.dispose();
     _reorder?.dispose();
-    for (final c in _scrollControllers.values) {
-      c.dispose();
-    }
     _pages.dispose();
     _search.dispose();
     super.dispose();
@@ -168,18 +159,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
     _shellNav.changed();
   }
 
-  void _keepOffset(VoidCallback change) {
-    final sc = _scrollControllers[_listType]!;
-    final offset = sc.hasClients ? sc.offset : null;
-    setState(change);
-    if (offset == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !sc.hasClients) return;
-      final max = sc.position.maxScrollExtent;
-      final target = offset > max ? max : offset;
-      if (sc.offset != target) sc.jumpTo(target);
-    });
-  }
+  /// The lists run on the page's (nested) primary controller, so the header
+  /// and the tabs scroll away with them; a list rebuilt by the mode switch
+  /// gets its offset back from its PageStorageKey.
+  void _keepOffset(VoidCallback change) => setState(change);
 
   /// The controller may also change the shared collapsed set (a toggle, or a
   /// move that opens a parent): remember it (no PUT when unchanged).
@@ -271,48 +254,45 @@ class _CategoriesPageState extends State<CategoriesPage> {
             onPopInvokedWithResult: (didPop, _) {
               if (!didPop && _reordering) _backInReorder();
             },
-            child: Scaffold(
-              extendBodyBehindAppBar: true,
-              appBar: AppTopBar(
+            child: AppPage(
+              topBar: AppTopBar(
                 title: l.categoriesTitle,
                 showBack: true,
                 editing: _reordering,
                 onBack: _reordering ? _backInReorder : null,
               ),
-              body: TabSwitchBody(
-                child: TabbedListPageBody<CategoryType>(
-                  controller: _pages,
-                  selected: _listType,
-                  onChanged: _setListType,
-                  swipeEnabled: !_reordering,
-                  headerBelowTabs: true,
-                  header: typeUsers.isEmpty
-                      ? const []
-                      : [_header(l, typeUsers, all)],
-                  tabs: [
-                    PpForgeTab(
-                      value: CategoryType.expense,
-                      label: l.categoryTypeExpense,
-                      icon: AppIcons.expense,
-                    ),
-                    PpForgeTab(
-                      value: CategoryType.income,
-                      label: l.categoryTypeIncome,
-                      icon: AppIcons.income,
-                    ),
-                  ],
-                  pageBuilder: (context, t) => _tab(
-                    l,
-                    state,
-                    t == _listType
-                        ? typeUsers
-                        : users.where((c) => c.type == t).toList(),
-                    all,
-                    t,
+              body: TabbedListPageBody<CategoryType>(
+                controller: _pages,
+                selected: _listType,
+                onChanged: _setListType,
+                swipeEnabled: !_reordering,
+                headerBelowTabs: true,
+                header: typeUsers.isEmpty
+                    ? const []
+                    : [_header(l, typeUsers, all)],
+                tabs: [
+                  PpForgeTab(
+                    value: CategoryType.expense,
+                    label: l.categoryTypeExpense,
+                    icon: AppIcons.expense,
                   ),
+                  PpForgeTab(
+                    value: CategoryType.income,
+                    label: l.categoryTypeIncome,
+                    icon: AppIcons.income,
+                  ),
+                ],
+                pageBuilder: (context, t) => _tab(
+                  l,
+                  state,
+                  t == _listType
+                      ? typeUsers
+                      : users.where((c) => c.type == t).toList(),
+                  all,
+                  t,
                 ),
               ),
-              bottomNavigationBar: reorder == null
+              bottomBar: reorder == null
                   ? null
                   : Column(
                       mainAxisSize: MainAxisSize.min,
@@ -513,7 +493,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
       sidePadding: 0,
       builder: (context, padding) => ReorderListScope(
         controller: _reorder,
-        scrollController: _scrollControllers[type]!,
         indentStep: PpForgeSpacing.xxl,
         indentBase: PpForgeSpacing.lg,
         dropLabel: (parentId) {
@@ -528,7 +507,6 @@ class _CategoriesPageState extends State<CategoriesPage> {
           reorder: _reorder,
           visibleIds: visible,
           collapsedIds: _collapsedIds,
-          scrollController: _scrollControllers[type]!,
           padding: padding,
           // Long-press enters the mode (not while searching / filtering — the
           // tree isn't whole then); it never starts a drag.
@@ -563,7 +541,6 @@ class _ListBody extends StatelessWidget {
     required this.reorder,
     required this.visibleIds,
     required this.collapsedIds,
-    required this.scrollController,
     required this.padding,
     required this.onLongPress,
     required this.onToggleCollapse,
@@ -578,8 +555,6 @@ class _ListBody extends StatelessWidget {
 
   final Set<String>? visibleIds;
   final Set<String> collapsedIds;
-  final ScrollController scrollController;
-
   final EdgeInsets padding;
   final void Function(String id)? onLongPress;
   final void Function(String id) onToggleCollapse;
@@ -592,7 +567,6 @@ class _ListBody extends StatelessWidget {
     final rows = reorder == null ? _treeRows() : _outlineRows(reorder!);
     return ListView(
       key: PageStorageKey('categories-list-${type.name}'),
-      controller: scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: padding,
       children: [

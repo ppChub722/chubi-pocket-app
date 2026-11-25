@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -320,14 +321,13 @@ class _EditProfilePageState extends State<EditProfilePage>
         }
       },
       child: editScope(
-        Scaffold(
-          appBar: AppTopBar(
+        AppPage(
+          topBar: AppTopBar(
             title: l.profileTitle,
             showBack: true,
             editing: editing,
             onBack: handleBack,
           ),
-          extendBodyBehindAppBar: true,
           body: Form(
             key: _formKey,
             child: BlocBuilder<ConnectionsCubit, ConnectionsState>(
@@ -352,7 +352,7 @@ class _EditProfilePageState extends State<EditProfilePage>
               ),
             ),
           ),
-          bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
+          bottomBar: editing ? editActionBar(onSave: _save) : null,
         ),
       ),
     );

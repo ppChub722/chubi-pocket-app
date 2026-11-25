@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/tab_nav.dart';
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -116,9 +117,8 @@ class _TransactionDetailPageState extends State<TransactionDetailPage> {
           );
         }
         final missing = _error?.statusCode == 404;
-        return Scaffold(
-          appBar: AppTopBar(title: l.navTransactions, showBack: true),
-          extendBodyBehindAppBar: true,
+        return AppPage(
+          topBar: AppTopBar(title: l.navTransactions, showBack: true),
           body: AsyncStateView.fallback(
             loading: _fetching,
             error: missing ? null : _error,
@@ -233,9 +233,8 @@ class _BillPageState extends State<BillPage> {
       );
     }
     final missing = _error?.statusCode == 404;
-    return Scaffold(
-      appBar: AppTopBar(title: l.navTransactions, showBack: true),
-      extendBodyBehindAppBar: true,
+    return AppPage(
+      topBar: AppTopBar(title: l.navTransactions, showBack: true),
       body: AsyncStateView.fallback(
         loading: _loading || p != null,
         error: missing ? null : _error,
@@ -1133,14 +1132,13 @@ class _LoadedState extends State<_Loaded>
     return editScope(
       BusyScope(
         busy: isSaving,
-        child: Scaffold(
-          appBar: AppTopBar(
+        child: AppPage(
+          topBar: AppTopBar(
             title: _titleForType(l, tx.type),
             showBack: true,
             editing: editing,
             onBack: handleBack,
           ),
-          extendBodyBehindAppBar: true,
           body: Builder(
             builder: (context) {
               return CompactHeroScope(
@@ -1261,7 +1259,7 @@ class _LoadedState extends State<_Loaded>
               );
             },
           ),
-          bottomNavigationBar: editing ? editActionBar(onSave: _save) : null,
+          bottomBar: editing ? editActionBar(onSave: _save) : null,
         ),
       ),
     );

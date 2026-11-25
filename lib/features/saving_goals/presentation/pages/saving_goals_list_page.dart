@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/quick_create_look.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -112,58 +112,55 @@ class _SavingGoalsListPageState extends State<SavingGoalsListPage> {
 
   Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
-      extendBodyBehindAppBar: true,
-      body: TabSwitchBody(
-        child: MultiBlocListener(
-          listeners: [
-            BlocListener<TransactionsCubit, TransactionsState>(
-              listenWhen: (a, b) =>
-                  a.revision != b.revision ||
-                  !identical(a.transactions, b.transactions),
-              listener: (c, _) => c.read<SavingGoalsCubit>().load(),
-            ),
-            BlocListener<SavingGoalsCubit, SavingGoalsState>(
-              listenWhen: (a, b) =>
-                  a.status != b.status &&
-                  b.status == SavingGoalsStatus.error &&
-                  b.overview.summary.currency.isNotEmpty,
-              listener: (c, _) => showPpForgeSnackBar(
-                c,
-                l.fpGoalsRefreshFailed,
-                tone: Tone.danger,
-              ),
-            ),
-          ],
-          child: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
-            builder: (context, state) {
-              final cubit = context.read<SavingGoalsCubit>();
-              // The BE always sends the user currency: empty = never loaded.
-              final neverLoaded = state.overview.summary.currency.isEmpty;
-              return ListPageBody(
-                // Only the FIRST load shows the skeleton: a reload keeps the
-                // rows (a skeleton would kill a pull-to-refresh).
-                loading:
-                    (state.status == SavingGoalsStatus.initial ||
-                        state.status == SavingGoalsStatus.loading) &&
-                    neverLoaded,
-                error: state.status == SavingGoalsStatus.error && neverLoaded
-                    ? state.error
-                    : null,
-                isEmpty: neverLoaded,
-                onRetry: cubit.load,
-                empty: EmptyView(
-                  icon: AppIcons.savingGoal,
-                  title: l.savingGoalsEmptyTitle,
-                  message: l.savingGoalsEmptyMessage,
-                ),
-                sidePadding: 0,
-                topInset: 0,
-                children: _children(context, l, state, cubit),
-              );
-            },
+    return AppPage(
+      topBar: AppTopBar(title: l.savingGoalsTitle, showBack: true),
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<TransactionsCubit, TransactionsState>(
+            listenWhen: (a, b) =>
+                a.revision != b.revision ||
+                !identical(a.transactions, b.transactions),
+            listener: (c, _) => c.read<SavingGoalsCubit>().load(),
           ),
+          BlocListener<SavingGoalsCubit, SavingGoalsState>(
+            listenWhen: (a, b) =>
+                a.status != b.status &&
+                b.status == SavingGoalsStatus.error &&
+                b.overview.summary.currency.isNotEmpty,
+            listener: (c, _) => showPpForgeSnackBar(
+              c,
+              l.fpGoalsRefreshFailed,
+              tone: Tone.danger,
+            ),
+          ),
+        ],
+        child: BlocBuilder<SavingGoalsCubit, SavingGoalsState>(
+          builder: (context, state) {
+            final cubit = context.read<SavingGoalsCubit>();
+            // The BE always sends the user currency: empty = never loaded.
+            final neverLoaded = state.overview.summary.currency.isEmpty;
+            return ListPageBody(
+              // Only the FIRST load shows the skeleton: a reload keeps the
+              // rows (a skeleton would kill a pull-to-refresh).
+              loading:
+                  (state.status == SavingGoalsStatus.initial ||
+                      state.status == SavingGoalsStatus.loading) &&
+                  neverLoaded,
+              error: state.status == SavingGoalsStatus.error && neverLoaded
+                  ? state.error
+                  : null,
+              isEmpty: neverLoaded,
+              onRetry: cubit.load,
+              empty: EmptyView(
+                icon: AppIcons.savingGoal,
+                title: l.savingGoalsEmptyTitle,
+                message: l.savingGoalsEmptyMessage,
+              ),
+              sidePadding: 0,
+              topInset: 0,
+              children: _children(context, l, state, cubit),
+            );
+          },
         ),
       ),
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/shell/tab_root_scaffold.dart';
+import '../../../../app/shell/app_page.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 
@@ -12,7 +12,7 @@ class HomeComingSoonPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return TabRootScaffold(
+    return AppPage(
       title: l.navDashboard,
       body: EmptyView(
         icon: AppIcons.hourglass,

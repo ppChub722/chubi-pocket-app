@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -85,15 +86,14 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(
+    return AppPage(
+      topBar: AppTopBar(
         title: l.authRegisterTitle,
         showBack: true,
         showUniversal: false,
         showParent: false,
         onBack: _toLogin,
       ),
-      extendBodyBehindAppBar: true,
       body: BlocListener<AuthCubit, AuthState>(
         listenWhen: (_, s) => s is AuthFailure,
         listener: (context, s) {

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/fade_branch_container.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
@@ -176,111 +176,107 @@ class _InboxScaffoldState extends State<_InboxScaffold> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppTopBar(title: l.notificationsTitle),
-      extendBodyBehindAppBar: true,
-      body: TabSwitchBody(
-        child: BlocConsumer<NotificationsInboxCubit, InboxState>(
-          listenWhen: (a, b) => a.error != b.error,
-          listener: (ctx, state) {
-            if (state.error != null &&
-                (state.status != InboxStatus.error ||
-                    state.notifications.isNotEmpty)) {
-              showErrorSnackBar(ctx, state.error!);
+    return AppPage(
+      topBar: AppTopBar(title: l.notificationsTitle),
+      body: BlocConsumer<NotificationsInboxCubit, InboxState>(
+        listenWhen: (a, b) => a.error != b.error,
+        listener: (ctx, state) {
+          if (state.error != null &&
+              (state.status != InboxStatus.error ||
+                  state.notifications.isNotEmpty)) {
+            showErrorSnackBar(ctx, state.error!);
+          }
+        },
+        builder: (ctx, state) {
+          final cubit = ctx.read<NotificationsInboxCubit>();
+          final hiddenView = state.filter == InboxFilter.hidden;
+          final visible = [
+            for (final n in state.notifications)
+              if (hiddenView ? n.isDismissed : !n.isDismissed) n,
+          ];
+          final rows = <Widget>[];
+          String? lastDay;
+          for (final n in visible) {
+            final local = n.createdAt.toLocal();
+            final day = '${local.year}-${local.month}-${local.day}';
+            if (day != lastDay) {
+              lastDay = day;
+              rows.add(PpForgeListHeader(title: _dayLabel(ctx, local)));
             }
-          },
-          builder: (ctx, state) {
-            final cubit = ctx.read<NotificationsInboxCubit>();
-            final hiddenView = state.filter == InboxFilter.hidden;
-            final visible = [
-              for (final n in state.notifications)
-                if (hiddenView ? n.isDismissed : !n.isDismissed) n,
-            ];
-            final rows = <Widget>[];
-            String? lastDay;
-            for (final n in visible) {
-              final local = n.createdAt.toLocal();
-              final day = '${local.year}-${local.month}-${local.day}';
-              if (day != lastDay) {
-                lastDay = day;
-                rows.add(PpForgeListHeader(title: _dayLabel(ctx, local)));
-              }
-              final tile = NotificationTile(
-                notification: n,
-                hidden: hiddenView,
-                onTap: (notif) =>
-                    hiddenView ? null : NotificationActions.tap(ctx, notif),
-                onAccept: (_) => NotificationActions.accept(ctx, n),
-                onReject: (_) => NotificationActions.reject(ctx, n),
-              );
-              rows.add(
-                hiddenView
-                    ? Column(
-                        key: ValueKey('notif_${n.id}'),
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          tile,
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                right: PpForgeSpacing.md,
-                              ),
-                              child: PpForgeButton(
-                                label: l.notifRestore,
-                                icon: AppIcons.unarchive,
-                                variant: PpForgeButtonVariant.text,
-                                submits: true,
-                                onPressed: () => cubit.restore(n.id),
-                              ),
+            final tile = NotificationTile(
+              notification: n,
+              hidden: hiddenView,
+              onTap: (notif) =>
+                  hiddenView ? null : NotificationActions.tap(ctx, notif),
+              onAccept: (_) => NotificationActions.accept(ctx, n),
+              onReject: (_) => NotificationActions.reject(ctx, n),
+            );
+            rows.add(
+              hiddenView
+                  ? Column(
+                      key: ValueKey('notif_${n.id}'),
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        tile,
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              right: PpForgeSpacing.md,
+                            ),
+                            child: PpForgeButton(
+                              label: l.notifRestore,
+                              icon: AppIcons.unarchive,
+                              variant: PpForgeButtonVariant.text,
+                              submits: true,
+                              onPressed: () => cubit.restore(n.id),
                             ),
                           ),
-                        ],
-                      )
-                    : Dismissible(
-                        key: ValueKey('notif_${n.id}'),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(
-                            right: PpForgeSpacing.xl,
-                          ),
-                          color: Theme.of(
-                            ctx,
-                          ).colorScheme.surfaceContainerHighest,
-                          child: const PpForgeIcon(AppIcons.hidden),
                         ),
-                        onDismissed: (_) => _hide(n),
-                        child: tile,
+                      ],
+                    )
+                  : Dismissible(
+                      key: ValueKey('notif_${n.id}'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(
+                          right: PpForgeSpacing.xl,
+                        ),
+                        color: Theme.of(
+                          ctx,
+                        ).colorScheme.surfaceContainerHighest,
+                        child: const PpForgeIcon(AppIcons.hidden),
                       ),
-              );
-            }
-            return ListPageBody(
-              loading:
-                  (state.status == InboxStatus.initial ||
-                      state.status == InboxStatus.loading) &&
-                  state.notifications.isEmpty,
-              error:
-                  state.status == InboxStatus.error &&
-                      state.notifications.isEmpty
-                  ? state.error
-                  : null,
-              isEmpty: visible.isEmpty,
-              onRetry: cubit.reload,
-              empty: _empty(l, state.filter),
-              header: [_topRow(ctx, l, state)],
-              topInset: 0,
-              sidePadding: 0,
-              bottomInset: PpForgeSpacing.huge,
-              rowDividers: true,
-              rowDividerIndent: 68,
-              hasMore: state.hasMore,
-              loadingMore: _loadingMore,
-              onLoadMore: _loadMore,
-              children: rows,
+                      onDismissed: (_) => _hide(n),
+                      child: tile,
+                    ),
             );
-          },
-        ),
+          }
+          return ListPageBody(
+            loading:
+                (state.status == InboxStatus.initial ||
+                    state.status == InboxStatus.loading) &&
+                state.notifications.isEmpty,
+            error:
+                state.status == InboxStatus.error && state.notifications.isEmpty
+                ? state.error
+                : null,
+            isEmpty: visible.isEmpty,
+            onRetry: cubit.reload,
+            empty: _empty(l, state.filter),
+            header: [_topRow(ctx, l, state)],
+            topInset: 0,
+            sidePadding: 0,
+            bottomInset: PpForgeSpacing.huge,
+            rowDividers: true,
+            rowDividerIndent: 68,
+            hasMore: state.hasMore,
+            loadingMore: _loadingMore,
+            onLoadMore: _loadMore,
+            children: rows,
+          );
+        },
       ),
     );
   }

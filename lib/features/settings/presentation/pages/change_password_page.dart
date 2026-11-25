@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -122,14 +123,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
     final l = AppLocalizations.of(context)!;
     final editing = isEditing;
     return editScope(
-      Scaffold(
-        appBar: AppTopBar(
+      AppPage(
+        topBar: AppTopBar(
           title: _setMode ? l.profileSetPassword : l.changePasswordTitle,
           showBack: true,
           editing: editing,
           onBack: handleBack,
         ),
-        extendBodyBehindAppBar: true,
         body: Form(
           key: _formKey,
           child: Builder(
@@ -197,7 +197,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage>
             ),
           ),
         ),
-        bottomNavigationBar: editActionBar(onSave: _submit),
+        bottomBar: editActionBar(onSave: _submit),
       ),
     );
   }

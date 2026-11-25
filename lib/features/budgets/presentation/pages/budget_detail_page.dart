@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
 import '../../../../app/shell/tab_nav.dart';
@@ -512,9 +513,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     if (!widget.isCreate && _detail == null) {
-      return Scaffold(
-        appBar: AppTopBar(title: l.budgetsTitle, showBack: true),
-        extendBodyBehindAppBar: true,
+      return AppPage(
+        topBar: AppTopBar(title: l.budgetsTitle, showBack: true),
         body: AsyncStateView.fallback(
           loading: _loading || _error == null,
           error: _error,
@@ -538,9 +538,8 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
       child: QuickCreatePresetScope(
         preset: _preset(),
         child: editScope(
-          Scaffold(
-            extendBodyBehindAppBar: true,
-            appBar: AppTopBar(
+          AppPage(
+            topBar: AppTopBar(
               // Titles never change with the mode.
               title: b == null
                   ? l.budgetFormTitle
@@ -564,9 +563,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
                 },
               ),
             ),
-            bottomNavigationBar: isEditing
-                ? editActionBar(onSave: _save)
-                : null,
+            bottomBar: isEditing ? editActionBar(onSave: _save) : null,
           ),
         ),
       ),
@@ -630,6 +627,7 @@ class _BudgetDetailPageState extends State<BudgetDetailPage>
         topInset: barInset + PpForgeSpacing.lg,
         bottomInset: bottom,
         onRefresh: _load,
+        compactBar: _compactBar(d),
         hero: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
