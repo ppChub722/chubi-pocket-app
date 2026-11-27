@@ -148,6 +148,8 @@ class NotificationsRepository {
     bool? autoSyncEvents,
     bool? autoSyncDebts,
     bool? autoAcceptRepayments,
+    bool? recurringNotifyDefault,
+    bool? recurringAutoAcceptDefault,
     String? onSplitRemoved,
   }) async {
     try {
@@ -158,6 +160,8 @@ class NotificationsRepository {
           'auto_sync_events': ?autoSyncEvents,
           'auto_sync_debts': ?autoSyncDebts,
           'auto_accept_repayments': ?autoAcceptRepayments,
+          'recurring_notify_default': ?recurringNotifyDefault,
+          'recurring_auto_accept_default': ?recurringAutoAcceptDefault,
           'on_split_removed': ?onSplitRemoved,
         },
       );

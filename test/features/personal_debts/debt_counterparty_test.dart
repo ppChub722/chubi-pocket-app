@@ -65,17 +65,18 @@ void main() {
           'name': 'ให้ยืมเงิน',
           'type': 'debt',
           'status': 'active',
-          'debt_direction': 'paid',
-          'reminders_count': 1,
+          'rules_count': 1,
           'plan': {
             'count': 5,
             'done': 2,
             'left_principal': 6000,
             'next': {'seq': 3, 'due_date': '2026-11-30', 'amount': 2000},
           },
-          'reminders': [
+          'rules': [
             {
               'id': 'l1',
+              'type': 'debt',
+              'debt_direction': 'paid',
               'amount': 2000,
               'source': {'account_id': 'a1'},
               'account': {'id': 'a1', 'name': 'เงินในธนาคาร'},

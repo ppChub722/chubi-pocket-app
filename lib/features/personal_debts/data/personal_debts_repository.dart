@@ -348,6 +348,7 @@ class PersonalDebtsRepository {
     DateTime? dueDate,
     double? amount,
     double? interest,
+    bool recalcRest = false,
   }) => _call(() async {
     final res = await _client.dio.put<Map<String, dynamic>>(
       '/debt-plans/$id/installments/$seq',
@@ -355,6 +356,8 @@ class PersonalDebtsRepository {
         if (dueDate != null) 'due_date': _ymd(dueDate),
         'amount': ?amount,
         'interest': ?interest,
+        // the user said yes to "คำนวณงวดที่เหลือใหม่ไหม"
+        if (recalcRest) 'recalc_rest': true,
       },
     );
     return DebtPlan.tryParse(res.data)!;
@@ -403,15 +406,16 @@ class PersonalDebtsRepository {
       '/recurring',
       data: {
         'name': name,
-        'type': 'debt',
-        'debt_plan_id': planId,
-        'reminders': [
+        'tracking_type': 'installment',
+        'rules': [
           {
+            'type': 'debt',
+            'debt_plan_id': planId,
             'source': {'account_id': fromAccountId},
             'schedule': {
               'freq': 'monthly',
               'interval': 1,
-              'monthly': {'mode': 'day', 'day': first.day},
+              'month_days': [first.day],
               'start_date': _ymd(first),
               'end': {'kind': 'count', 'count': left},
             },
@@ -427,9 +431,9 @@ class PersonalDebtsRepository {
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
-  /// จ่ายบิลบัตร: a debt item paying the card's bill (0.4.3): monthly on
-  /// [day] from [fromAccountId], a transfer into the card whose amount is the
-  /// bill's left (amount_mode ask). Answers the item id.
+  /// จ่ายบิลบัตร: a recurring whose rule pays the card's bill: monthly on
+  /// [day] (the statement day) from [fromAccountId], a transfer into the card
+  /// whose amount is asked (prefilled with the bill). Answers the recurring id.
   Future<String> createCardBillReminder({
     required String accountId,
     required String name,
@@ -445,16 +449,17 @@ class PersonalDebtsRepository {
       '/recurring',
       data: {
         'name': name,
-        'type': 'debt',
-        'counterparty': {'account_id': accountId},
-        'reminders': [
+        'tracking_type': 'credit_card',
+        'rules': [
           {
+            'type': 'transfer',
+            'to_account_id': accountId,
             'amount_mode': 'ask',
             'source': {'account_id': fromAccountId},
             'schedule': {
               'freq': 'monthly',
               'interval': 1,
-              'monthly': {'mode': 'day', 'day': day},
+              'month_days': [day],
               'start_date': start,
             },
           },

@@ -11,7 +11,7 @@ import 'recurrence_rule.dart';
 import 'recurring.dart';
 import 'recurring_page.dart';
 
-/// Which item each line (`recurring_reminder_id`) belongs to, learned from every
+/// Which item each line (`recurring_rule_id`) belongs to, learned from every
 /// round the app reads (0.4.3): a round is written at
 /// `/recurring/{item}/lines/{line}/occurrences/{slot}`. A line not seen
 /// yet is taken as its own item (a migrated item keeps its rule's id).
@@ -228,7 +228,7 @@ class RecurringItem extends Equatable {
         ? RecurringParent.fromJson(json['recurring'] as Map<String, dynamic>)
         : null;
     final ruleId =
-        json['recurring_reminder_id'] as String? ??
+        json['recurring_rule_id'] as String? ??
         json['rule_id'] as String? ??
         recurring?.id;
     if (ruleId != null && recurring != null) {

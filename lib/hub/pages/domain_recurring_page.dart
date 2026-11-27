@@ -600,9 +600,7 @@ class _RecurringPage extends StatelessWidget {
                 'monthly | last day',
                 rule(
                   RecurrenceFreq.monthly,
-                  monthly: const RecurrenceMonthly.onDay(
-                    RecurrenceMonthly.lastDay,
-                  ),
+                  monthly: null,
                 ),
               ),
               recurCell(
@@ -721,9 +719,7 @@ class _RecurringPage extends StatelessWidget {
                 'monthly | day 31',
                 rule(
                   RecurrenceFreq.monthly,
-                  monthly: const RecurrenceMonthly.onDay(
-                    RecurrenceMonthly.lastDay,
-                  ),
+                  monthly: null,
                 ),
               ),
               editorCell(
@@ -812,9 +808,7 @@ class _RecurringPage extends StatelessWidget {
             final mode = v<RecurrenceMonthlyMode?>('monthly mode');
             final monthly = switch (mode) {
               null => null,
-              RecurrenceMonthlyMode.day => RecurrenceMonthly.onDay(
-                v<double>('day (31 = last)').round(),
-              ),
+              RecurrenceMonthlyMode.day => null,
               RecurrenceMonthlyMode.weekday => RecurrenceMonthly.onWeekday(
                 nth: v<int>('nth'),
                 weekday: v<int>('weekday'),

@@ -1,33 +1,35 @@
 import 'package:chubi_pocket/features/personal_debts/domain/debt_direction.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_page.dart';
-import 'package:chubi_pocket/features/recurring/presentation/recurring_draft.dart';
+import 'package:chubi_pocket/features/recurring/domain/rule_draft.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// BE `ItemPage` (internal/modules/recurring/item_model.go): a debt item with
-/// a plan and two lines, one paid by a person.
+/// BE `ItemPage` (internal/modules/recurring/item_model.go, the rework): a
+/// recurring with a plan and two rules, one paid by a person; each rule
+/// carries its own type and debt target.
+const _counterparty = {
+  'key': 'i:inst1',
+  'kind': 'institution',
+  'name': 'Toyota Leasing',
+  'person': null,
+  'institution': {
+    'id': 'inst1',
+    'name': 'Toyota Leasing',
+    'kind': 'finance',
+    'icon_code': null,
+  },
+  'net': -650286,
+};
+
 Map<String, dynamic> itemPageJson() => {
   'id': 'it1',
   'name': 'ผ่อนรถยนต์',
-  'type': 'debt',
+  'tracking_type': 'installment',
   'status': 'active',
   'icon_code': null,
-  'category': null,
-  'tags': <dynamic>[],
-  'counterparty': {
-    'key': 'i:inst1',
-    'kind': 'institution',
-    'name': 'Toyota Leasing',
-    'person': null,
-    'institution': {
-      'id': 'inst1',
-      'name': 'Toyota Leasing',
-      'kind': 'finance',
-      'icon_code': null,
-    },
-    'net': -650286,
-  },
-  'debt_direction': 'received',
+  'touches': [
+    {'kind': 'institution', 'id': 'inst1', 'name': 'Toyota Leasing'},
+  ],
   'plan': {
     'principal': 780000,
     'count': 48,
@@ -60,12 +62,14 @@ Map<String, dynamic> itemPageJson() => {
       {'seq': 13, 'status': 'upcoming'},
     ],
   },
-  'reminders': [
+  'rules': [
     {
       'id': 'it1',
-      'alerts': [
-        {'id': 'rm1', 'anchor': 'due', 'days_before': 3, 'time': '09:00'},
-      ],
+      'seq': 1,
+      'type': 'debt',
+      'counterparty': _counterparty,
+      'debt_direction': 'received',
+      'amount_mode': 'fixed',
       'amount': 15000,
       'source': {'account_id': 'a1', 'paid_by': null},
       'account': {'id': 'a1', 'name': 'เงินในธนาคาร', 'type': 'bank'},
@@ -75,12 +79,14 @@ Map<String, dynamic> itemPageJson() => {
         'freq': 'monthly',
         'interval': 1,
         'weekdays': <dynamic>[],
-        'monthly': {'mode': 'day', 'day': 25},
+        'month_days': [25],
         'dates': <dynamic>[],
         'start_date': '2025-11-25',
         'end': {'kind': 'count', 'count': 48},
       },
-      'auto_create': true,
+      'auto_accept': true,
+      'notify_on': true,
+      'auto_accept_on': true,
       'status': 'active',
       'next_date': '2026-11-25',
       'due_count': 0,
@@ -90,6 +96,11 @@ Map<String, dynamic> itemPageJson() => {
     },
     {
       'id': 'l2',
+      'seq': 2,
+      'type': 'debt',
+      'counterparty': _counterparty,
+      'debt_direction': 'received',
+      'amount_mode': 'fixed',
       'amount': 3063.5,
       'source': {
         'account_id': null,
@@ -104,7 +115,7 @@ Map<String, dynamic> itemPageJson() => {
         'start_date': '2025-11-25',
         'end': {'kind': 'none'},
       },
-      'auto_create': false,
+      'auto_accept': null,
       'status': 'paused',
       'actions': {'resume': true, 'delete': true},
     },
@@ -112,22 +123,24 @@ Map<String, dynamic> itemPageJson() => {
   'stats': {'paid_count': 12, 'paid_total': 216762},
   'due_count': 0,
   'next': {
-    'recurring_reminder_id': 'it1',
+    'recurring_rule_id': 'it1',
     'date': '2026-11-25',
     'amount': 15000,
     'days_until': 8,
   },
   'month_total': 18063.5,
-  'actions': {'pause': true, 'archive': true, 'add_reminder': true},
+  'actions': {'pause': true, 'archive': true, 'add_rule': true},
   'account_balances': [
     {'account_id': 'a1', 'balance': 90036.5},
   ],
 };
 
 void main() {
-  test('the item page: counterparty, plan, reminders, lines', () {
+  test('the item page: counterparty, plan, rules', () {
     final p = RecurringPage.fromJson(itemPageJson());
     expect(p.kind, RecurringKind.debt);
+    expect(p.trackingType, 'installment');
+    expect(p.touches.single.kind, 'institution');
     expect(p.direction, DebtEntryDirection.received);
     expect(p.counterparty?.isInstitution, isTrue);
     expect(p.counterparty?.institution?.id, 'inst1');
@@ -137,8 +150,9 @@ void main() {
     expect(p.plan?.next?.interest, 1813.5);
     expect(p.plan?.method, PlanInterestMethod.flat);
     expect(p.plan?.toMark?.seq, 13);
-    expect(p.reminders.single.daysBefore, 3);
     expect(p.lines, hasLength(2));
+    expect([for (final l in p.lines) l.seq], [1, 2]);
+    expect(p.lines[0].autoAcceptOn, isTrue);
     expect(p.lines[1].paidBy?.name, 'แฟน');
     expect(p.lines[1].status, RecurringStatus.paused);
     expect(p.actions.addLine, isTrue);
@@ -158,17 +172,18 @@ void main() {
     expect(v.actions.pause, isTrue);
   });
 
-  test('the form on an item: main line edited, the others sent back as is', () {
+  test('a rule opens as a draft and goes back as its own input', () {
     final p = RecurringPage.fromJson(itemPageJson());
-    final d = RecurringDraft.from(p.view);
-    expect(d.kind, RecurringKind.debt);
-    final w = d.toWrite().toJson();
-    expect(w['type'], 'debt');
-    // A new line from the line's input keeps the other line's id.
-    expect(p.lines[1].toInput()['id'], 'l2');
-    expect((p.lines[1].toInput()['source'] as Map)['paid_by'], {
+    final d = RuleDraft.fromLine(p.lines[1]);
+    expect(d.type, RecurringKind.debt);
+    expect(d.debtRecord, isTrue);
+    final w = d.toJson();
+    expect(w['id'], 'l2');
+    expect((w['source'] as Map)['paid_by'], {
       'contact_id': 'c1',
-      'person_name': null,
+      'person_name': 'แฟน',
     });
+    expect(w['counterparty'], {'institution_id': 'inst1'});
+    expect(w['notify'], isNull, reason: 'stored null = the user default');
   });
 }

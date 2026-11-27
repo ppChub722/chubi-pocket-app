@@ -18,7 +18,6 @@ enum AcceptRoute {
   /// debt_repaid: quick create, the repayment prefilled.
   recordRepayment,
   projectInvite,
-  extendRecurring,
   openDue,
   linkRequest,
 }
@@ -42,7 +41,6 @@ AcceptRoute acceptRouteOf(NotificationType type) => switch (type) {
   NotificationType.billRemoved => AcceptRoute.deleteBooks,
   NotificationType.debtRepaid => AcceptRoute.recordRepayment,
   NotificationType.projectInvite => AcceptRoute.projectInvite,
-  NotificationType.recurringEnding => AcceptRoute.extendRecurring,
   NotificationType.recurringDue => AcceptRoute.openDue,
   _ => AcceptRoute.linkRequest,
 };
@@ -56,8 +54,7 @@ RejectRoute rejectRouteOf(NotificationType type) => switch (type) {
   NotificationType.billNew ||
   NotificationType.billChanged ||
   NotificationType.billRemoved ||
-  NotificationType.debtRepaid ||
-  NotificationType.recurringEnding => RejectRoute.markActioned,
+  NotificationType.debtRepaid => RejectRoute.markActioned,
   _ => RejectRoute.dismiss,
 };
 

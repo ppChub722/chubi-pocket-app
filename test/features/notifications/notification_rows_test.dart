@@ -21,8 +21,6 @@ NotificationSettings _settings({List<String> muted = const []}) =>
           ('event_member_removed', 'event'),
           ('event_deleted', 'event'),
           ('recurring_due', 'recurring'),
-          ('recurring_ending', 'recurring'),
-          ('recurring_auto_created', 'recurring'),
           ('project_invite', 'request'),
           ('contact_link_request', 'request'),
           ('account_invite', 'request'),
@@ -57,7 +55,8 @@ void main() {
       'debt_disconnected:',
     ]);
     expect(rows[NotificationGroup.event], hasLength(3));
-    expect(rows[NotificationGroup.recurring], hasLength(3));
+    // the rework keeps one recurring row (ถึงงวด = the rules' defaults)
+    expect(rows[NotificationGroup.recurring], hasLength(1));
     final requests = rows[NotificationGroup.request]!;
     expect(requests.map(line), [
       'project_invite:acceptEventInvites',

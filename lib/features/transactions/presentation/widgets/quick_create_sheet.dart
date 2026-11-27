@@ -122,9 +122,14 @@ class EntrySheetConfig {
     this.createAction,
     this.paid,
     this.debtPerson,
+    this.section,
   });
 
   final EntrySheetPaid? paid;
+
+  /// A block above the note, given the amount typed now (a card bill's
+  /// ยอดบิลจริง).
+  final Widget Function(double? amount)? section;
 
   /// A recurring หนี้ slot (0.4.1-2 K12): its person stands where the
   /// category is, and there are no tags. Null = a normal entry.
@@ -160,6 +165,7 @@ Future<bool> showEntrySheet(
   EntrySheetAction? createAction,
   EntrySheetPaid? paid,
   EmbeddedPerson? debtPerson,
+  Widget Function(double? amount)? section,
 }) {
   assert(actions.isNotEmpty && actions.length <= 2, '1 or 2 actions');
   return showQuickCreateSheet(
@@ -176,6 +182,7 @@ Future<bool> showEntrySheet(
       createAction: createAction,
       paid: paid,
       debtPerson: debtPerson,
+      section: section,
     ),
   );
 }
@@ -1078,6 +1085,7 @@ class _QuickCreateSheetState extends State<_QuickCreateSheet> {
     final create = entry.createAction;
     final paid = entry.paid;
     final rows = <Widget>[
+      ?entry.section?.call(_c.amountValue),
       if (create != null)
         DraftFieldRow(
           label: create.label,

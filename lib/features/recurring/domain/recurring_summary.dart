@@ -50,6 +50,7 @@ class RecurringSummary extends Equatable {
     this.nextName,
     this.nextDate,
     this.nextAmount,
+    this.month = const MonthHero(),
   });
 
   static RecurringSummary? fromJson(Object? json) {
@@ -73,6 +74,7 @@ class RecurringSummary extends Equatable {
       nextAmount: next is Map<String, dynamic>
           ? (next['amount'] as num?)?.toDouble()
           : null,
+      month: MonthHero.fromJson(json['month']),
     );
   }
 
@@ -85,6 +87,9 @@ class RecurringSummary extends Equatable {
   final DateTime? nextDate;
   final double? nextAmount;
 
+  /// The list hero: this month's rounds.
+  final MonthHero month;
+
   @override
   List<Object?> get props => [
     monthPay,
@@ -95,5 +100,52 @@ class RecurringSummary extends Equatable {
     nextName,
     nextDate,
     nextAmount,
+    month,
+  ];
+}
+
+/// The list hero (BE `summary.month`): this calendar month's rounds of the
+/// active rules. [expense] leaves out saving and installments; [approx] = some
+/// rounds have no amount yet and count their rule's average (shown "~").
+class MonthHero extends Equatable {
+  const MonthHero({
+    this.expense = 0,
+    this.approx = false,
+    this.paid = 0,
+    this.income = 0,
+    this.saving = 0,
+    this.installment = 0,
+  });
+
+  factory MonthHero.fromJson(Object? json) {
+    if (json is! Map<String, dynamic>) return const MonthHero();
+    double n(String k) => (json[k] as num?)?.toDouble() ?? 0;
+    return MonthHero(
+      expense: n('expense'),
+      approx: json['expense_approx'] == true,
+      paid: n('expense_paid'),
+      income: n('income'),
+      saving: n('saving'),
+      installment: n('installment'),
+    );
+  }
+
+  final double expense;
+  final bool approx;
+  final double paid;
+  final double income;
+  final double saving;
+  final double installment;
+
+  double get left => (expense - paid).clamp(0, double.infinity);
+
+  @override
+  List<Object?> get props => [
+    expense,
+    approx,
+    paid,
+    income,
+    saving,
+    installment,
   ];
 }

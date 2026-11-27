@@ -3574,16 +3574,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringSortAmount => 'Largest amount';
 
   @override
-  String get recurringSortTooltip => 'Sort';
-
-  @override
   String get recurringFilterAllStatus => 'Any status';
 
   @override
   String get recurringFilterAllKinds => 'Any type';
-
-  @override
-  String get recurringMonthNoMatch => 'Nothing matches these filters';
 
   @override
   String get occurrenceShowLess => 'Show less';
@@ -3606,37 +3600,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringFieldKind => 'Type';
-
-  @override
-  String get recurringFieldDates => 'Pick dates';
-
-  @override
-  String get recurringSectionPeriod => 'Schedule';
-
-  @override
-  String get recurringHomeTabOverview => 'Overview';
-
-  @override
-  String get recurringHomeMonthPay => 'Paid out this month';
-
-  @override
-  String get recurringHomeMonthCount => 'This month';
-
-  @override
-  String recurringHomeItemCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count items',
-      one: '1 item',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String recurringHomeToday(String date) {
-    return 'Today $date';
-  }
 
   @override
   String recurringDayEmpty(String date) {
@@ -3796,20 +3759,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String recurMonthlyOnDay(int day) {
-    return 'Monthly on day $day';
-  }
-
-  @override
-  String get recurMonthlyLastDay => 'Monthly on the last day';
-
-  @override
-  String recurOnDay(int day) {
-    return 'day $day';
-  }
-
-  @override
-  String get recurLastDay => 'last day';
+  String get recurMonthlyLastDay => 'Every month end';
 
   @override
   String recurMonthlyNthWeekday(String ord, int nth, String weekday) {
@@ -3866,8 +3816,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Custom | $count dates',
-      one: 'Custom | 1 date',
+      other: 'Custom · $count dates',
+      one: 'Custom · 1 date',
       zero: 'Custom',
     );
     return '$_temp0';
@@ -3909,9 +3859,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set up repeating items like rent or internet. When the day comes, they wait in Pending.';
 
   @override
-  String get recurringNewTitle => 'New recurring';
-
-  @override
   String get recurringNotFound => 'Recurring not found';
 
   @override
@@ -3934,26 +3881,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringNameRequired => 'Enter a name';
-
-  @override
-  String get recurringAmountInvalid => 'Enter an amount above 0';
-
-  @override
-  String get recurringWalletRequired => 'Pick a wallet';
-
-  @override
-  String get recurringRepeatDatesTitle => 'Pick dates';
-
-  @override
-  String recurringRepeatDatesConfirm(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Pick $count days',
-      one: 'Pick 1 day',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get recurringEndNever => 'Never';
@@ -3984,13 +3911,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recurringDelete => 'Delete recurring';
-
-  @override
-  String get recurringArchiveTitle => 'Archive this recurring?';
-
-  @override
-  String get recurringArchiveBody =>
-      'It stops producing items and is hidden. You can restore it later.';
 
   @override
   String get recurringDeleteTitle => 'Delete this recurring?';
@@ -4059,23 +3979,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String notifRecurringAutoCreated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Recorded $count automatically',
-      one: 'Recorded 1 automatically',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String notifRecurringEnding(String name, int left) {
-    return '$name has $left items left — extend it?';
-  }
-
-  @override
-  String get recurSheetTitle => 'Custom repeat';
+  String get recurSheetTitle => 'Repeat';
 
   @override
   String get recurSheetEvery => 'Every';
@@ -4125,10 +4029,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recurSheetRepeatOn => 'Repeat on';
+  String get recurSheetRepeatOn => 'Days of the week · pick several';
 
   @override
-  String get recurSheetMonthlyOn => 'Monthly on';
+  String get recurSheetMonthlyOn => 'Days of the month · pick several';
 
   @override
   String get recurSheetEnds => 'Ends';
@@ -4140,7 +4044,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurSheetEndOnDate => 'On a date';
 
   @override
-  String get recurSheetEndAfter => 'After';
+  String get recurSheetEndAfter => 'After N times';
 
   @override
   String recurSheetOccurrences(int count) {
@@ -4157,29 +4061,457 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurSheetPeriodStart => 'Each period starts on';
 
   @override
-  String get recurSheetYearlyOn => 'Every year on';
+  String get recurSheetYearlyOn => 'Months · pick several';
 
   @override
-  String get recurSheetByDay => 'On a date';
+  String recurOnDays(String days) {
+    return 'on day $days';
+  }
 
   @override
-  String get recurSheetByWeekday => 'On a weekday';
+  String recurMonthlyOnDays(String days) {
+    return 'Monthly on day $days';
+  }
 
   @override
-  String recurSheetNth(String ord, int nth) {
-    String _temp0 = intl.Intl.selectLogic(ord, {
-      'first': '1st',
-      'second': '2nd',
-      'third': '3rd',
-      'other': '4th',
-    });
+  String recurNumberList(String list, String last) {
+    return '$list and $last';
+  }
+
+  @override
+  String recurDaysMore(int count) {
+    return '+$count';
+  }
+
+  @override
+  String get recurLastDayShort => 'month end';
+
+  @override
+  String recurYearlyOnMonths(String days, String months) {
+    return 'Every year on the $days of $months';
+  }
+
+  @override
+  String get recurSheetModeRepeat => 'Repeat';
+
+  @override
+  String get recurSheetModeDates => 'Pick dates';
+
+  @override
+  String get recurSheetMonthDaysHint =>
+      'A month without the 29th–31st uses its last day';
+
+  @override
+  String recurSheetNext(String dates) {
+    return 'Next $dates';
+  }
+
+  @override
+  String recurSheetLast(String date) {
+    return 'Last $date';
+  }
+
+  @override
+  String recurSheetTotal(String amount) {
+    return 'Total $amount';
+  }
+
+  @override
+  String recurSheetUntilCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '1 time',
+    );
     return '$_temp0';
   }
 
   @override
-  String recurSheetStartMoves(String date) {
-    return 'The start moves to $date';
+  String get recurSheetDatesHint =>
+      'Tap a day to add or remove it · move between months';
+
+  @override
+  String get recurSheetPickedDates => 'Picked dates';
+
+  @override
+  String get recurSheetDatesNoEnd => 'No end: it ends on the last picked date';
+
+  @override
+  String recurSheetDatesSpan(int count, String from, String to) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dates',
+      one: '1 date',
+    );
+    return '$_temp0 · $from → $to';
   }
+
+  @override
+  String ruleTitle(int n) {
+    return 'Rule $n';
+  }
+
+  @override
+  String get ruleRowAsk => 'Awaiting amount';
+
+  @override
+  String get ruleRowAuto => 'Auto';
+
+  @override
+  String get ruleRowManual => 'Confirm yourself';
+
+  @override
+  String ruleOfTotal(int n, int total) {
+    return 'rule $n of $total';
+  }
+
+  @override
+  String get recurringRulesTitle => 'Rules';
+
+  @override
+  String get recurringAddRule => 'Add rule';
+
+  @override
+  String get recurringRulesRequired => 'Add at least one rule';
+
+  @override
+  String get recurringFormNewCrumb => 'New';
+
+  @override
+  String get recurringFormTotalLabel => 'All rules';
+
+  @override
+  String get recurringFormTotalHint => 'Read only, from the rules';
+
+  @override
+  String get recurringTrackingHelper =>
+      'For tracking / filtering; no effect on rules';
+
+  @override
+  String get trackingBill => 'Bill';
+
+  @override
+  String get trackingSubscription => 'Subscription';
+
+  @override
+  String get trackingInstallment => 'Installment';
+
+  @override
+  String get trackingCreditCard => 'Credit card';
+
+  @override
+  String get trackingPersonDebt => 'Person debt';
+
+  @override
+  String get trackingIncome => 'Income';
+
+  @override
+  String get trackingSaving => 'Saving';
+
+  @override
+  String get trackingOther => 'Other';
+
+  @override
+  String get trackingAll => 'All';
+
+  @override
+  String recurringRulesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules',
+      one: '1 rule',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringHeroExpense =>
+      'This month\'s spending · no saving / installments';
+
+  @override
+  String recurringHeroPaid(String amount) {
+    return 'Paid $amount';
+  }
+
+  @override
+  String get recurringCalendarHint =>
+      'Tap a day for its rounds · yellow = something waits';
+
+  @override
+  String recurringRangeLabel(String from, String to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get recurringRangePay => 'Out';
+
+  @override
+  String get recurringRangeReceive => 'In';
+
+  @override
+  String get recurringRangeInstallSave => 'Installments / saving';
+
+  @override
+  String get recurringNeedsAction => 'Needs action';
+
+  @override
+  String get recurringRangeList => 'Rounds';
+
+  @override
+  String get recurringSectionSelf => 'Self-made';
+
+  @override
+  String get recurringSectionRelated => 'Linked to other pages';
+
+  @override
+  String get rulesBoxTitle => 'Automatic';
+
+  @override
+  String get rulesBoxAdd => 'Set up';
+
+  @override
+  String get rulesBoxEmpty => 'Nothing set up yet';
+
+  @override
+  String get rulesBoxSavingTitle => 'Automatic saving';
+
+  @override
+  String get rulesBoxSavingAdd => 'Set up saving';
+
+  @override
+  String get rulesBoxCardAdd => 'Set up the bill';
+
+  @override
+  String get rulesBoxCardPlanNote => 'Paid through the bill · no rule';
+
+  @override
+  String get rulesBoxPlanAdd => 'Add a payment rule';
+
+  @override
+  String get rulesBoxPlanEmpty =>
+      'No rule yet · tap \"pay this round\" when it is due';
+
+  @override
+  String rulesNewNameSaving(String name) {
+    return 'Save for $name';
+  }
+
+  @override
+  String rulesNewNameWallet(String name) {
+    return 'From $name';
+  }
+
+  @override
+  String rulesNewNamePerson(String name) {
+    return 'Pay $name';
+  }
+
+  @override
+  String rulesNewNameCard(String name) {
+    return 'Pay $name bill';
+  }
+
+  @override
+  String rulesNewNamePlan(String name) {
+    return '$name';
+  }
+
+  @override
+  String get debtPlanRecalcTitle => 'Recalculate the remaining rounds?';
+
+  @override
+  String get debtPlanRecalcBody =>
+      'The remaining rounds are worked out again from the real principal left, overwriting them (hand-edited ones too)';
+
+  @override
+  String get debtPlanRecalcYes => 'Recalculate';
+
+  @override
+  String get debtPlanRecalcNo => 'No';
+
+  @override
+  String get billActualTitle => 'Actual bill';
+
+  @override
+  String billRecorded(String amount) {
+    return 'Recorded $amount';
+  }
+
+  @override
+  String billDiffWarn(String amount) {
+    return '⚠ $amount off what was recorded';
+  }
+
+  @override
+  String get billDiffAsk => 'Book the difference as an expense on the card?';
+
+  @override
+  String get billDiffOther => 'Other';
+
+  @override
+  String get billDiffInterest => 'Interest';
+
+  @override
+  String get billDiffManual => 'Add it myself ›';
+
+  @override
+  String get billDiffNone => 'No';
+
+  @override
+  String get billPayLessOk =>
+      'You can pay less than the bill (e.g. the minimum); the rest stays as card debt';
+
+  @override
+  String billDiffSummary(
+    String diff,
+    String card,
+    String category,
+    String date,
+    String paid,
+  ) {
+    return 'Save = an expense of $diff on $card ($category, $date) + a transfer of $paid';
+  }
+
+  @override
+  String get ruleNewTitle => 'New rule';
+
+  @override
+  String get ruleStatusActive => 'Active';
+
+  @override
+  String get ruleStatusPaused => 'Paused';
+
+  @override
+  String get rulePausedBanner =>
+      'This rule is paused · no new rounds · recorded rounds stay';
+
+  @override
+  String get ruleInRecurring => 'In recurring';
+
+  @override
+  String get ruleInRecurringHint => 'A rule always sits under a recurring';
+
+  @override
+  String ruleInRecurringNew(String name) {
+    return '$name · new';
+  }
+
+  @override
+  String get ruleAmountPerRound => 'Per round';
+
+  @override
+  String get ruleAmountFixed => 'Fixed';
+
+  @override
+  String get ruleAmountAsk => 'Each round';
+
+  @override
+  String get ruleAmountAskValue => 'Typed on confirm';
+
+  @override
+  String get ruleAmountSchedule => 'Follows the plan';
+
+  @override
+  String ruleAmountFollow(int n) {
+    return 'Follows rule $n\'s latest round';
+  }
+
+  @override
+  String get ruleAmountFixedOnly => 'Fixed only';
+
+  @override
+  String rulePrefillHint(String amount) {
+    return 'Owed $amount';
+  }
+
+  @override
+  String get ruleSectionPeriod => 'Period';
+
+  @override
+  String ruleEndSummary(String date, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '1 time',
+    );
+    return 'Last $date · $_temp0';
+  }
+
+  @override
+  String ruleEndSummaryTotal(String date, int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '1 time',
+    );
+    return 'Last $date · $_temp0 · total $amount';
+  }
+
+  @override
+  String get ruleEndGoal => 'Until the goal';
+
+  @override
+  String get ruleEndDebt => 'Until paid off';
+
+  @override
+  String get ruleSectionDue => 'When a round is due';
+
+  @override
+  String get ruleNotify => 'Notify';
+
+  @override
+  String get ruleAutoAccept => 'Confirm by itself';
+
+  @override
+  String get ruleAutoAcceptAskOff =>
+      'Always off when the amount is typed each round';
+
+  @override
+  String get ruleDelete => 'Delete rule';
+
+  @override
+  String get ruleDeleteConfirm => 'Delete this rule? Recorded rounds stay';
+
+  @override
+  String get ruleTypeExpense => 'Expense';
+
+  @override
+  String get ruleTypeIncome => 'Income';
+
+  @override
+  String get ruleTypeTransfer => 'Transfer';
+
+  @override
+  String get ruleTypeSaving => 'Saving';
+
+  @override
+  String get ruleTypeDebt => 'Debt';
+
+  @override
+  String get ruleDebtRepay => 'Repay';
+
+  @override
+  String get ruleDebtRecord => 'Record a debt';
+
+  @override
+  String get ruleCounterparty => 'With';
+
+  @override
+  String get ruleIntoGoal => 'Into goal';
+
+  @override
+  String get ruleWalletRequired => 'Pick a wallet';
+
+  @override
+  String get rulePersonRequired => 'Pick a person';
+
+  @override
+  String get ruleAmountRequired => 'Enter an amount above 0';
 
   @override
   String get moreGroupPlan => 'Money plans';
@@ -5600,15 +5932,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifGroupRecurring => 'Recurring';
 
   @override
-  String get notifTypeRecurringDue => 'Recurring items are due';
-
-  @override
-  String get notifTypeRecurringEnding => 'A recurring is about to end';
-
-  @override
-  String get notifTypeRecurringAutoCreated => 'Recorded automatically';
-
-  @override
   String get settingsSectionApp => 'App';
 
   @override
@@ -5701,12 +6024,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifEmptyHidden => 'No hidden notifications';
 
   @override
-  String get notifActionExtend => 'Extend';
-
-  @override
-  String get notifActionLetEnd => 'Let it end';
-
-  @override
   String get notifActionOpenDue => 'Open ›';
 
   @override
@@ -5788,7 +6105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringPickerGroupRecurring => 'Recurring';
 
   @override
-  String get recurringPickerGroupReminders => 'Payment reminders';
+  String get recurringPickerGroupReminders => 'Amount asked each round';
 
   @override
   String get recurringPickerAwaitingAmount => 'Amount pending';
@@ -5844,7 +6161,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errRecurringLastLine =>
-      'A recurring item needs at least one line; delete the whole item instead';
+      'A recurring item needs at least one rule; delete the whole item instead';
 
   @override
   String get errInstallmentNeedsInstitution =>
@@ -5878,12 +6195,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringLinkSwapYes => 'Swap';
 
   @override
-  String get fpRecurringTabCalendar => 'Calendar';
-
-  @override
-  String get fpRecurringPausedGroup => 'Paused';
-
-  @override
   String get fpRecurringAwaitingAmount => 'No amount yet';
 
   @override
@@ -5900,13 +6211,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpRecurringKindSaving => 'Saving';
-
-  @override
-  String get recurringHomeMonthPayNoSaving =>
-      'Paid this month, savings not included';
-
-  @override
-  String get recurringHomeMonthSave => 'Saved this month';
 
   @override
   String get sgRecurringTitle => 'Recurring saves';
@@ -6010,19 +6314,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'It will not become a draft in pending. You can restore it later.';
 
   @override
-  String get fpRecurringAmountLabel => 'Amount / time';
-
-  @override
-  String get fpRecurringAmountOptional => 'Amount / time (optional)';
-
-  @override
   String get fpRecurringReminderHint =>
       'No amount needed. On the day, enter the real amount in the draft.';
-
-  @override
-  String fpRecurringCountValue(int n) {
-    return '$n payments';
-  }
 
   @override
   String get fpRecurringCountRequired =>
@@ -6033,25 +6326,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpRecurringFieldFromWallet => 'From wallet';
-
-  @override
-  String get fpRecurringArchiveConsequence =>
-      'Stops making new occurrences. Hidden, can be restored.';
-
-  @override
-  String get fpRecurringRestoreConsequence =>
-      'Active again, making occurrences';
-
-  @override
-  String get fpRecurringDeleteConsequence =>
-      'Deletes this recurring with its unsaved occurrences';
-
-  @override
-  String get fpRecurringDuplicate => 'Duplicate';
-
-  @override
-  String get fpRecurringDuplicateConsequence =>
-      'Creates the same recurring, starting today';
 
   @override
   String fpM5ContactDeleteDebts(int n) {
@@ -6176,13 +6450,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fpRecurringTapToRestore => 'Tap to undo the skip';
-
-  @override
-  String get fpRecurringAutoCreate => 'Record automatically on the day';
-
-  @override
-  String get fpRecurringAutoCreateHint =>
-      'On the day it\'s recorded for you, no confirm needed';
 
   @override
   String get fpM5bRecurringPerMonth => 'Per month';
@@ -6692,13 +6959,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtCloseAllHint => 'Label every open debt with this person paid';
 
   @override
-  String get fpRecurringAutoCreateNeedsWallet => 'Pick a wallet first';
-
-  @override
-  String get fpRecurringAutoCreateZeroWarn =>
-      'No fixed amount: on the day it records 0 for you to fix. Not a good fit for an amount that changes every time (e.g. electricity)';
-
-  @override
   String get txLinkDisconnect => 'Disconnect';
 
   @override
@@ -6862,10 +7122,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notifSetEventMemberRemovedHint =>
       'What I booked stays, just no longer connected';
-
-  @override
-  String get notifSetRecurringAutoCreatedHint =>
-      'Entries recorded for me on schedule';
 
   @override
   String get notifActionAddToBook => 'Add to my book';
@@ -7273,10 +7529,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Events: follows the Events switch of \"Someone edited a shared bill\"\nSplits: my copy always becomes a plain record';
 
   @override
-  String get notifSetRecurringDueHint => 'Payments to pay / receive today';
+  String get notifSetRecurringDueHint =>
+      'A rule\'s default (a rule with its own switch keeps it)';
 
   @override
-  String get notifSetRecurringEndingHint => 'The last payment is left';
+  String get notifSetRecurringDue => 'A round is due';
 
   @override
   String get settingsAutoTitle => 'Auto';
@@ -7602,10 +7859,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Delete this recurring item and every line | What it already recorded stays; its debts become general debts of the counterparty, the balance doesn\'t change';
 
   @override
-  String get fpRecurringPlanIncomplete =>
-      'Finish the plan: principal, number of installments and interest';
-
-  @override
   String get institutionPickTitle => 'Pick an institution';
 
   @override
@@ -7644,16 +7897,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringCounterpartyInstitution => 'Institution';
 
   @override
-  String get recurringSourceLabel => 'Paid from';
-
-  @override
-  String get recurringSourceWallet => 'Wallet';
-
-  @override
   String get recurringSourcePaidBy => 'Paid by someone';
-
-  @override
-  String get recurringPaidByPick => 'Who pays for me';
 
   @override
   String get recurringPlanSection => 'Installment plan';
@@ -7742,9 +7986,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringPlanBilledOnCard => 'billed on the card';
 
   @override
-  String get recurringPlanInCard => 'On card';
-
-  @override
   String recurringPlanPurchase(String date) {
     return 'Purchase | $date | full price on the card';
   }
@@ -7758,17 +7999,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String recurringPlanRateChip(String method, String rate) {
     return '$method $rate%/yr';
   }
-
-  @override
-  String get recurringPlanClose => 'Close the plan early';
-
-  @override
-  String get recurringPlanCloseConsequence =>
-      'Unticked installments are skipped; paid ones stay as history';
-
-  @override
-  String get recurringPlanCloseBody =>
-      'Close this plan early? Installments not ticked paid are skipped';
 
   @override
   String get recurringPlanClosed => 'Plan closed';
@@ -7809,49 +8039,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recurringInstallmentInterest => 'Interest';
 
   @override
-  String get recurringLinesSection => 'Lines';
-
-  @override
-  String get recurringLineAdd => 'Add line';
-
-  @override
   String recurringLinePaidBy(String name) {
     return '$name pays';
   }
 
   @override
-  String get recurringLineDeleteTitle => 'Delete this line?';
-
-  @override
-  String get recurringLineDeleteBody => 'What this line already recorded stays';
-
-  @override
   String recurringLinesCount(int n) {
     return '$n lines';
   }
-
-  @override
-  String get recurringRemindersSection => 'Reminders';
-
-  @override
-  String get recurringReminderAdd => 'Add reminder';
-
-  @override
-  String get recurringReminderAnchorDue => 'Before it\'s due';
-
-  @override
-  String get recurringReminderAnchorStart => 'Before it starts';
-
-  @override
-  String get recurringReminderAnchorEnd => 'Before it ends';
-
-  @override
-  String recurringReminderDays(int n) {
-    return '$n days';
-  }
-
-  @override
-  String get recurringReminderSameDay => 'Same day';
 
   @override
   String get debtsSectionInstitutions => 'Institutions';
@@ -7962,18 +8157,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Split it into installments on the card | the full price goes on the card now';
 
   @override
-  String notifRecurringDueSoon(String name, String amount, String when) {
-    return '$name takes $amount $when';
-  }
-
-  @override
-  String get notifTypeRecurringDueSoon => 'Coming up';
-
-  @override
-  String get notifSetRecurringDueSoonHint =>
-      'Reminders before a round is due, as each recurring item sets them';
-
-  @override
   String get debtsSectionCards => 'Cards / PayLater';
 
   @override
@@ -8004,12 +8187,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String debtCardDue(String date) {
     return 'Due $date';
   }
-
-  @override
-  String get debtCardBillReminder => 'Set a bill reminder';
-
-  @override
-  String get debtCardBillReminderSet => 'Bill reminder';
 
   @override
   String get debtPlanTitle => 'Installment plan';
@@ -8061,12 +8238,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debtPlanDeleteConfirm => 'Delete this plan? Its debt rows stay.';
-
-  @override
-  String get debtPlanReminder => 'Set a reminder';
-
-  @override
-  String get debtPlanReminderOpen => 'Its reminder';
 
   @override
   String get debtPlanClosed => 'Closed';
@@ -8133,17 +8304,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get debtPlanSave => 'Save';
 
   @override
-  String get recurringRepaysLabel => 'Pay back';
-
-  @override
-  String get recurringRepaysNone => 'No (a plain expense)';
-
-  @override
-  String recurringRepaysTo(String name) {
-    return 'Pay back $name';
-  }
-
-  @override
   String get errRecurringTypeFixed =>
       'A recurring item keeps its type. Delete it and create a new one.';
 
@@ -8192,10 +8352,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtPlanNoReminder =>
-      'No reminder yet: on the day, tap \"Pay this installment\" yourself';
-
-  @override
   String get debtPlanPrincipalTotal => 'Amount financed';
 
   @override
@@ -8237,9 +8393,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get debtCardPay => 'Paying the card';
-
-  @override
   String get debtCardNewPlan => 'New installment';
 
   @override
@@ -8279,12 +8432,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get recurringNotifyOnly => 'Notify only';
-
-  @override
-  String get recurringNotifyOnlyHint => 'Books nothing; only its alerts go out';
-
-  @override
   String get recurringTagAuto => 'auto';
 
   @override
@@ -8315,10 +8462,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quickInstallmentFirstDueAuto => 'Next statement';
-
-  @override
-  String get recurringHeroOwePeople => 'Owed to people';
-
-  @override
-  String get recurringHeroCardBills => 'Card bills';
 }

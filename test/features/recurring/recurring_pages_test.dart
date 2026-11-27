@@ -2,8 +2,9 @@ import 'package:chubi_pocket/features/recurring/domain/recurrence_rule.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_summary.dart';
-import 'package:chubi_pocket/features/recurring/presentation/recurring_draft.dart';
-import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
+import 'package:chubi_pocket/features/recurring/domain/rule_draft.dart';
+import 'package:chubi_pocket/features/recurring/presentation/pages/recurring_form_page.dart';
+import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/ui/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,7 +14,7 @@ void main() {
   test('the rule round-trips through the API shape', () {
     final r = Recurring.fromJson(prodRecurringJson());
     expect(r.rule.freq, RecurrenceFreq.monthly);
-    expect(r.rule.monthly?.day, 3);
+    expect(r.rule.monthDays, {3});
     expect(r.rule.end.count, 12);
     final json = recurrenceToJson(r.rule);
     expect(json['start_date'], '2026-10-03');
@@ -61,37 +62,35 @@ void main() {
     expect(RecurringItem.fromJson(prodItemJson(amount: null)).amount, isNull);
   });
 
-  test('the write: a bill sends its line with amount 0, no trial', () {
-    final draft = RecurringDraft.blank(
-      preset: const RecurringPreset(kind: RecurringKind.expense),
-    ).copyWith(name: 'Water', accountId: 'a1');
-    final body = draft.toWrite().toJson();
+  test('a bill rule asking its amount sends no amount', () {
+    final body = RuleDraft.blank(RecurringKind.expense)
+        .copyWith(
+          ask: true,
+          account: const AccountRef(id: 'a1', name: 'KBank'),
+        )
+        .toJson();
     expect(body['type'], 'expense');
-    expect(body.containsKey('trial_until'), isFalse);
-    final line = (body['reminders'] as List).single as Map<String, dynamic>;
-    expect(line['amount_mode'], 'ask');
-    expect(line['source'], {'account_id': 'a1'});
+    expect(body['amount_mode'], 'ask');
+    expect(body.containsKey('amount'), isFalse);
+    expect(body['source'], {'account_id': 'a1'});
   });
 
-  test('prefill: type / amount / category / name / account from the query', () {
-    final p = RecurringPreset.fromQuery({
+  test('quick create preset: type / amount / category / name / account / '
+      'pick from the query', () {
+    final p = RecurringFormPreset.fromQuery({
       'type': 'income',
       'amount': '30000',
       'category': 'c9',
       'name': 'Salary',
       'account': 'a1',
+      'pick': '1',
     });
-    final d = RecurringDraft.blank(preset: p);
-    // income → the รายรับ kind
-    expect(d.kind, RecurringKind.income);
-    expect(d.type, TransactionType.income);
-    expect(d.name, 'Salary');
-    expect(AmountInput.parse(d.amount), 30000);
-    final body = d.toWrite().toJson();
-    expect(body['category_id'], 'c9');
-    expect(((body['reminders'] as List).single as Map)['source'], {
-      'account_id': 'a1',
-    });
-    expect(body['type'], 'income');
+    expect(RecurringKind.fromJson(p.type), RecurringKind.income);
+    expect(p.amount, 30000);
+    expect(p.categoryId, 'c9');
+    expect(p.name, 'Salary');
+    expect(p.accountId, 'a1');
+    expect(p.pick, isTrue, reason: 'the picker picks the new one');
+    expect(RecurringFormPreset.fromQuery(const {}).pick, isFalse);
   });
 }

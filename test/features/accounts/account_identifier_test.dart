@@ -145,7 +145,10 @@ void main() {
     expect(wallet({'auto_save': true}).autoSave, isTrue);
     expect(wallet({'auto_save': true}).copyWith(name: 'x').autoSave, isTrue);
     // The switch has its own call: a wallet edit never carries it.
-    expect(wallet({'auto_save': true}).toUpdateJson().containsKey('auto_save'), isFalse);
+    expect(
+      wallet({'auto_save': true}).toUpdateJson().containsKey('auto_save'),
+      isFalse,
+    );
   });
 
   test('User reads fee_category_id from preferences', () {

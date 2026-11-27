@@ -38,6 +38,7 @@ class _Repo extends Fake implements NotificationsRepository {
   final bool fail;
   var settings = NotificationSettings.fromJson(_settingsJson());
   final puts = <Set<String>?>[];
+  final defaults = <(bool?, bool?)>[];
 
   @override
   Future<NotificationSettings> getSettings() async => settings;
@@ -48,14 +49,26 @@ class _Repo extends Fake implements NotificationsRepository {
     bool? autoSyncEvents,
     bool? autoSyncDebts,
     bool? autoAcceptRepayments,
+    bool? recurringNotifyDefault,
+    bool? recurringAutoAcceptDefault,
     String? onSplitRemoved,
   }) async {
-    puts.add(mutedTypes);
+    if (mutedTypes == null) {
+      defaults.add((recurringNotifyDefault, recurringAutoAcceptDefault));
+    } else {
+      puts.add(mutedTypes);
+    }
     if (fail) {
       throw const ApiException(code: 'INTERNAL', message: 'boom');
     }
+    if (mutedTypes == null) {
+      return settings = settings.copyWith(
+        recurringNotifyDefault: recurringNotifyDefault,
+        recurringAutoAcceptDefault: recurringAutoAcceptDefault,
+      );
+    }
     return settings = NotificationSettings.fromJson(
-      _settingsJson(muted: mutedTypes!.toList()),
+      _settingsJson(muted: mutedTypes.toList()),
     );
   }
 }
@@ -88,15 +101,15 @@ void main() {
       final cubit = NotificationSettingsCubit(repository: repo);
       await cubit.load();
 
-      await cubit.setOn('recurring_due', false);
-      expect(repo.puts.single, {'bill_changed', 'recurring_due'});
+      await cubit.setOn('debt_disconnected', false);
+      expect(repo.puts.single, {'bill_changed', 'debt_disconnected'});
       expect(
-        cubit.state.settings!.ofGroup(NotificationGroup.recurring).single.on,
+        cubit.state.settings!.ofGroup(NotificationGroup.debt).single.on,
         isFalse,
       );
 
       await cubit.setOn('bill_changed', true);
-      expect(repo.puts.last, {'recurring_due'});
+      expect(repo.puts.last, {'debt_disconnected'});
 
       await cubit.setOn('bill_changed', true);
       expect(repo.puts, hasLength(2), reason: 'already on: no call');
@@ -109,14 +122,37 @@ void main() {
     final cubit = NotificationSettingsCubit(repository: repo);
     await cubit.load();
 
-    await cubit.setOn('recurring_due', false);
+    await cubit.setOn('debt_disconnected', false);
     expect(repo.puts, hasLength(1));
     expect(cubit.state.status, SettingsStatus.error);
     expect(cubit.state.error?.code, 'INTERNAL');
     expect(
-      cubit.state.settings!.ofGroup(NotificationGroup.recurring).single.on,
+      cubit.state.settings!.ofGroup(NotificationGroup.debt).single.on,
       isTrue,
     );
+    await cubit.close();
+  });
+
+  test('รายการประจำ › ถึงงวด: its แจ้ง / อัตโนมัติ are the rules\' defaults, '
+      'not a mute', () async {
+    final repo = _Repo(fail: false);
+    final cubit = NotificationSettingsCubit(repository: repo);
+    await cubit.load();
+    final s0 = cubit.state.settings!;
+    expect(s0.recurringNotifyDefault, isTrue);
+    expect(s0.recurringAutoAcceptDefault, isFalse);
+
+    await cubit.setRecurringDefaults(notify: false);
+    await cubit.setRecurringDefaults(autoAccept: true);
+    expect(repo.defaults, [(false, null), (null, true)]);
+    expect(repo.puts, isEmpty, reason: 'never the muted list');
+    final s = cubit.state.settings!;
+    expect(s.recurringNotifyDefault, isFalse);
+    expect(s.recurringAutoAcceptDefault, isTrue);
+    expect(s.ofGroup(NotificationGroup.recurring).single.on, isFalse);
+
+    await cubit.setRecurringDefaults(notify: false);
+    expect(repo.defaults, hasLength(2), reason: 'same value: no call');
     await cubit.close();
   });
 }

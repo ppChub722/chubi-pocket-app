@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,11 +7,22 @@ import 'package:intl/intl.dart';
 
 import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
-import '../../../../app/shell/tab_nav.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
-import '../../../recurring/domain/recurring.dart' show PlanInterestMethod;
+import '../../../recurring/domain/recurring.dart'
+    show PlanInterestMethod, RecurringKind;
+import '../../../recurring/data/recurring_repository.dart';
+import '../../../recurring/domain/recurring_item.dart';
+import '../../../recurring/domain/rule_draft.dart';
+import '../../../recurring/domain/rule_group.dart';
+import '../../../recurring/presentation/due_boxes.dart';
+import '../../../recurring/presentation/occurrence_actions.dart'
+    show openOccurrenceSheet;
+import '../../../recurring/presentation/widgets/rule_due_box.dart'
+    show dueOfRules;
+import '../../../recurring/presentation/widgets/rules_box.dart';
 import '../../../recurring/domain/recurring_page.dart';
 import '../../data/personal_debts_repository.dart';
 import '../../domain/debt_plans.dart';
@@ -34,6 +47,10 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
   bool _allUpcoming = false;
   bool _allPast = false;
 
+  /// ต้องทำ: the due rounds of the rules that pay this plan (mock PlanNew);
+  /// with none, the next installment card and its buttons (CarNoRule).
+  List<RecurringItem> _due = const [];
+
   PersonalDebtsRepository get _repo => context.read<PersonalDebtsRepository>();
 
   @override
@@ -43,6 +60,7 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
   }
 
   Future<void> _load() async {
+    unawaited(_loadDue());
     try {
       final p = await _repo.plan(widget.id);
       if (mounted) {
@@ -55,6 +73,20 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
       if (mounted) setState(() => _error = e);
     }
   }
+
+  Future<void> _loadDue() async {
+    try {
+      final due = await dueOfRules(
+        RecurringRepository.of(context),
+        RuleFilter(debtPlanId: widget.id),
+      );
+      if (mounted) setState(() => _due = due);
+    } on ApiException {
+      // the next card stays: จ่ายงวดนี้ by hand still works
+    }
+  }
+
+  void _onDueChanged(ItemWriteResult _) => unawaited(_load());
 
   Future<void> _run(Future<DebtPlan?> Function() op) async {
     setState(() => _busy = true);
@@ -78,32 +110,6 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
     if (!mounted || r == null) return;
     final acc = r is AccountPicked ? r.account.id : null;
     await _run(() => _repo.payInstallment(widget.id, accountId: acc));
-  }
-
-  /// ตั้ง reminder: a debt item paying this plan from the wallet picked,
-  /// monthly from the next installment for what is left.
-  Future<void> _addReminder(DebtPlan p) async {
-    final l = AppLocalizations.of(context)!;
-    final next = p.plan.next;
-    if (next == null) return;
-    final r = await AccountPicker.one(context, title: l.debtPlanPayFrom);
-    if (!mounted || r is! AccountPicked) return;
-    setState(() => _busy = true);
-    try {
-      final id = await _repo.createPlanReminder(
-        planId: p.id,
-        name: p.name,
-        fromAccountId: r.account.id,
-        first: next.dueDate,
-        left: p.plan.leftCount,
-      );
-      await _load();
-      if (mounted) openPage(context, '/recurring/$id');
-    } catch (e) {
-      if (mounted) showErrorSnackBar(context, e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 
   /// แก้งวดนี้: its due date, amount and interest (principal = the rest).
@@ -168,6 +174,18 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
     amount.dispose();
     interest.dispose();
     if (ok != true || !mounted) return;
+    // owner 2026-11-27: never recalculated by itself; asked, and it overwrites
+    final moneyChanged = a != i.amount || it != i.interest;
+    final recalc =
+        moneyChanged &&
+        await showConfirmDialog(
+          context,
+          title: l.debtPlanRecalcTitle,
+          message: l.debtPlanRecalcBody,
+          confirmLabel: l.debtPlanRecalcYes,
+          cancelLabel: l.debtPlanRecalcNo,
+        );
+    if (!mounted) return;
     await _run(
       () => _repo.editInstallment(
         widget.id,
@@ -175,6 +193,7 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
         dueDate: due,
         amount: a,
         interest: it,
+        recalcRest: recalc,
       ),
     );
   }
@@ -341,7 +360,19 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
           ),
         ],
       ),
-      if (next != null && !v.closed) ...[
+      if (_due.isNotEmpty && !v.closed && !p.isCard) ...[
+        const SizedBox(height: PpForgeSpacing.md),
+        DueBoxes(
+          key: const ValueKey('debtPlanDue'),
+          items: _due,
+          showDate: false,
+          titleOf: (i) => i.recurring?.name ?? i.title,
+          leading: (i) => DateTile(date: i.date),
+          onChanged: _onDueChanged,
+          onOpen: (i) =>
+              openOccurrenceSheet(context, i, onChanged: _onDueChanged),
+        ),
+      ] else if (next != null && !v.closed) ...[
         const SizedBox(height: PpForgeSpacing.md),
         SectionCard(
           key: const ValueKey('debtPlanNextCard'),
@@ -398,29 +429,30 @@ class _DebtPlanPageState extends State<DebtPlanPage> {
           ],
         ),
       ],
-      if (!p.isCard &&
-          (p.recurringId != null || (!v.closed && next != null))) ...[
-        const SizedBox(height: PpForgeSpacing.md),
+      // Rules: the rules that pay this plan (spec §2.2, §3; mock PlanNew /
+      // CarNoRule); a card plan has none (its card's bill pays it)
+      const SizedBox(height: PpForgeSpacing.md),
+      if (p.isCard)
         SectionCard(
-          description: p.recurringId == null ? l.debtPlanNoReminder : null,
-          children: [
-            if (p.recurringId != null)
-              InfoRow(
-                label: l.debtPlanReminderOpen,
-                value: '✓',
-                showChevron: true,
-                onTap: () => openPage(context, '/recurring/${p.recurringId}'),
-              )
-            else
-              InfoRow(
-                key: const ValueKey('debtPlanReminderAdd'),
-                label: '+ ${l.debtPlanReminder}',
-                showChevron: true,
-                onTap: _busy ? null : () => _addReminder(p),
-              ),
-          ],
+          key: const ValueKey('planCardNote'),
+          description: l.rulesBoxCardPlanNote,
+          children: const [],
+        )
+      else if (!v.closed)
+        RulesBox(
+          key: ValueKey('planRules:${widget.id}'),
+          filter: RuleFilter(debtPlanId: widget.id),
+          preset: RuleDraft.blank(
+            RecurringKind.debt,
+            start: next?.dueDate,
+          ).copyWith(planId: widget.id, planName: p.name),
+          newName: l.rulesNewNamePlan(p.name),
+          title: l.recurringRulesTitle,
+          addLabel: l.rulesBoxPlanAdd,
+          emptyHint: l.rulesBoxPlanEmpty,
+          trackingType: 'installment',
+          onChanged: () => unawaited(_load()),
         ),
-      ],
       if (past.isNotEmpty) ...[
         const SizedBox(height: PpForgeSpacing.md),
         SectionCard(

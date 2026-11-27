@@ -274,8 +274,8 @@ class BudgetItem extends Equatable {
       recurringSeq: (recurring?['seq'] as num?)?.toInt(),
       recurringTotal: (recurring?['total'] as num?)?.toInt(),
       ruleId:
-          (recurring?['recurring_reminder_id'] ??
-                  json['recurring_reminder_id'] ??
+          (recurring?['recurring_rule_id'] ??
+                  json['recurring_rule_id'] ??
                   json['rule_id'])
               as String?,
       slot: json['slot'] as String?,

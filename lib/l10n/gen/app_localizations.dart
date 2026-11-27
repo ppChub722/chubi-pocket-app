@@ -6283,12 +6283,6 @@ abstract class AppLocalizations {
   /// **'Largest amount'**
   String get recurringSortAmount;
 
-  /// No description provided for @recurringSortTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort'**
-  String get recurringSortTooltip;
-
   /// No description provided for @recurringFilterAllStatus.
   ///
   /// In en, this message translates to:
@@ -6300,12 +6294,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Any type'**
   String get recurringFilterAllKinds;
-
-  /// No description provided for @recurringMonthNoMatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing matches these filters'**
-  String get recurringMonthNoMatch;
 
   /// No description provided for @occurrenceShowLess.
   ///
@@ -6348,48 +6336,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Type'**
   String get recurringFieldKind;
-
-  /// No description provided for @recurringFieldDates.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick dates'**
-  String get recurringFieldDates;
-
-  /// No description provided for @recurringSectionPeriod.
-  ///
-  /// In en, this message translates to:
-  /// **'Schedule'**
-  String get recurringSectionPeriod;
-
-  /// No description provided for @recurringHomeTabOverview.
-  ///
-  /// In en, this message translates to:
-  /// **'Overview'**
-  String get recurringHomeTabOverview;
-
-  /// No description provided for @recurringHomeMonthPay.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid out this month'**
-  String get recurringHomeMonthPay;
-
-  /// No description provided for @recurringHomeMonthCount.
-  ///
-  /// In en, this message translates to:
-  /// **'This month'**
-  String get recurringHomeMonthCount;
-
-  /// No description provided for @recurringHomeItemCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, one{1 item} other{{count} items}}'**
-  String recurringHomeItemCount(int count);
-
-  /// No description provided for @recurringHomeToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Today {date}'**
-  String recurringHomeToday(String date);
 
   /// No description provided for @recurringDayEmpty.
   ///
@@ -6589,29 +6535,11 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{Every month} other{Every {count} months}}'**
   String recurEveryMonths(int count);
 
-  /// No description provided for @recurMonthlyOnDay.
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly on day {day}'**
-  String recurMonthlyOnDay(int day);
-
   /// No description provided for @recurMonthlyLastDay.
   ///
   /// In en, this message translates to:
-  /// **'Monthly on the last day'**
+  /// **'Every month end'**
   String get recurMonthlyLastDay;
-
-  /// No description provided for @recurOnDay.
-  ///
-  /// In en, this message translates to:
-  /// **'day {day}'**
-  String recurOnDay(int day);
-
-  /// No description provided for @recurLastDay.
-  ///
-  /// In en, this message translates to:
-  /// **'last day'**
-  String get recurLastDay;
 
   /// No description provided for @recurMonthlyNthWeekday.
   ///
@@ -6652,7 +6580,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurCustomDates.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =0{Custom} =1{Custom | 1 date} other{Custom | {count} dates}}'**
+  /// **'{count, plural, =0{Custom} =1{Custom · 1 date} other{Custom · {count} dates}}'**
   String recurCustomDates(int count);
 
   /// No description provided for @recurEndCount.
@@ -6703,12 +6631,6 @@ abstract class AppLocalizations {
   /// **'Set up repeating items like rent or internet. When the day comes, they wait in Pending.'**
   String get recurringEmptyMessage;
 
-  /// No description provided for @recurringNewTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'New recurring'**
-  String get recurringNewTitle;
-
   /// No description provided for @recurringNotFound.
   ///
   /// In en, this message translates to:
@@ -6756,30 +6678,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a name'**
   String get recurringNameRequired;
-
-  /// No description provided for @recurringAmountInvalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter an amount above 0'**
-  String get recurringAmountInvalid;
-
-  /// No description provided for @recurringWalletRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a wallet'**
-  String get recurringWalletRequired;
-
-  /// No description provided for @recurringRepeatDatesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick dates'**
-  String get recurringRepeatDatesTitle;
-
-  /// No description provided for @recurringRepeatDatesConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Pick 1 day} other{Pick {count} days}}'**
-  String recurringRepeatDatesConfirm(int count);
 
   /// No description provided for @recurringEndNever.
   ///
@@ -6840,18 +6738,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete recurring'**
   String get recurringDelete;
-
-  /// No description provided for @recurringArchiveTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Archive this recurring?'**
-  String get recurringArchiveTitle;
-
-  /// No description provided for @recurringArchiveBody.
-  ///
-  /// In en, this message translates to:
-  /// **'It stops producing items and is hidden. You can restore it later.'**
-  String get recurringArchiveBody;
 
   /// No description provided for @recurringDeleteTitle.
   ///
@@ -6931,22 +6817,10 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 recurring payment is due} other{{count} recurring payments are due}}'**
   String notifRecurringDue(int count);
 
-  /// No description provided for @notifRecurringAutoCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Recorded 1 automatically} other{Recorded {count} automatically}}'**
-  String notifRecurringAutoCreated(int count);
-
-  /// No description provided for @notifRecurringEnding.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} has {left} items left — extend it?'**
-  String notifRecurringEnding(String name, int left);
-
   /// No description provided for @recurSheetTitle.
   ///
   /// In en, this message translates to:
-  /// **'Custom repeat'**
+  /// **'Repeat'**
   String get recurSheetTitle;
 
   /// No description provided for @recurSheetEvery.
@@ -6982,13 +6856,13 @@ abstract class AppLocalizations {
   /// No description provided for @recurSheetRepeatOn.
   ///
   /// In en, this message translates to:
-  /// **'Repeat on'**
+  /// **'Days of the week · pick several'**
   String get recurSheetRepeatOn;
 
   /// No description provided for @recurSheetMonthlyOn.
   ///
   /// In en, this message translates to:
-  /// **'Monthly on'**
+  /// **'Days of the month · pick several'**
   String get recurSheetMonthlyOn;
 
   /// No description provided for @recurSheetEnds.
@@ -7012,7 +6886,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurSheetEndAfter.
   ///
   /// In en, this message translates to:
-  /// **'After'**
+  /// **'After N times'**
   String get recurSheetEndAfter;
 
   /// No description provided for @recurSheetOccurrences.
@@ -7030,32 +6904,710 @@ abstract class AppLocalizations {
   /// No description provided for @recurSheetYearlyOn.
   ///
   /// In en, this message translates to:
-  /// **'Every year on'**
+  /// **'Months · pick several'**
   String get recurSheetYearlyOn;
 
-  /// No description provided for @recurSheetByDay.
+  /// No description provided for @recurOnDays.
   ///
   /// In en, this message translates to:
-  /// **'On a date'**
-  String get recurSheetByDay;
+  /// **'on day {days}'**
+  String recurOnDays(String days);
 
-  /// No description provided for @recurSheetByWeekday.
+  /// No description provided for @recurMonthlyOnDays.
   ///
   /// In en, this message translates to:
-  /// **'On a weekday'**
-  String get recurSheetByWeekday;
+  /// **'Monthly on day {days}'**
+  String recurMonthlyOnDays(String days);
 
-  /// No description provided for @recurSheetNth.
+  /// No description provided for @recurNumberList.
   ///
   /// In en, this message translates to:
-  /// **'{ord, select, first{1st} second{2nd} third{3rd} other{4th}}'**
-  String recurSheetNth(String ord, int nth);
+  /// **'{list} and {last}'**
+  String recurNumberList(String list, String last);
 
-  /// No description provided for @recurSheetStartMoves.
+  /// No description provided for @recurDaysMore.
   ///
   /// In en, this message translates to:
-  /// **'The start moves to {date}'**
-  String recurSheetStartMoves(String date);
+  /// **'+{count}'**
+  String recurDaysMore(int count);
+
+  /// No description provided for @recurLastDayShort.
+  ///
+  /// In en, this message translates to:
+  /// **'month end'**
+  String get recurLastDayShort;
+
+  /// No description provided for @recurYearlyOnMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Every year on the {days} of {months}'**
+  String recurYearlyOnMonths(String days, String months);
+
+  /// No description provided for @recurSheetModeRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get recurSheetModeRepeat;
+
+  /// No description provided for @recurSheetModeDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick dates'**
+  String get recurSheetModeDates;
+
+  /// No description provided for @recurSheetMonthDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A month without the 29th–31st uses its last day'**
+  String get recurSheetMonthDaysHint;
+
+  /// No description provided for @recurSheetNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next {dates}'**
+  String recurSheetNext(String dates);
+
+  /// No description provided for @recurSheetLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {date}'**
+  String recurSheetLast(String date);
+
+  /// No description provided for @recurSheetTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {amount}'**
+  String recurSheetTotal(String amount);
+
+  /// No description provided for @recurSheetUntilCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 time} other{{count} times}}'**
+  String recurSheetUntilCount(int count);
+
+  /// No description provided for @recurSheetDatesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a day to add or remove it · move between months'**
+  String get recurSheetDatesHint;
+
+  /// No description provided for @recurSheetPickedDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked dates'**
+  String get recurSheetPickedDates;
+
+  /// No description provided for @recurSheetDatesNoEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'No end: it ends on the last picked date'**
+  String get recurSheetDatesNoEnd;
+
+  /// No description provided for @recurSheetDatesSpan.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 date} other{{count} dates}} · {from} → {to}'**
+  String recurSheetDatesSpan(int count, String from, String to);
+
+  /// No description provided for @ruleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule {n}'**
+  String ruleTitle(int n);
+
+  /// No description provided for @ruleRowAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting amount'**
+  String get ruleRowAsk;
+
+  /// No description provided for @ruleRowAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get ruleRowAuto;
+
+  /// No description provided for @ruleRowManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm yourself'**
+  String get ruleRowManual;
+
+  /// No description provided for @ruleOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'rule {n} of {total}'**
+  String ruleOfTotal(int n, int total);
+
+  /// No description provided for @recurringRulesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules'**
+  String get recurringRulesTitle;
+
+  /// No description provided for @recurringAddRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get recurringAddRule;
+
+  /// No description provided for @recurringRulesRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one rule'**
+  String get recurringRulesRequired;
+
+  /// No description provided for @recurringFormNewCrumb.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get recurringFormNewCrumb;
+
+  /// No description provided for @recurringFormTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All rules'**
+  String get recurringFormTotalLabel;
+
+  /// No description provided for @recurringFormTotalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only, from the rules'**
+  String get recurringFormTotalHint;
+
+  /// No description provided for @recurringTrackingHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'For tracking / filtering; no effect on rules'**
+  String get recurringTrackingHelper;
+
+  /// No description provided for @trackingBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill'**
+  String get trackingBill;
+
+  /// No description provided for @trackingSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get trackingSubscription;
+
+  /// No description provided for @trackingInstallment.
+  ///
+  /// In en, this message translates to:
+  /// **'Installment'**
+  String get trackingInstallment;
+
+  /// No description provided for @trackingCreditCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Credit card'**
+  String get trackingCreditCard;
+
+  /// No description provided for @trackingPersonDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Person debt'**
+  String get trackingPersonDebt;
+
+  /// No description provided for @trackingIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get trackingIncome;
+
+  /// No description provided for @trackingSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get trackingSaving;
+
+  /// No description provided for @trackingOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get trackingOther;
+
+  /// No description provided for @trackingAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get trackingAll;
+
+  /// No description provided for @recurringRulesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 rule} other{{count} rules}}'**
+  String recurringRulesCount(int count);
+
+  /// No description provided for @recurringHeroExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s spending · no saving / installments'**
+  String get recurringHeroExpense;
+
+  /// No description provided for @recurringHeroPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid {amount}'**
+  String recurringHeroPaid(String amount);
+
+  /// No description provided for @recurringCalendarHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a day for its rounds · yellow = something waits'**
+  String get recurringCalendarHint;
+
+  /// No description provided for @recurringRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} – {to}'**
+  String recurringRangeLabel(String from, String to);
+
+  /// No description provided for @recurringRangePay.
+  ///
+  /// In en, this message translates to:
+  /// **'Out'**
+  String get recurringRangePay;
+
+  /// No description provided for @recurringRangeReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'In'**
+  String get recurringRangeReceive;
+
+  /// No description provided for @recurringRangeInstallSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Installments / saving'**
+  String get recurringRangeInstallSave;
+
+  /// No description provided for @recurringNeedsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs action'**
+  String get recurringNeedsAction;
+
+  /// No description provided for @recurringRangeList.
+  ///
+  /// In en, this message translates to:
+  /// **'Rounds'**
+  String get recurringRangeList;
+
+  /// No description provided for @recurringSectionSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-made'**
+  String get recurringSectionSelf;
+
+  /// No description provided for @recurringSectionRelated.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to other pages'**
+  String get recurringSectionRelated;
+
+  /// No description provided for @rulesBoxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get rulesBoxTitle;
+
+  /// No description provided for @rulesBoxAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up'**
+  String get rulesBoxAdd;
+
+  /// No description provided for @rulesBoxEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing set up yet'**
+  String get rulesBoxEmpty;
+
+  /// No description provided for @rulesBoxSavingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic saving'**
+  String get rulesBoxSavingTitle;
+
+  /// No description provided for @rulesBoxSavingAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up saving'**
+  String get rulesBoxSavingAdd;
+
+  /// No description provided for @rulesBoxCardAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up the bill'**
+  String get rulesBoxCardAdd;
+
+  /// No description provided for @rulesBoxCardPlanNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid through the bill · no rule'**
+  String get rulesBoxCardPlanNote;
+
+  /// No description provided for @rulesBoxPlanAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a payment rule'**
+  String get rulesBoxPlanAdd;
+
+  /// No description provided for @rulesBoxPlanEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No rule yet · tap \"pay this round\" when it is due'**
+  String get rulesBoxPlanEmpty;
+
+  /// No description provided for @rulesNewNameSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Save for {name}'**
+  String rulesNewNameSaving(String name);
+
+  /// No description provided for @rulesNewNameWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'From {name}'**
+  String rulesNewNameWallet(String name);
+
+  /// No description provided for @rulesNewNamePerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {name}'**
+  String rulesNewNamePerson(String name);
+
+  /// No description provided for @rulesNewNameCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay {name} bill'**
+  String rulesNewNameCard(String name);
+
+  /// No description provided for @rulesNewNamePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}'**
+  String rulesNewNamePlan(String name);
+
+  /// No description provided for @debtPlanRecalcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate the remaining rounds?'**
+  String get debtPlanRecalcTitle;
+
+  /// No description provided for @debtPlanRecalcBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The remaining rounds are worked out again from the real principal left, overwriting them (hand-edited ones too)'**
+  String get debtPlanRecalcBody;
+
+  /// No description provided for @debtPlanRecalcYes.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate'**
+  String get debtPlanRecalcYes;
+
+  /// No description provided for @debtPlanRecalcNo.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get debtPlanRecalcNo;
+
+  /// No description provided for @billActualTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual bill'**
+  String get billActualTitle;
+
+  /// No description provided for @billRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded {amount}'**
+  String billRecorded(String amount);
+
+  /// No description provided for @billDiffWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠ {amount} off what was recorded'**
+  String billDiffWarn(String amount);
+
+  /// No description provided for @billDiffAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Book the difference as an expense on the card?'**
+  String get billDiffAsk;
+
+  /// No description provided for @billDiffOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get billDiffOther;
+
+  /// No description provided for @billDiffInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get billDiffInterest;
+
+  /// No description provided for @billDiffManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Add it myself ›'**
+  String get billDiffManual;
+
+  /// No description provided for @billDiffNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get billDiffNone;
+
+  /// No description provided for @billPayLessOk.
+  ///
+  /// In en, this message translates to:
+  /// **'You can pay less than the bill (e.g. the minimum); the rest stays as card debt'**
+  String get billPayLessOk;
+
+  /// No description provided for @billDiffSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Save = an expense of {diff} on {card} ({category}, {date}) + a transfer of {paid}'**
+  String billDiffSummary(
+    String diff,
+    String card,
+    String category,
+    String date,
+    String paid,
+  );
+
+  /// No description provided for @ruleNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New rule'**
+  String get ruleNewTitle;
+
+  /// No description provided for @ruleStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get ruleStatusActive;
+
+  /// No description provided for @ruleStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get ruleStatusPaused;
+
+  /// No description provided for @rulePausedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'This rule is paused · no new rounds · recorded rounds stay'**
+  String get rulePausedBanner;
+
+  /// No description provided for @ruleInRecurring.
+  ///
+  /// In en, this message translates to:
+  /// **'In recurring'**
+  String get ruleInRecurring;
+
+  /// No description provided for @ruleInRecurringHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A rule always sits under a recurring'**
+  String get ruleInRecurringHint;
+
+  /// No description provided for @ruleInRecurringNew.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} · new'**
+  String ruleInRecurringNew(String name);
+
+  /// No description provided for @ruleAmountPerRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Per round'**
+  String get ruleAmountPerRound;
+
+  /// No description provided for @ruleAmountFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed'**
+  String get ruleAmountFixed;
+
+  /// No description provided for @ruleAmountAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Each round'**
+  String get ruleAmountAsk;
+
+  /// No description provided for @ruleAmountAskValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed on confirm'**
+  String get ruleAmountAskValue;
+
+  /// No description provided for @ruleAmountSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows the plan'**
+  String get ruleAmountSchedule;
+
+  /// No description provided for @ruleAmountFollow.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows rule {n}\'s latest round'**
+  String ruleAmountFollow(int n);
+
+  /// No description provided for @ruleAmountFixedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed only'**
+  String get ruleAmountFixedOnly;
+
+  /// No description provided for @rulePrefillHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Owed {amount}'**
+  String rulePrefillHint(String amount);
+
+  /// No description provided for @ruleSectionPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get ruleSectionPeriod;
+
+  /// No description provided for @ruleEndSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {date} · {count, plural, =1{1 time} other{{count} times}}'**
+  String ruleEndSummary(String date, int count);
+
+  /// No description provided for @ruleEndSummaryTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {date} · {count, plural, =1{1 time} other{{count} times}} · total {amount}'**
+  String ruleEndSummaryTotal(String date, int count, String amount);
+
+  /// No description provided for @ruleEndGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Until the goal'**
+  String get ruleEndGoal;
+
+  /// No description provided for @ruleEndDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Until paid off'**
+  String get ruleEndDebt;
+
+  /// No description provided for @ruleSectionDue.
+  ///
+  /// In en, this message translates to:
+  /// **'When a round is due'**
+  String get ruleSectionDue;
+
+  /// No description provided for @ruleNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify'**
+  String get ruleNotify;
+
+  /// No description provided for @ruleAutoAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm by itself'**
+  String get ruleAutoAccept;
+
+  /// No description provided for @ruleAutoAcceptAskOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Always off when the amount is typed each round'**
+  String get ruleAutoAcceptAskOff;
+
+  /// No description provided for @ruleDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete rule'**
+  String get ruleDelete;
+
+  /// No description provided for @ruleDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this rule? Recorded rounds stay'**
+  String get ruleDeleteConfirm;
+
+  /// No description provided for @ruleTypeExpense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get ruleTypeExpense;
+
+  /// No description provided for @ruleTypeIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get ruleTypeIncome;
+
+  /// No description provided for @ruleTypeTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer'**
+  String get ruleTypeTransfer;
+
+  /// No description provided for @ruleTypeSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get ruleTypeSaving;
+
+  /// No description provided for @ruleTypeDebt.
+  ///
+  /// In en, this message translates to:
+  /// **'Debt'**
+  String get ruleTypeDebt;
+
+  /// No description provided for @ruleDebtRepay.
+  ///
+  /// In en, this message translates to:
+  /// **'Repay'**
+  String get ruleDebtRepay;
+
+  /// No description provided for @ruleDebtRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a debt'**
+  String get ruleDebtRecord;
+
+  /// No description provided for @ruleCounterparty.
+  ///
+  /// In en, this message translates to:
+  /// **'With'**
+  String get ruleCounterparty;
+
+  /// No description provided for @ruleIntoGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Into goal'**
+  String get ruleIntoGoal;
+
+  /// No description provided for @ruleWalletRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a wallet'**
+  String get ruleWalletRequired;
+
+  /// No description provided for @rulePersonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a person'**
+  String get rulePersonRequired;
+
+  /// No description provided for @ruleAmountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount above 0'**
+  String get ruleAmountRequired;
 
   /// No description provided for @moreGroupPlan.
   ///
@@ -9494,24 +10046,6 @@ abstract class AppLocalizations {
   /// **'Recurring'**
   String get notifGroupRecurring;
 
-  /// No description provided for @notifTypeRecurringDue.
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring items are due'**
-  String get notifTypeRecurringDue;
-
-  /// No description provided for @notifTypeRecurringEnding.
-  ///
-  /// In en, this message translates to:
-  /// **'A recurring is about to end'**
-  String get notifTypeRecurringEnding;
-
-  /// No description provided for @notifTypeRecurringAutoCreated.
-  ///
-  /// In en, this message translates to:
-  /// **'Recorded automatically'**
-  String get notifTypeRecurringAutoCreated;
-
   /// No description provided for @settingsSectionApp.
   ///
   /// In en, this message translates to:
@@ -9692,18 +10226,6 @@ abstract class AppLocalizations {
   /// **'No hidden notifications'**
   String get notifEmptyHidden;
 
-  /// No description provided for @notifActionExtend.
-  ///
-  /// In en, this message translates to:
-  /// **'Extend'**
-  String get notifActionExtend;
-
-  /// No description provided for @notifActionLetEnd.
-  ///
-  /// In en, this message translates to:
-  /// **'Let it end'**
-  String get notifActionLetEnd;
-
   /// No description provided for @notifActionOpenDue.
   ///
   /// In en, this message translates to:
@@ -9839,7 +10361,7 @@ abstract class AppLocalizations {
   /// No description provided for @recurringPickerGroupReminders.
   ///
   /// In en, this message translates to:
-  /// **'Payment reminders'**
+  /// **'Amount asked each round'**
   String get recurringPickerGroupReminders;
 
   /// No description provided for @recurringPickerAwaitingAmount.
@@ -9935,7 +10457,7 @@ abstract class AppLocalizations {
   /// No description provided for @errRecurringLastLine.
   ///
   /// In en, this message translates to:
-  /// **'A recurring item needs at least one line; delete the whole item instead'**
+  /// **'A recurring item needs at least one rule; delete the whole item instead'**
   String get errRecurringLastLine;
 
   /// No description provided for @errInstallmentNeedsInstitution.
@@ -9992,18 +10514,6 @@ abstract class AppLocalizations {
   /// **'Swap'**
   String get recurringLinkSwapYes;
 
-  /// No description provided for @fpRecurringTabCalendar.
-  ///
-  /// In en, this message translates to:
-  /// **'Calendar'**
-  String get fpRecurringTabCalendar;
-
-  /// No description provided for @fpRecurringPausedGroup.
-  ///
-  /// In en, this message translates to:
-  /// **'Paused'**
-  String get fpRecurringPausedGroup;
-
   /// No description provided for @fpRecurringAwaitingAmount.
   ///
   /// In en, this message translates to:
@@ -10039,18 +10549,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving'**
   String get fpRecurringKindSaving;
-
-  /// No description provided for @recurringHomeMonthPayNoSaving.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid this month, savings not included'**
-  String get recurringHomeMonthPayNoSaving;
-
-  /// No description provided for @recurringHomeMonthSave.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved this month'**
-  String get recurringHomeMonthSave;
 
   /// No description provided for @sgRecurringTitle.
   ///
@@ -10238,29 +10736,11 @@ abstract class AppLocalizations {
   /// **'It will not become a draft in pending. You can restore it later.'**
   String get fpRecurringSkipBody;
 
-  /// No description provided for @fpRecurringAmountLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount / time'**
-  String get fpRecurringAmountLabel;
-
-  /// No description provided for @fpRecurringAmountOptional.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount / time (optional)'**
-  String get fpRecurringAmountOptional;
-
   /// No description provided for @fpRecurringReminderHint.
   ///
   /// In en, this message translates to:
   /// **'No amount needed. On the day, enter the real amount in the draft.'**
   String get fpRecurringReminderHint;
-
-  /// No description provided for @fpRecurringCountValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{n} payments'**
-  String fpRecurringCountValue(int n);
 
   /// No description provided for @fpRecurringCountRequired.
   ///
@@ -10279,36 +10759,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'From wallet'**
   String get fpRecurringFieldFromWallet;
-
-  /// No description provided for @fpRecurringArchiveConsequence.
-  ///
-  /// In en, this message translates to:
-  /// **'Stops making new occurrences. Hidden, can be restored.'**
-  String get fpRecurringArchiveConsequence;
-
-  /// No description provided for @fpRecurringRestoreConsequence.
-  ///
-  /// In en, this message translates to:
-  /// **'Active again, making occurrences'**
-  String get fpRecurringRestoreConsequence;
-
-  /// No description provided for @fpRecurringDeleteConsequence.
-  ///
-  /// In en, this message translates to:
-  /// **'Deletes this recurring with its unsaved occurrences'**
-  String get fpRecurringDeleteConsequence;
-
-  /// No description provided for @fpRecurringDuplicate.
-  ///
-  /// In en, this message translates to:
-  /// **'Duplicate'**
-  String get fpRecurringDuplicate;
-
-  /// No description provided for @fpRecurringDuplicateConsequence.
-  ///
-  /// In en, this message translates to:
-  /// **'Creates the same recurring, starting today'**
-  String get fpRecurringDuplicateConsequence;
 
   /// No description provided for @fpM5ContactDeleteDebts.
   ///
@@ -10506,18 +10956,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to undo the skip'**
   String get fpRecurringTapToRestore;
-
-  /// No description provided for @fpRecurringAutoCreate.
-  ///
-  /// In en, this message translates to:
-  /// **'Record automatically on the day'**
-  String get fpRecurringAutoCreate;
-
-  /// No description provided for @fpRecurringAutoCreateHint.
-  ///
-  /// In en, this message translates to:
-  /// **'On the day it\'s recorded for you, no confirm needed'**
-  String get fpRecurringAutoCreateHint;
 
   /// No description provided for @fpM5bRecurringPerMonth.
   ///
@@ -11359,18 +11797,6 @@ abstract class AppLocalizations {
   /// **'Label every open debt with this person paid'**
   String get debtCloseAllHint;
 
-  /// No description provided for @fpRecurringAutoCreateNeedsWallet.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick a wallet first'**
-  String get fpRecurringAutoCreateNeedsWallet;
-
-  /// No description provided for @fpRecurringAutoCreateZeroWarn.
-  ///
-  /// In en, this message translates to:
-  /// **'No fixed amount: on the day it records 0 for you to fix. Not a good fit for an amount that changes every time (e.g. electricity)'**
-  String get fpRecurringAutoCreateZeroWarn;
-
   /// No description provided for @txLinkDisconnect.
   ///
   /// In en, this message translates to:
@@ -11658,12 +12084,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What I booked stays, just no longer connected'**
   String get notifSetEventMemberRemovedHint;
-
-  /// No description provided for @notifSetRecurringAutoCreatedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Entries recorded for me on schedule'**
-  String get notifSetRecurringAutoCreatedHint;
 
   /// No description provided for @notifActionAddToBook.
   ///
@@ -12340,14 +12760,14 @@ abstract class AppLocalizations {
   /// No description provided for @notifSetRecurringDueHint.
   ///
   /// In en, this message translates to:
-  /// **'Payments to pay / receive today'**
+  /// **'A rule\'s default (a rule with its own switch keeps it)'**
   String get notifSetRecurringDueHint;
 
-  /// No description provided for @notifSetRecurringEndingHint.
+  /// No description provided for @notifSetRecurringDue.
   ///
   /// In en, this message translates to:
-  /// **'The last payment is left'**
-  String get notifSetRecurringEndingHint;
+  /// **'A round is due'**
+  String get notifSetRecurringDue;
 
   /// No description provided for @settingsAutoTitle.
   ///
@@ -12895,12 +13315,6 @@ abstract class AppLocalizations {
   /// **'Delete this recurring item and every line | What it already recorded stays; its debts become general debts of the counterparty, the balance doesn\'t change'**
   String get recurringDeleteKeepsWritten;
 
-  /// No description provided for @fpRecurringPlanIncomplete.
-  ///
-  /// In en, this message translates to:
-  /// **'Finish the plan: principal, number of installments and interest'**
-  String get fpRecurringPlanIncomplete;
-
   /// No description provided for @institutionPickTitle.
   ///
   /// In en, this message translates to:
@@ -12973,29 +13387,11 @@ abstract class AppLocalizations {
   /// **'Institution'**
   String get recurringCounterpartyInstitution;
 
-  /// No description provided for @recurringSourceLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid from'**
-  String get recurringSourceLabel;
-
-  /// No description provided for @recurringSourceWallet.
-  ///
-  /// In en, this message translates to:
-  /// **'Wallet'**
-  String get recurringSourceWallet;
-
   /// No description provided for @recurringSourcePaidBy.
   ///
   /// In en, this message translates to:
   /// **'Paid by someone'**
   String get recurringSourcePaidBy;
-
-  /// No description provided for @recurringPaidByPick.
-  ///
-  /// In en, this message translates to:
-  /// **'Who pays for me'**
-  String get recurringPaidByPick;
 
   /// No description provided for @recurringPlanSection.
   ///
@@ -13159,12 +13555,6 @@ abstract class AppLocalizations {
   /// **'billed on the card'**
   String get recurringPlanBilledOnCard;
 
-  /// No description provided for @recurringPlanInCard.
-  ///
-  /// In en, this message translates to:
-  /// **'On card'**
-  String get recurringPlanInCard;
-
   /// No description provided for @recurringPlanPurchase.
   ///
   /// In en, this message translates to:
@@ -13182,24 +13572,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{method} {rate}%/yr'**
   String recurringPlanRateChip(String method, String rate);
-
-  /// No description provided for @recurringPlanClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Close the plan early'**
-  String get recurringPlanClose;
-
-  /// No description provided for @recurringPlanCloseConsequence.
-  ///
-  /// In en, this message translates to:
-  /// **'Unticked installments are skipped; paid ones stay as history'**
-  String get recurringPlanCloseConsequence;
-
-  /// No description provided for @recurringPlanCloseBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Close this plan early? Installments not ticked paid are skipped'**
-  String get recurringPlanCloseBody;
 
   /// No description provided for @recurringPlanClosed.
   ///
@@ -13273,83 +13645,17 @@ abstract class AppLocalizations {
   /// **'Interest'**
   String get recurringInstallmentInterest;
 
-  /// No description provided for @recurringLinesSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Lines'**
-  String get recurringLinesSection;
-
-  /// No description provided for @recurringLineAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add line'**
-  String get recurringLineAdd;
-
   /// No description provided for @recurringLinePaidBy.
   ///
   /// In en, this message translates to:
   /// **'{name} pays'**
   String recurringLinePaidBy(String name);
 
-  /// No description provided for @recurringLineDeleteTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete this line?'**
-  String get recurringLineDeleteTitle;
-
-  /// No description provided for @recurringLineDeleteBody.
-  ///
-  /// In en, this message translates to:
-  /// **'What this line already recorded stays'**
-  String get recurringLineDeleteBody;
-
   /// No description provided for @recurringLinesCount.
   ///
   /// In en, this message translates to:
   /// **'{n} lines'**
   String recurringLinesCount(int n);
-
-  /// No description provided for @recurringRemindersSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Reminders'**
-  String get recurringRemindersSection;
-
-  /// No description provided for @recurringReminderAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add reminder'**
-  String get recurringReminderAdd;
-
-  /// No description provided for @recurringReminderAnchorDue.
-  ///
-  /// In en, this message translates to:
-  /// **'Before it\'s due'**
-  String get recurringReminderAnchorDue;
-
-  /// No description provided for @recurringReminderAnchorStart.
-  ///
-  /// In en, this message translates to:
-  /// **'Before it starts'**
-  String get recurringReminderAnchorStart;
-
-  /// No description provided for @recurringReminderAnchorEnd.
-  ///
-  /// In en, this message translates to:
-  /// **'Before it ends'**
-  String get recurringReminderAnchorEnd;
-
-  /// No description provided for @recurringReminderDays.
-  ///
-  /// In en, this message translates to:
-  /// **'{n} days'**
-  String recurringReminderDays(int n);
-
-  /// No description provided for @recurringReminderSameDay.
-  ///
-  /// In en, this message translates to:
-  /// **'Same day'**
-  String get recurringReminderSameDay;
 
   /// No description provided for @debtsSectionInstitutions.
   ///
@@ -13537,24 +13843,6 @@ abstract class AppLocalizations {
   /// **'Split it into installments on the card | the full price goes on the card now'**
   String get quickInstallmentHint;
 
-  /// No description provided for @notifRecurringDueSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'{name} takes {amount} {when}'**
-  String notifRecurringDueSoon(String name, String amount, String when);
-
-  /// No description provided for @notifTypeRecurringDueSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming up'**
-  String get notifTypeRecurringDueSoon;
-
-  /// No description provided for @notifSetRecurringDueSoonHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Reminders before a round is due, as each recurring item sets them'**
-  String get notifSetRecurringDueSoonHint;
-
   /// No description provided for @debtsSectionCards.
   ///
   /// In en, this message translates to:
@@ -13614,18 +13902,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Due {date}'**
   String debtCardDue(String date);
-
-  /// No description provided for @debtCardBillReminder.
-  ///
-  /// In en, this message translates to:
-  /// **'Set a bill reminder'**
-  String get debtCardBillReminder;
-
-  /// No description provided for @debtCardBillReminderSet.
-  ///
-  /// In en, this message translates to:
-  /// **'Bill reminder'**
-  String get debtCardBillReminderSet;
 
   /// No description provided for @debtPlanTitle.
   ///
@@ -13716,18 +13992,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete this plan? Its debt rows stay.'**
   String get debtPlanDeleteConfirm;
-
-  /// No description provided for @debtPlanReminder.
-  ///
-  /// In en, this message translates to:
-  /// **'Set a reminder'**
-  String get debtPlanReminder;
-
-  /// No description provided for @debtPlanReminderOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'Its reminder'**
-  String get debtPlanReminderOpen;
 
   /// No description provided for @debtPlanClosed.
   ///
@@ -13855,24 +14119,6 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get debtPlanSave;
 
-  /// No description provided for @recurringRepaysLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Pay back'**
-  String get recurringRepaysLabel;
-
-  /// No description provided for @recurringRepaysNone.
-  ///
-  /// In en, this message translates to:
-  /// **'No (a plain expense)'**
-  String get recurringRepaysNone;
-
-  /// No description provided for @recurringRepaysTo.
-  ///
-  /// In en, this message translates to:
-  /// **'Pay back {name}'**
-  String recurringRepaysTo(String name);
-
   /// No description provided for @errRecurringTypeFixed.
   ///
   /// In en, this message translates to:
@@ -13938,12 +14184,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'#{seq}/{count} · paid'**
   String debtPlanSeqPaid(String seq, String count);
-
-  /// No description provided for @debtPlanNoReminder.
-  ///
-  /// In en, this message translates to:
-  /// **'No reminder yet: on the day, tap \"Pay this installment\" yourself'**
-  String get debtPlanNoReminder;
 
   /// No description provided for @debtPlanPrincipalTotal.
   ///
@@ -14011,12 +14251,6 @@ abstract class AppLocalizations {
   /// **'round {round}'**
   String debtCardPlanRound(String round);
 
-  /// No description provided for @debtCardPay.
-  ///
-  /// In en, this message translates to:
-  /// **'Paying the card'**
-  String get debtCardPay;
-
   /// No description provided for @debtCardNewPlan.
   ///
   /// In en, this message translates to:
@@ -14083,18 +14317,6 @@ abstract class AppLocalizations {
   /// **'Records {amount} on the card today + a {count}-installment plan on it · the debt stays in the card\'s balance, no separate debt'**
   String quickInstallmentSummary(String amount, String count);
 
-  /// No description provided for @recurringNotifyOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Notify only'**
-  String get recurringNotifyOnly;
-
-  /// No description provided for @recurringNotifyOnlyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Books nothing; only its alerts go out'**
-  String get recurringNotifyOnlyHint;
-
   /// No description provided for @recurringTagAuto.
   ///
   /// In en, this message translates to:
@@ -14154,18 +14376,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next statement'**
   String get quickInstallmentFirstDueAuto;
-
-  /// No description provided for @recurringHeroOwePeople.
-  ///
-  /// In en, this message translates to:
-  /// **'Owed to people'**
-  String get recurringHeroOwePeople;
-
-  /// No description provided for @recurringHeroCardBills.
-  ///
-  /// In en, this message translates to:
-  /// **'Card bills'**
-  String get recurringHeroCardBills;
 }
 
 class _AppLocalizationsDelegate

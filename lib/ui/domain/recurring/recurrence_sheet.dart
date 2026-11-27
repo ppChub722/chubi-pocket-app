@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'package:pp_forge_core/ui.dart';
 import '../tokens/app_icons.dart';
+import '../money/money_text.dart';
 import 'recurrence_choices.dart';
+import 'recurrence_dates.dart';
 import 'recurrence_rule.dart';
 import 'recurrence_text.dart';
 
@@ -12,8 +14,10 @@ import 'recurrence_text.dart';
 /// then when it falls, then when it ends. [simple] = a period (a budget's or
 /// a goal's รอบ): one start day instead of repeat days ("รอบใหม่เริ่มวัน").
 /// [showEnd] false drops the สิ้นสุด part (a goal's รอบ ends with the goal).
-/// [title] names the field; none = "ทำซ้ำแบบกำหนดเอง". Every page sets a
-/// repeat or a period through this.
+/// [title] names the field; none = "ทำซ้ำ". A repeat (not [simple]) has two
+/// modes, either-or: ทำซ้ำเป็นรอบ | เลือกวันเอง (mock แผ่นทำซ้ำ RepeatB1–B5,
+/// B3). [amount] = each round's, when known: the end shows the total. Every
+/// page sets a repeat or a period through this.
 abstract final class AppRecurrenceSheet {
   static Future<RecurrenceRule?> show(
     BuildContext context, {
@@ -21,6 +25,7 @@ abstract final class AppRecurrenceSheet {
     bool simple = false,
     bool showEnd = true,
     String? title,
+    double? amount,
   }) {
     return showPpForgeSheetCustom<RecurrenceRule>(
       context,
@@ -29,6 +34,7 @@ abstract final class AppRecurrenceSheet {
         simple: simple,
         showEnd: showEnd,
         title: title,
+        amount: amount,
       ),
     );
   }
@@ -40,12 +46,14 @@ class _RecurrenceSheet extends StatefulWidget {
     required this.simple,
     required this.showEnd,
     required this.title,
+    this.amount,
   });
 
   final RecurrenceRule initial;
   final bool simple;
   final bool showEnd;
   final String? title;
+  final double? amount;
 
   @override
   State<_RecurrenceSheet> createState() => _RecurrenceSheetState();
@@ -90,6 +98,7 @@ class _RecurrenceSheetState extends State<_RecurrenceSheet> {
           initial: widget.initial,
           simple: widget.simple,
           showEnd: widget.showEnd,
+          amount: widget.amount,
           onChanged: (r) => _rule = r,
         ),
       ),
@@ -103,6 +112,7 @@ class RecurrenceEditor extends StatefulWidget {
     required this.onChanged,
     this.simple = false,
     this.showEnd = true,
+    this.amount,
     super.key,
   });
 
@@ -112,6 +122,9 @@ class RecurrenceEditor extends StatefulWidget {
 
   /// False: no สิ้นสุด part (the rule keeps the end it came with).
   final bool showEnd;
+
+  /// The amount of each round, when known: the end shows the total.
+  final double? amount;
 
   final ValueChanged<RecurrenceRule> onChanged;
 
@@ -131,16 +144,23 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
   late final RecurrenceChoices _c;
   late final TextEditingController _intervalText;
   late final TextEditingController _countText;
+  late DateTime _datesMonth;
+  late DateTime _endMonth;
 
   DateTime get _start => _rule.start;
 
   @override
   void initState() {
     super.initState();
-    _rule = RecurrenceChoices.normalize(widget.initial);
     _c = RecurrenceChoices(widget.initial, simple: widget.simple);
+    _rule = _c.build();
     _intervalText = TextEditingController(text: '${_c.interval}');
     _countText = TextEditingController(text: '${_c.endCount}');
+    final first = _c.dates.isEmpty
+        ? _c.base
+        : (_c.dates.toList()..sort()).first;
+    _datesMonth = DateTime(first.year, first.month);
+    _endMonth = DateTime(_c.endDate.year, _c.endDate.month);
   }
 
   @override
@@ -150,31 +170,13 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
     super.dispose();
   }
 
-  void _edit(VoidCallback change) {
-    setState(() => _rule = _c.edit(change));
-    widget.onChanged(_rule);
-  }
-
-  void _toggleWeekday(int d) {
-    final r = _c.toggleWeekday(d);
+  void _set(RecurrenceRule? r) {
     if (r == null) return;
     setState(() => _rule = r);
     widget.onChanged(_rule);
   }
 
-  Future<void> _pickEndDate() async {
-    final start = DateTime(_start.year, _start.month, _start.day);
-    final r = await PpForgeDatePicker.show(
-      context,
-      initial: _c.endDate,
-      first: start,
-      last: RecurrenceChoices.lastEndOf(_start),
-    );
-    if (r is PpForgeDatePicked && mounted) {
-      final d = r.date;
-      _edit(() => _c.endDate = DateTime(d.year, d.month, d.day));
-    }
-  }
+  void _edit(VoidCallback change) => _set(_c.edit(change));
 
   String _unitLabel(AppLocalizations l, RecurrenceFreq f) => switch (f) {
     RecurrenceFreq.daily => l.recurSheetUnitDay(_c.interval),
@@ -183,12 +185,19 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
     _ => l.recurSheetUnitYear(_c.interval),
   };
 
+  /// A day of the month in the app's model (−1 = last) ↔ the grid's cell (31).
+  static int _toCell(int d) =>
+      d == RecurrenceRule.lastDay ? kLastDayOfMonth : d;
+  static int _fromCell(int d) =>
+      d == kLastDayOfMonth ? RecurrenceRule.lastDay : d;
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final strings = PpForgeConfig.stringsOf(context);
     final scheme = Theme.of(context).colorScheme;
     final loc = MaterialLocalizations.of(context);
+    final short = DateFormat.MMMd(l.localeName);
+    final full = DateFormat.yMMMd(l.localeName);
 
     Widget section(String title, Widget child) => Padding(
       padding: const EdgeInsets.only(top: PpForgeSpacing.lg),
@@ -210,12 +219,14 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
     );
 
     Widget numberField(
+      Key key,
       TextEditingController c,
       int max,
       ValueChanged<int> onValue,
     ) => SizedBox(
-      width: 72,
+      width: 48,
       child: PpForgeInput(
+        key: key,
         controller: c,
         dense: true,
         type: PpForgeInputType.number,
@@ -250,40 +261,86 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
         ),
     ]);
 
-    final byDay = widget.simple || _c.monthlyMode == RecurrenceMonthlyMode.day;
-    final moved = !DateUtils.isSameDay(_rule.start, _c.base);
+    // the summary: the rule in words, then its next / last rounds
+    final ends =
+        _rule.end.kind != RecurrenceEndKind.never ||
+        _rule.freq == RecurrenceFreq.dates;
+    final ahead = recurrenceDates(
+      _rule,
+      until: DateTime(_start.year + 3, _start.month, _start.day),
+      limit: ends ? 0 : 3,
+    );
+    final today = DateUtils.dateOnly(DateTime.now());
+    final next = ahead.where((d) => !d.isBefore(today)).take(3).toList();
+    final total = widget.amount == null || !ends
+        ? null
+        : moneyString(context, widget.amount! * ahead.length);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final summary = Column(
+      key: const ValueKey('recurSummary'),
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         PpForgeText(
-          recurrenceLabel(l, _rule, showEnd: widget.showEnd),
+          _c.pickDates
+              ? (ahead.isEmpty
+                    ? l.recurCustomDates(0)
+                    : l.recurSheetDatesSpan(
+                        ahead.length,
+                        full.format(ahead.first),
+                        full.format(ahead.last),
+                      ))
+              : recurrenceLabel(l, _rule, showEnd: widget.showEnd),
           role: PpForgeTextRole.title,
           color: scheme.primary,
         ),
-        if (moved) ...[
-          const SizedBox(height: PpForgeSpacing.xs),
+        if (!_c.pickDates && ends && ahead.isNotEmpty) ...[
+          const SizedBox(height: PpForgeSpacing.xxs),
           PpForgeText(
-            l.recurSheetStartMoves(
-              DateFormat.yMMMd(l.localeName).format(_rule.start),
-            ),
-            key: const ValueKey('recurStartMoves'),
+            '${full.format(ahead.first)} → ${full.format(ahead.last)}',
             role: PpForgeTextRole.caption,
           ),
         ],
-        const SizedBox(height: PpForgeSpacing.md),
+        if (!_c.pickDates && next.isNotEmpty) ...[
+          const SizedBox(height: PpForgeSpacing.xxs),
+          PpForgeText(
+            l.recurSheetNext(
+              [for (final d in next) short.format(d)].join(', '),
+            ),
+            key: const ValueKey('recurNext'),
+            role: PpForgeTextRole.caption,
+          ),
+        ],
+      ],
+    );
+
+    final monthGrid = DayOfMonthGrid(
+      key: const ValueKey('recurMonthDays'),
+      selectedDays: {for (final d in _c.monthDays) _toCell(d)},
+      allowNone: false,
+      padding: EdgeInsets.zero,
+      onPicked: (d) => d == null ? null : _set(_c.toggleMonthDay(_fromCell(d))),
+    );
+
+    final repeat = <Widget>[
+      section(
+        l.recurSheetEvery,
         Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             PpForgeText(l.recurSheetEvery),
             const SizedBox(width: PpForgeSpacing.sm),
-            numberField(_intervalText, 99, (n) => _edit(() => _c.interval = n)),
-            const SizedBox(width: PpForgeSpacing.md),
+            numberField(
+              const ValueKey('recurInterval'),
+              _intervalText,
+              99,
+              (n) => _edit(() => _c.interval = n),
+            ),
+            const SizedBox(width: PpForgeSpacing.sm),
             Expanded(
               child: chips([
                 for (final f in _units)
                   PpForgeChip(
+                    key: ValueKey('recurUnit${f.name}'),
                     label: _unitLabel(l, f),
                     selected: _c.freq == f,
                     onTap: () => _edit(() => _c.freq = f),
@@ -292,173 +349,240 @@ class _RecurrenceEditorState extends State<RecurrenceEditor> {
             ),
           ],
         ),
-        if (_c.freq == RecurrenceFreq.weekly)
-          section(
-            widget.simple ? l.recurSheetPeriodStart : l.recurSheetRepeatOn,
-            widget.simple
-                ? weekdayChips(
-                    'recurWeekday',
-                    (d) => _c.startWeekday == d,
-                    (d) => _edit(() => _c.startWeekday = d),
-                  )
-                : weekdayChips(
-                    'recurWeekday',
-                    _c.weekdays.contains,
-                    _toggleWeekday,
-                  ),
-          ),
-        if (_c.freq == RecurrenceFreq.monthly)
-          section(
-            widget.simple ? l.recurSheetPeriodStart : l.recurSheetMonthlyOn,
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!widget.simple) ...[
-                  chips([
-                    PpForgeChip(
-                      key: const ValueKey('recurByDay'),
-                      label: l.recurSheetByDay,
-                      selected: byDay,
-                      onTap: () => _edit(
-                        () => _c.monthlyMode = RecurrenceMonthlyMode.day,
-                      ),
-                    ),
-                    PpForgeChip(
-                      key: const ValueKey('recurByWeekday'),
-                      label: l.recurSheetByWeekday,
-                      selected: !byDay,
-                      onTap: () => _edit(
-                        () => _c.monthlyMode = RecurrenceMonthlyMode.weekday,
-                      ),
-                    ),
-                  ]),
-                  const SizedBox(height: PpForgeSpacing.md),
-                ],
-                if (byDay)
-                  DayOfMonthGrid(
-                    key: const ValueKey('recurMonthDay'),
-                    selected: _c.monthDay,
-                    allowNone: false,
-                    padding: EdgeInsets.zero,
-                    onPicked: (d) =>
-                        _edit(() => _c.monthDay = d ?? _c.monthDay),
-                  )
-                else ...[
-                  chips([
-                    for (final n in const [
-                      1,
-                      2,
-                      3,
-                      4,
-                      RecurrenceMonthly.lastWeek,
-                    ])
-                      PpForgeChip(
-                        key: ValueKey('recurNth$n'),
-                        label: n == RecurrenceMonthly.lastWeek
-                            ? strings.dayLastShort
-                            : l.recurSheetNth(_ordinal(n), n),
-                        selected: _c.nth == n,
-                        onTap: () => _edit(() => _c.nth = n),
-                      ),
-                  ]),
-                  const SizedBox(height: PpForgeSpacing.sm),
-                  weekdayChips(
-                    'recurNthWeekday',
-                    (d) => _c.nthWeekday == d,
-                    (d) => _edit(() => _c.nthWeekday = d),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        if (_c.freq == RecurrenceFreq.yearly)
-          section(
-            widget.simple ? l.recurSheetPeriodStart : l.recurSheetYearlyOn,
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                MonthOfYearGrid(
-                  selected: _c.yearMonth,
-                  onPicked: (m) => _edit(() {
-                    _c.yearMonth = m;
-                    _c.yearDay = _c.yearDay.clamp(
-                      1,
-                      RecurrenceChoices.daysIn(m),
-                    );
-                  }),
+      ),
+      if (_c.freq == RecurrenceFreq.weekly)
+        section(
+          widget.simple ? l.recurSheetPeriodStart : l.recurSheetRepeatOn,
+          widget.simple
+              ? weekdayChips(
+                  'recurWeekday',
+                  (d) => _c.startWeekday == d,
+                  (d) => _edit(() => _c.startWeekday = d),
+                )
+              : weekdayChips(
+                  'recurWeekday',
+                  _c.weekdays.contains,
+                  (d) => _set(_c.toggleWeekday(d)),
                 ),
-                const SizedBox(height: PpForgeSpacing.md),
-                DayOfMonthGrid(
-                  key: const ValueKey('recurYearDay'),
-                  days: RecurrenceChoices.daysIn(_c.yearMonth),
-                  selected: _c.yearDay,
+        ),
+      if (_c.freq == RecurrenceFreq.monthly)
+        section(
+          widget.simple ? l.recurSheetPeriodStart : l.recurSheetMonthlyOn,
+          widget.simple
+              ? DayOfMonthGrid(
+                  key: const ValueKey('recurMonthDay'),
+                  selected: _c.monthDay,
                   allowNone: false,
                   padding: EdgeInsets.zero,
-                  onPicked: (d) => _edit(() => _c.yearDay = d ?? _c.yearDay),
+                  onPicked: (d) => _edit(() => _c.monthDay = d ?? _c.monthDay),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    monthGrid,
+                    const SizedBox(height: PpForgeSpacing.sm),
+                    PpForgeText(
+                      l.recurSheetMonthDaysHint,
+                      role: PpForgeTextRole.caption,
+                    ),
+                  ],
+                ),
+        ),
+      if (_c.freq == RecurrenceFreq.yearly)
+        section(
+          widget.simple ? l.recurSheetPeriodStart : l.recurSheetYearlyOn,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: widget.simple
+                ? [
+                    MonthOfYearGrid(
+                      selected: _c.yearMonth,
+                      onPicked: (m) => _edit(() {
+                        _c.yearMonth = m;
+                        _c.yearDay = _c.yearDay.clamp(
+                          1,
+                          RecurrenceChoices.daysIn(m),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: PpForgeSpacing.md),
+                    DayOfMonthGrid(
+                      key: const ValueKey('recurYearDay'),
+                      days: RecurrenceChoices.daysIn(_c.yearMonth),
+                      selected: _c.yearDay,
+                      allowNone: false,
+                      padding: EdgeInsets.zero,
+                      onPicked: (d) =>
+                          _edit(() => _c.yearDay = d ?? _c.yearDay),
+                    ),
+                  ]
+                : [
+                    MonthOfYearGrid(
+                      key: const ValueKey('recurMonths'),
+                      selected: 0,
+                      selectedMonths: _c.months,
+                      onPicked: (m) => _set(_c.toggleMonth(m)),
+                    ),
+                    const SizedBox(height: PpForgeSpacing.md),
+                    PpForgeText(
+                      l.recurSheetMonthlyOn,
+                      role: PpForgeTextRole.caption,
+                    ),
+                    const SizedBox(height: PpForgeSpacing.sm),
+                    monthGrid,
+                  ],
+          ),
+        ),
+      if (widget.showEnd)
+        section(
+          l.recurSheetEnds,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SegmentedChoice<RecurrenceEndKind>(
+                key: const ValueKey('recurEnd'),
+                expand: true,
+                segments: [
+                  ChoiceSegment(RecurrenceEndKind.never, l.recurSheetEndNever),
+                  ChoiceSegment(
+                    RecurrenceEndKind.onDate,
+                    l.recurSheetEndOnDate,
+                  ),
+                  ChoiceSegment(
+                    RecurrenceEndKind.afterCount,
+                    l.recurSheetEndAfter,
+                  ),
+                ],
+                selected: _c.endKind,
+                onChanged: (k) => _edit(() => _c.endKind = k),
+              ),
+              if (_c.endKind == RecurrenceEndKind.afterCount) ...[
+                const SizedBox(height: PpForgeSpacing.md),
+                Row(
+                  children: [
+                    numberField(
+                      const ValueKey('recurCount'),
+                      _countText,
+                      999,
+                      (n) => _edit(() => _c.endCount = n),
+                    ),
+                    const SizedBox(width: PpForgeSpacing.sm),
+                    PpForgeText(l.recurSheetOccurrences(_c.endCount)),
+                    const SizedBox(width: PpForgeSpacing.md),
+                    if (ahead.isNotEmpty)
+                      Expanded(
+                        child: PpForgeText(
+                          [
+                            l.recurSheetLast(full.format(ahead.last)),
+                            ?total == null ? null : l.recurSheetTotal(total),
+                          ].join(' · '),
+                          key: const ValueKey('recurCountEnd'),
+                          role: PpForgeTextRole.caption,
+                        ),
+                      ),
+                  ],
                 ),
               ],
-            ),
-          ),
-        if (widget.showEnd)
-          section(
-            l.recurSheetEnds,
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                chips([
-                  for (final (kind, label) in [
-                    (RecurrenceEndKind.never, l.recurSheetEndNever),
-                    (RecurrenceEndKind.onDate, l.recurSheetEndOnDate),
-                    (RecurrenceEndKind.afterCount, l.recurSheetEndAfter),
-                  ])
-                    PpForgeChip(
-                      label: label,
-                      selected: _c.endKind == kind,
-                      onTap: () => _edit(() => _c.endKind = kind),
-                    ),
-                ]),
-                if (_c.endKind == RecurrenceEndKind.onDate) ...[
-                  const SizedBox(height: PpForgeSpacing.md),
-                  PpForgeChip(
-                    label: DateFormat.yMMMd(l.localeName).format(_c.endDate),
-                    icon: AppIcons.date,
-                    trailing: PpForgeChipTrailing.dropdown,
-                    onTap: _pickEndDate,
-                  ),
-                ],
-                if (_c.endKind == RecurrenceEndKind.afterCount) ...[
-                  const SizedBox(height: PpForgeSpacing.md),
-                  Row(
-                    children: [
-                      numberField(
-                        _countText,
-                        999,
-                        (n) => _edit(() => _c.endCount = n),
-                      ),
-                      const SizedBox(width: PpForgeSpacing.sm),
-                      PpForgeText(l.recurSheetOccurrences(_c.endCount)),
-                    ],
-                  ),
-                ],
+              if (_c.endKind == RecurrenceEndKind.onDate) ...[
+                const SizedBox(height: PpForgeSpacing.sm),
+                PpForgeText(
+                  [
+                    l.recurEndUntil(full.format(_c.endDate)),
+                    l.recurSheetUntilCount(ahead.length),
+                    ?total == null ? null : l.recurSheetTotal(total),
+                  ].join(' · '),
+                  key: const ValueKey('recurUntilEnd'),
+                  role: PpForgeTextRole.caption,
+                ),
+                const SizedBox(height: PpForgeSpacing.sm),
+                MonthCalendar(
+                  key: const ValueKey('recurEndCalendar'),
+                  month: _endMonth,
+                  onMonthChanged: (m) => setState(() => _endMonth = m),
+                  selected: _c.endDate,
+                  today: today,
+                  onSelect: (d) {
+                    final first = DateUtils.dateOnly(_start);
+                    final last = RecurrenceChoices.lastEndOf(_start);
+                    if (d.isBefore(first) || d.isAfter(last)) return;
+                    _edit(() => _c.endDate = DateUtils.dateOnly(d));
+                  },
+                ),
               ],
-            ),
+            ],
           ),
+        ),
+    ];
+
+    final picked = _c.dates.toList()..sort();
+    final dates = <Widget>[
+      const SizedBox(height: PpForgeSpacing.md),
+      PpForgeText(l.recurSheetDatesHint, role: PpForgeTextRole.caption),
+      const SizedBox(height: PpForgeSpacing.sm),
+      MonthCalendar(
+        key: const ValueKey('recurDatesCalendar'),
+        month: _datesMonth,
+        onMonthChanged: (m) => setState(() => _datesMonth = m),
+        selectedDays: _c.dates,
+        today: today,
+        onSelect: (d) => _set(_c.toggleDate(d)),
+      ),
+      section(
+        l.recurSheetPickedDates,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final d in picked)
+              Row(
+                key: ValueKey('recurPicked:${d.toIso8601String()}'),
+                children: [
+                  Expanded(
+                    child: PpForgeText(
+                      DateFormat.yMMMEd(l.localeName).format(d),
+                    ),
+                  ),
+                  PpForgeIconButton(
+                    icon: AppIcons.close,
+                    tooltip: l.commonRemove,
+                    onPressed: () => _set(_c.toggleDate(d)),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+      const SizedBox(height: PpForgeSpacing.sm),
+      PpForgeText(l.recurSheetDatesNoEnd, role: PpForgeTextRole.caption),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!widget.simple) ...[
+          SegmentedChoice<bool>(
+            key: const ValueKey('recurMode'),
+            expand: true,
+            segments: [
+              ChoiceSegment(false, l.recurSheetModeRepeat),
+              ChoiceSegment(true, l.recurSheetModeDates),
+            ],
+            selected: _c.pickDates,
+            onChanged: (v) => _edit(() => _c.pickDates = v),
+          ),
+          const SizedBox(height: PpForgeSpacing.md),
+        ],
+        summary,
+        if (_c.pickDates) ...dates else ...repeat,
         const SizedBox(height: PpForgeSpacing.sm),
       ],
     );
   }
 }
-
-String _ordinal(int nth) => switch (nth) {
-  1 => 'first',
-  2 => 'second',
-  3 => 'third',
-  4 => 'fourth',
-  _ => 'other',
-};
 
 String _weekdayName(AppLocalizations l, int isoWeekday) => switch (isoWeekday) {
   1 => l.recurWeekday1,

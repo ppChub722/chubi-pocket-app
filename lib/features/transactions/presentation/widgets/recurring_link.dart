@@ -62,6 +62,8 @@ String recurringCreateRoute({
     'category': ?categoryId,
     'account': ?accountId,
     if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+    // the create page pops with the new id: the picker picks it
+    'pick': '1',
   },
 ).toString();
 

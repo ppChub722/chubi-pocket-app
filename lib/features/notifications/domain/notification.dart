@@ -36,16 +36,9 @@ enum NotificationType {
 
   accountInvite('account_invite'),
 
+  /// Rounds came due (and auto-accepted ones were made) for rules whose
+  /// แจ้ง is on: one grouped notice, payload count (recurring rework).
   recurringDue('recurring_due'),
-
-  recurringEnding('recurring_ending'),
-
-  /// 0.4.3: a reminder before a round is due (the item's reminders);
-  /// payload recurring_id, recurring_reminder_id, name, date, amount.
-  recurringDueSoon('recurring_due_soon'),
-
-  /// The day's tx the auto-create recorded (one notice per day).
-  recurringAutoCreated('recurring_auto_created'),
 
   /// The owner completed an event I'm in: locked, no more sync (info).
   eventCompleted('event_completed'),

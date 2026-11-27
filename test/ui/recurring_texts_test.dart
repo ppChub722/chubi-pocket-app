@@ -58,6 +58,7 @@ void main() {
       RecurrenceFreq f, {
       int interval = 1,
       Set<int> weekdays = const {},
+      Set<int> monthDays = const {},
       RecurrenceMonthly? monthly,
       List<DateTime> dates = const [],
       RecurrenceEnd end = const RecurrenceEnd.never(),
@@ -66,6 +67,7 @@ void main() {
       start: start,
       interval: interval,
       weekdays: weekdays,
+      monthDays: monthDays,
       monthly: monthly,
       dates: dates,
       end: end,
@@ -92,21 +94,18 @@ void main() {
         got: t(r(RecurrenceFreq.weekly, weekdays: {1, 3, 5})),
       ),
       (
-        want: 'ทุก 2 สัปดาห์ | วันจันทร์',
+        want: 'ทุก 2 สัปดาห์ · วันจันทร์',
         got: t(r(RecurrenceFreq.weekly, interval: 2, weekdays: {1})),
       ),
-      (want: 'ทุกวันที่ 3', got: t(r(RecurrenceFreq.monthly))),
+      (want: 'ทุกเดือน วันที่ 3', got: t(r(RecurrenceFreq.monthly))),
       (
-        want: 'ทุกวันสุดท้ายของเดือน',
+        want: 'ทุกสิ้นเดือน',
         got: t(
-          r(
-            RecurrenceFreq.monthly,
-            monthly: const RecurrenceMonthly.onDay(RecurrenceMonthly.lastDay),
-          ),
+          r(RecurrenceFreq.monthly, monthDays: const {RecurrenceRule.lastDay}),
         ),
       ),
       (
-        want: 'ทุก 3 เดือน | วันที่ 3',
+        want: 'ทุก 3 เดือน · วันที่ 3',
         got: t(r(RecurrenceFreq.monthly, interval: 3)),
       ),
       (
@@ -126,16 +125,16 @@ void main() {
         ),
       ),
       (
-        want: 'ทุก 2 เดือน | วันจันทร์ที่ 2',
+        want: 'ทุก 2 เดือน · วันจันทร์ที่ 2',
         got: t(r(RecurrenceFreq.monthly, interval: 2, monthly: secondMonday)),
       ),
       (want: 'ทุกปี 3 ต.ค.', got: t(r(RecurrenceFreq.yearly))),
       (
-        want: 'ทุก 2 ปี | 3 ต.ค.',
+        want: 'ทุก 2 ปี · 3 ต.ค.',
         got: t(r(RecurrenceFreq.yearly, interval: 2)),
       ),
       (
-        want: 'กำหนดเอง 5 วัน',
+        want: 'เลือกวันเอง · 5 วัน',
         got: t(
           r(
             RecurrenceFreq.dates,
@@ -143,13 +142,13 @@ void main() {
           ),
         ),
       ),
-      (want: 'กำหนดเอง', got: t(r(RecurrenceFreq.dates))),
+      (want: 'เลือกวันเอง', got: t(r(RecurrenceFreq.dates))),
       (
-        want: 'ทุกวันที่ 3 | 4/12',
+        want: 'ทุกเดือน วันที่ 3 · 4/12',
         got: recurrenceLabel(th, monthlyEnds12, seq: 4, total: 12),
       ),
       (
-        want: 'ทุกวันที่ 3 | 12 ครั้ง',
+        want: 'ทุกเดือน วันที่ 3 · 12 ครั้ง',
         got: recurrenceLabel(th, monthlyEnds12, showEnd: true),
       ),
       (
@@ -168,10 +167,10 @@ void main() {
         got: e(r(RecurrenceFreq.weekly, weekdays: {1, 3, 5})),
       ),
       (
-        want: 'Every 2 weeks | Monday and Wednesday',
+        want: 'Every 2 weeks · Monday and Wednesday',
         got: e(r(RecurrenceFreq.weekly, interval: 2, weekdays: {1, 3})),
       ),
-      (want: 'Monthly on day 3', got: e(r(RecurrenceFreq.monthly))),
+      (want: 'Every month on day 3', got: e(r(RecurrenceFreq.monthly))),
       (
         want: 'Monthly on the second Monday',
         got: e(r(RecurrenceFreq.monthly, monthly: secondMonday)),
@@ -185,13 +184,13 @@ void main() {
           ),
         ),
       ),
-      (want: 'Every year on Oct 3', got: e(r(RecurrenceFreq.yearly))),
+      (want: 'Every year on 3 Oct', got: e(r(RecurrenceFreq.yearly))),
       (
-        want: 'Custom | 2 dates',
+        want: 'Custom · 2 dates',
         got: e(r(RecurrenceFreq.dates, dates: [start, start])),
       ),
       (
-        want: 'Monthly on day 3 | 12 times | 4/12',
+        want: 'Every month on day 3 · 12 times · 4/12',
         got: recurrenceLabel(
           en,
           monthlyEnds12,
@@ -212,7 +211,7 @@ void main() {
         ),
         showEnd: true,
       ),
-      startsWith('ทุกวันที่ 3 | ถึง 3 ต.ค.'),
+      startsWith('ทุกเดือน วันที่ 3 · ถึง 3 ต.ค.'),
     );
   });
 
@@ -232,6 +231,5 @@ void main() {
     expect(a, b);
     expect(a.hashCode, b.hashCode);
     expect(a == a.copyWith(interval: 2), isFalse);
-    expect(const RecurrenceMonthly.onDay(3), const RecurrenceMonthly(day: 3));
   });
 }

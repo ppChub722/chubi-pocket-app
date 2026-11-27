@@ -220,7 +220,16 @@ class DebtCounterpartyRecurring extends Equatable {
 
   factory DebtCounterpartyRecurring.fromJson(Map<String, dynamic> json) {
     final next = json['next'];
-    final direction = (json['debt_direction'] ?? json['direction']) as String?;
+    // the rework: the direction lives on the rules (the first debt one)
+    final rules = (json['rules'] as List?) ?? const [];
+    final ruleDirection = rules
+        .whereType<Map<String, dynamic>>()
+        .map((r) => r['debt_direction'])
+        .whereType<String>()
+        .firstOrNull;
+    final direction =
+        (json['debt_direction'] ?? json['direction'] ?? ruleDirection)
+            as String?;
     return DebtCounterpartyRecurring(
       id: json['id'] as String,
       name: (json['name'] as String?) ?? '',
@@ -230,17 +239,14 @@ class DebtCounterpartyRecurring extends Equatable {
           ? null
           : DebtEntryDirection.parse(direction) == DebtEntryDirection.paid,
       balance: (json['balance'] as num?)?.toDouble(),
-      linesCount: (json['reminders_count'] as num?)?.toInt() ?? 0,
+      linesCount: (json['rules_count'] as num?)?.toInt() ?? 0,
       nextDate: next is Map ? _date(next['date']) : _date(json['next_date']),
       nextAmount: next is Map
           ? (next['amount'] as num?)?.toDouble()
           : ((json['next_amount'] ?? json['amount']) as num?)?.toDouble(),
       dueCount: (json['due_count'] as num?)?.toInt() ?? 0,
       plan: DebtRecurringPlan.tryParse(json['plan']),
-      lines: [
-        for (final l in (json['reminders'] as List?) ?? const [])
-          ?DebtRecurringLine.tryParse(l),
-      ],
+      lines: [for (final l in rules) ?DebtRecurringLine.tryParse(l)],
     );
   }
 

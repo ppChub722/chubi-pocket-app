@@ -8,7 +8,7 @@ import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
 import 'package:chubi_pocket/features/recurring/presentation/item_write_apply.dart';
 import 'package:chubi_pocket/features/recurring/presentation/occurrence_actions.dart';
-import 'package:chubi_pocket/features/recurring/presentation/recurring_draft.dart';
+import 'package:chubi_pocket/features/recurring/domain/rule_draft.dart';
 import 'package:chubi_pocket/ui/ui.dart' show OccurrenceState;
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,7 +53,7 @@ Map<String, dynamic> _item(
   String status = 'upcoming',
 }) => {
   'id': id,
-  'recurring_reminder_id': 'r1',
+  'recurring_rule_id': 'r1',
   'slot': slot,
   'date': slot,
   'type': 'expense',
@@ -88,14 +88,14 @@ void main() {
 
       await repo.updateOccurrence('r1', '2026-11-03', {'amount': 500});
       expect(http.last!.method, 'PUT');
-      expect(http.last!.path, '/recurring/r1/reminders/r1/occurrences/2026-11-03');
+      expect(http.last!.path, '/recurring/r1/rules/r1/occurrences/2026-11-03');
       expect(http.last!.data, {'amount': 500});
 
       await repo.skipOccurrence('r1', '2026-11-03');
       expect(http.last!.method, 'POST');
       expect(
         http.last!.path,
-        '/recurring/r1/reminders/r1/occurrences/2026-11-03/skip',
+        '/recurring/r1/rules/r1/occurrences/2026-11-03/skip',
       );
       expect(http.last!.data, isNull, reason: 'no delete_tx (0.4.1-1)');
 
@@ -103,7 +103,7 @@ void main() {
       await repo.markOccurrencePaid('r1', '2026-11-03', amount: 480);
       expect(
         http.last!.path,
-        '/recurring/r1/reminders/r1/occurrences/2026-11-03/mark-paid',
+        '/recurring/r1/rules/r1/occurrences/2026-11-03/mark-paid',
       );
       expect(http.last!.data, {'amount': 480});
       await repo.markOccurrencePaid('r1', '2026-11-03');
@@ -123,7 +123,7 @@ void main() {
 
       await repo.updateOccurrence('r1', '2026-11-03', {'description': null});
       expect(http.last!.method, 'PUT');
-      expect(http.last!.path, '/recurring/r1/reminders/r1/occurrences/2026-11-03');
+      expect(http.last!.path, '/recurring/r1/rules/r1/occurrences/2026-11-03');
       expect(http.last!.data, {'description': null});
     },
   );
@@ -320,20 +320,19 @@ void main() {
     expect(gone.applyTo(list).map((i) => i.slot), ['2026-12-03']);
   });
 
-  test('auto-create (R12): needs only a wallet; no amount warns', () {
-    final blank = RecurringDraft.blank();
-    expect(blank.canAutoCreate, isFalse);
-    final wallet = blank.copyWith(accountId: 'a1', autoCreate: true);
-    expect(wallet.canAutoCreate, isTrue);
-    expect(wallet.autoCreateWarns, isTrue);
-    expect(wallet.copyWith(amount: '0').autoCreateWarns, isTrue);
-    expect(wallet.copyWith(amount: '500').autoCreateWarns, isFalse);
+  test('auto-accept (spec §1): only with a known amount, never asked', () {
+    final fixed = RuleDraft.blank(
+      RecurringKind.expense,
+    ).copyWith(amount: 500, autoAccept: true);
+    expect(fixed.toJson()['auto_accept'], isTrue);
+    expect(fixed.copyWith(ask: true).toJson()['auto_accept'], isNull);
     expect(
-      wallet.copyWith(autoCreate: false).autoCreateWarns,
-      isFalse,
-      reason: 'off: nothing to warn about',
+      RuleDraft.blank(RecurringKind.expense).toJson()['auto_accept'],
+      isNull,
+      reason: 'unset = the user default',
     );
   });
+
   test('B2: effects.slots patch a page list (a tx deleted elsewhere)', () {
     final list = [
       RecurringItem.fromJson(_item('i1', '2026-11-03', status: 'done')),

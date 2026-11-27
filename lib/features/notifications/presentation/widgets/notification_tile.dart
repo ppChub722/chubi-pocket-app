@@ -31,11 +31,7 @@ class NotificationTile extends StatelessWidget {
       notification.type == NotificationType.accountInvite ||
       notification.type == NotificationType.projectInvite;
 
-  bool get _isRecurring =>
-      notification.type == NotificationType.recurringDue ||
-      notification.type == NotificationType.recurringEnding ||
-      notification.type == NotificationType.recurringDueSoon ||
-      notification.type == NotificationType.recurringAutoCreated;
+  bool get _isRecurring => notification.type == NotificationType.recurringDue;
 
   bool get _isBillInvite => notification.type == NotificationType.billInvite;
 
@@ -43,8 +39,7 @@ class NotificationTile extends StatelessWidget {
     NotificationType.billNew ||
     NotificationType.billChanged ||
     NotificationType.billRemoved ||
-    NotificationType.debtRepaid ||
-    NotificationType.recurringEnding => true,
+    NotificationType.debtRepaid => true,
     _ => false,
   };
 
@@ -57,7 +52,6 @@ class NotificationTile extends StatelessWidget {
       notification.payload['direction'] == 'paid'
           ? l.notifActionRecordPaid
           : l.notifActionRecordReceived,
-    NotificationType.recurringEnding => l.notifActionExtend,
     NotificationType.recurringDue => l.notifActionOpenDue,
     _ => l.notificationAccept,
   };
@@ -91,7 +85,6 @@ class NotificationTile extends StatelessWidget {
       acceptLabel: _actionLabel(l),
       rejectLabel: switch (n.type) {
         NotificationType.recurringDue => null,
-        NotificationType.recurringEnding => l.notifActionLetEnd,
         NotificationType.billRemoved => l.notifActionKeepMine,
         _ =>
           _isRequest || _isBillInvite
@@ -122,34 +115,6 @@ class NotificationTile extends StatelessWidget {
     return moneyString(context, a, symbol: context.readUserCurrencySymbol);
   }
 
-  /// 0.4.3 reminder: "{name} จะตัด {amount} {when}" (the date as words).
-  String _dueSoon(BuildContext context, AppLocalizations l, AppNotification n) {
-    final p = n.payload;
-    final amount = p['amount'];
-    final date = DateTime.tryParse((p['date'] as String?) ?? '');
-    final now = DateTime.now();
-    final days = date == null
-        ? null
-        : DateTime(
-            date.year,
-            date.month,
-            date.day,
-          ).difference(DateTime(now.year, now.month, now.day)).inDays;
-    return l
-        .notifRecurringDueSoon(
-          (p['name'] as String?) ?? '',
-          amount is num
-              ? moneyString(
-                  context,
-                  amount,
-                  symbol: context.readUserCurrencySymbol,
-                )
-              : '',
-          date == null ? '' : dueLabel(l, date: date, daysUntil: days),
-        )
-        .trim();
-  }
-
   static IconData _iconFor(NotificationType t) => switch (t) {
     NotificationType.billInvite ||
     NotificationType.billNew ||
@@ -165,10 +130,7 @@ class NotificationTile extends StatelessWidget {
     NotificationType.eventDeleted => AppIcons.project,
     NotificationType.contactLinkRequest => AppIcons.link,
     NotificationType.accountInvite => AppIcons.bank,
-    NotificationType.recurringDue ||
-    NotificationType.recurringEnding ||
-    NotificationType.recurringDueSoon ||
-    NotificationType.recurringAutoCreated => AppIcons.recurring,
+    NotificationType.recurringDue => AppIcons.recurring,
     NotificationType.unknown => AppIcons.notifications,
   };
 
@@ -203,14 +165,6 @@ class NotificationTile extends StatelessWidget {
       (n.payload['account_name'] as String?) ?? '',
     ),
     NotificationType.recurringDue => l.notifRecurringDue(
-      (n.payload['count'] as num?)?.toInt() ?? 1,
-    ),
-    NotificationType.recurringEnding => l.notifRecurringEnding(
-      (n.payload['name'] as String?) ?? '',
-      (n.payload['left'] as num?)?.toInt() ?? 0,
-    ),
-    NotificationType.recurringDueSoon => _dueSoon(context, l, n),
-    NotificationType.recurringAutoCreated => l.notifRecurringAutoCreated(
       (n.payload['count'] as num?)?.toInt() ?? 1,
     ),
     NotificationType.eventCompleted => l.notifEventCompleted(

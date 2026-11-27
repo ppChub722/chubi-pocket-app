@@ -190,11 +190,6 @@ void main() {
         reject: RejectRoute.projectInvite,
       ),
       (
-        t: NotificationType.recurringEnding,
-        accept: AcceptRoute.extendRecurring,
-        reject: RejectRoute.markActioned,
-      ),
-      (
         t: NotificationType.recurringDue,
         accept: AcceptRoute.openDue,
         reject: RejectRoute.dismiss,

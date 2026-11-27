@@ -36,29 +36,40 @@ void main() {
     expect(empty.build().weekdays, {4});
   });
 
-  test('monthly: by day, and the weekday mode gives the Nth weekday', () {
-    for (final x in [
-      (
-        name: '13th = 2nd Tuesday',
-        at: start,
-        day: const RecurrenceMonthly.onDay(13),
-        weekday: const RecurrenceMonthly.onWeekday(nth: 2, weekday: 2),
+  test('monthly: several days and สิ้นเดือน (spec §3.1), the last one stays; '
+      'a kept Nth weekday gives way to a picked day', () {
+    final c = of(RecurrenceFreq.monthly);
+    expect(c.build().monthDays, {13}, reason: 'empty = the start day');
+    c.toggleMonthDay(20);
+    final r = c.toggleMonthDay(RecurrenceRule.lastDay)!;
+    expect(r.monthDays, {13, 20, RecurrenceRule.lastDay});
+    expect(r.monthly, isNull);
+    c.toggleMonthDay(13);
+    c.toggleMonthDay(20);
+    expect(c.toggleMonthDay(RecurrenceRule.lastDay), isNull);
+
+    // "4th Wednesday" stays in the model (not on screen) until a day is picked
+    final nth = RecurrenceChoices(
+      RecurrenceRule(
+        freq: RecurrenceFreq.monthly,
+        start: start,
+        monthly: const RecurrenceMonthly.onWeekday(nth: 2, weekday: 2),
       ),
-      (
-        name: '31st = last day; the 5th week = last',
-        at: DateTime(2026, 10, 31),
-        day: const RecurrenceMonthly.onDay(RecurrenceMonthly.lastDay),
-        weekday: const RecurrenceMonthly.onWeekday(
-          nth: RecurrenceMonthly.lastWeek,
-          weekday: 6,
-        ),
-      ),
-    ]) {
-      final c = of(RecurrenceFreq.monthly, at: x.at);
-      expect(c.build().monthly, x.day, reason: x.name);
-      final r = c.edit(() => c.monthlyMode = RecurrenceMonthlyMode.weekday);
-      expect(r.monthly, x.weekday, reason: x.name);
-    }
+      simple: false,
+    );
+    expect(nth.build().monthly?.nth, 2);
+    final picked = nth.toggleMonthDay(5)!;
+    expect(picked.monthly, isNull);
+    expect(picked.monthDays, {5});
+  });
+
+  test('yearly: months on top, then days', () {
+    final c = of(RecurrenceFreq.yearly);
+    expect(c.build().months, {10});
+    final r = c.toggleMonth(4)!;
+    expect(r.months, {4, 10});
+    expect(c.toggleMonth(4)!.months, {10});
+    expect(c.toggleMonth(10), isNull, reason: 'the last one left stays');
   });
 
   test('ends after N occurrences; hand-picked dates start monthly', () {
@@ -82,13 +93,21 @@ void main() {
     expect(dates.freq, RecurrenceFreq.monthly);
     expect(dates.monthDay, 13);
     final r = dates.edit(() {
+      dates.pickDates = false;
       dates.interval = 3;
       dates.freq = RecurrenceFreq.yearly;
       dates.endKind = RecurrenceEndKind.never;
     });
     expect(
       r,
-      RecurrenceRule(freq: RecurrenceFreq.yearly, start: start, interval: 3),
+      // repeat mode keeps the month and day it shows (spec §3.1)
+      RecurrenceRule(
+        freq: RecurrenceFreq.yearly,
+        start: start,
+        interval: 3,
+        monthDays: const {13},
+        months: const {10},
+      ),
     );
   });
 

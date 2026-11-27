@@ -85,6 +85,8 @@ class NotificationSettings extends Equatable {
     this.autoSyncEvents = true,
     this.autoSyncDebts = true,
     this.autoAcceptRepayments = false,
+    this.recurringNotifyDefault = true,
+    this.recurringAutoAcceptDefault = false,
     this.onSplitRemoved = 'ask',
     this.defaultAccount,
   });
@@ -98,6 +100,11 @@ class NotificationSettings extends Equatable {
 
   /// A partner's `debt_repaid` goes into my book at once.
   final bool autoAcceptRepayments;
+
+  /// รายการประจำ › ถึงงวด: a rule's แจ้ง / อัตโนมัติ when it has none of its
+  /// own (users.recurring_*_default); the row's แจ้ง is this, not a mute.
+  final bool recurringNotifyDefault;
+  final bool recurringAutoAcceptDefault;
 
   /// Taken off a bill, my records of it: `ask` | `keep` | `delete`.
   final String onSplitRemoved;
@@ -139,6 +146,10 @@ class NotificationSettings extends Equatable {
       autoSyncEvents: (json['auto_sync_events'] as bool?) ?? true,
       autoSyncDebts: (json['auto_sync_debts'] as bool?) ?? true,
       autoAcceptRepayments: (json['auto_accept_repayments'] as bool?) ?? false,
+      recurringNotifyDefault:
+          (json['recurring_notify_default'] as bool?) ?? true,
+      recurringAutoAcceptDefault:
+          (json['recurring_auto_accept_default'] as bool?) ?? false,
       onSplitRemoved: (json['on_split_removed'] as String?) ?? 'ask',
       defaultAccount: json['default_account'] is Map
           ? DefaultAccountRef.fromJson(
@@ -153,18 +164,28 @@ class NotificationSettings extends Equatable {
     bool? autoSyncEvents,
     bool? autoSyncDebts,
     bool? autoAcceptRepayments,
+    bool? recurringNotifyDefault,
+    bool? recurringAutoAcceptDefault,
     String? onSplitRemoved,
   }) {
     final muted = mutedTypes ?? this.mutedTypes;
+    final notify = recurringNotifyDefault ?? this.recurringNotifyDefault;
     return NotificationSettings(
       mutedTypes: muted,
       types: [
         for (final t in types)
-          t.mutable ? t.withOn(!muted.contains(t.type)) : t,
+          t.type == NotificationType.recurringDue.wire
+              ? t.withOn(notify)
+              : t.mutable
+              ? t.withOn(!muted.contains(t.type))
+              : t,
       ],
       autoSyncEvents: autoSyncEvents ?? this.autoSyncEvents,
       autoSyncDebts: autoSyncDebts ?? this.autoSyncDebts,
       autoAcceptRepayments: autoAcceptRepayments ?? this.autoAcceptRepayments,
+      recurringNotifyDefault: notify,
+      recurringAutoAcceptDefault:
+          recurringAutoAcceptDefault ?? this.recurringAutoAcceptDefault,
       onSplitRemoved: onSplitRemoved ?? this.onSplitRemoved,
       defaultAccount: defaultAccount,
     );
@@ -177,6 +198,8 @@ class NotificationSettings extends Equatable {
     autoSyncEvents,
     autoSyncDebts,
     autoAcceptRepayments,
+    recurringNotifyDefault,
+    recurringAutoAcceptDefault,
     onSplitRemoved,
     defaultAccount,
   ];

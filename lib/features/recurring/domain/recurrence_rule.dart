@@ -17,16 +17,24 @@ RecurrenceRule recurrenceFromJson(
       for (final d in (rule?['weekdays'] as List?) ?? const [])
         (d as num).toInt(),
     },
-    monthly: monthly == null
-        ? null
-        : RecurrenceMonthly(
-            mode: monthly['mode'] == 'weekday'
-                ? RecurrenceMonthlyMode.weekday
-                : RecurrenceMonthlyMode.day,
-            day: (monthly['day'] as num?)?.toInt(),
-            nth: (monthly['nth'] as num?)?.toInt(),
-            weekday: (monthly['weekday'] as num?)?.toInt(),
-          ),
+    monthly:
+        monthly != null &&
+            monthly['mode'] == 'weekday' &&
+            monthly['nth'] is num &&
+            monthly['weekday'] is num
+        ? RecurrenceMonthly.onWeekday(
+            nth: (monthly['nth'] as num).toInt(),
+            weekday: (monthly['weekday'] as num).toInt(),
+          )
+        : null,
+    monthDays: {
+      for (final d in (rule?['month_days'] as List?) ?? const [])
+        (d as num).toInt(),
+    },
+    months: {
+      for (final m in (rule?['months'] as List?) ?? const [])
+        (m as num).toInt(),
+    },
     dates: [
       for (final d in (rule?['dates'] as List?) ?? const [])
         ?parseYmd(d as String?),
@@ -49,14 +57,17 @@ Map<String, dynamic> recurrenceToJson(RecurrenceRule r) {
       'freq': r.freq.name,
       'interval': r.interval,
       'weekdays': (r.weekdays.toList()..sort()),
-      'monthly': m == null
+      'monthly': r.freq != RecurrenceFreq.monthly
           ? null
+          : m == null
+          ? <String, dynamic>{'mode': 'day'}
           : <String, dynamic>{
-              'mode': m.mode.name,
-              'day': m.day,
+              'mode': 'weekday',
               'nth': m.nth,
               'weekday': m.weekday,
             },
+      'month_days': (r.monthDays.toList()..sort()),
+      'months': (r.months.toList()..sort()),
       'dates': [for (final d in r.dates) ymd(d)],
     },
     'start_date': ymd(r.start),

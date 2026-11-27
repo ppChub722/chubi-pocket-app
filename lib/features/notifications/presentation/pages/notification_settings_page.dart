@@ -87,21 +87,10 @@ class NotificationSettingsPage extends StatelessWidget {
         label: l.notifSetEventMemberRemoved,
         helper: l.notifSetEventMemberRemovedHint,
       ),
+      // the one recurring row (mock NotifSettings): the rules' defaults
       'recurring_due' => (
-        label: l.notifTypeRecurringDue,
+        label: l.notifSetRecurringDue,
         helper: l.notifSetRecurringDueHint,
-      ),
-      'recurring_due_soon' => (
-        label: l.notifTypeRecurringDueSoon,
-        helper: l.notifSetRecurringDueSoonHint,
-      ),
-      'recurring_ending' => (
-        label: l.notifTypeRecurringEnding,
-        helper: l.notifSetRecurringEndingHint,
-      ),
-      'recurring_auto_created' => (
-        label: l.notifTypeRecurringAutoCreated,
-        helper: l.notifSetRecurringAutoCreatedHint,
       ),
       _ => null,
     };
@@ -177,7 +166,9 @@ class _Body extends StatelessWidget {
           // A card's auto column labels: "บิลที่แชร์" has อีเวนต์ | แบ่งจ่าย
           // ([autoColumns] order), the requests card one อัตโนมัติ.
           List<String> autoLabelsOf(NotificationGroup g) =>
-              g == NotificationGroup.request || g == NotificationGroup.debt
+              g == NotificationGroup.request ||
+                  g == NotificationGroup.debt ||
+                  g == NotificationGroup.recurring
               ? [l.notifColumnAuto]
               : [l.notifColumnAutoEvents, l.notifColumnAutoSplit];
 
@@ -192,7 +183,29 @@ class _Body extends StatelessWidget {
                 )
               : null;
 
+          // "รายการประจำ" › ถึงงวด: แจ้ง / อัตโนมัติ = a rule's defaults
+          // (users.recurring_*_default); a rule with its own switch keeps it.
+          Widget recurringRow(({String label, String? helper}) t) =>
+              SettingSwitchColumnsRow(
+                key: const ValueKey('notif-recurring_due'),
+                label: t.label,
+                helper: t.helper,
+                cells: [
+                  SettingSwitchCell(
+                    value: s.recurringNotifyDefault,
+                    onChanged: (v) => cubit.setRecurringDefaults(notify: v),
+                    semanticLabel: '${l.notifColumnNotify} ${t.label}',
+                  ),
+                  SettingSwitchCell(
+                    value: s.recurringAutoAcceptDefault,
+                    onChanged: (v) => cubit.setRecurringDefaults(autoAccept: v),
+                    semanticLabel: '${l.notifColumnAuto} ${t.label}',
+                  ),
+                ],
+              );
+
           Widget row(NotificationRow r, ({String label, String? helper}) t) {
+            if (r.type == 'recurring_due') return recurringRow(t);
             final autoLabels = autoLabelsOf(r.group);
             Widget build(AutoValues a, Map<AutoSwitch, ValueChanged<bool>> on) {
               return SettingSwitchColumnsRow(
@@ -295,6 +308,7 @@ class _Body extends StatelessWidget {
                   if (children.isEmpty) return null;
                   final hasAuto =
                       g == NotificationGroup.debt ||
+                      g == NotificationGroup.recurring ||
                       rows.any((r) => r.autos.isNotEmpty);
                   return SectionCard(
                     first: first,

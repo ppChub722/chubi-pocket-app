@@ -1,8 +1,10 @@
+import 'package:chubi_pocket/features/accounts/domain/account_type.dart';
+import 'package:chubi_pocket/features/pending/domain/pending_transaction.dart'
+    show TagRef;
 import 'package:chubi_pocket/features/personal_debts/domain/debt_direction.dart';
-import 'package:chubi_pocket/features/recurring/domain/recurrence_rule.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring.dart';
 import 'package:chubi_pocket/features/recurring/domain/recurring_item.dart';
-import 'package:chubi_pocket/features/recurring/presentation/recurring_draft.dart';
+import 'package:chubi_pocket/features/recurring/domain/rule_draft.dart';
 import 'package:chubi_pocket/features/transactions/domain/refs.dart';
 import 'package:chubi_pocket/features/transactions/domain/transaction_type.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,7 +63,7 @@ void main() {
   test('a filled debt occurrence carries its person and entry', () {
     final item = RecurringItem.tryParse({
       'id': 'i1',
-      'recurring_reminder_id': 'r1',
+      'recurring_rule_id': 'r1',
       'slot': '2026-11-01',
       'stored': true,
       'date': '2026-11-01',
@@ -88,85 +90,68 @@ void main() {
   });
 
   test(
-    'a debt write sends person + kind + direction, never category / tags',
+    'a debt rule sends person + kind + direction, never category / tags',
     () {
-      // 0.4.3: the item carries the counterparty and the direction; the
-      // line its amount, kind and schedule.
-      final body = RecurringWrite(
-        name: 'คืนแม่',
-        kind: RecurringKind.debt,
-        categoryId: 'cat-should-not-go',
-        tagIds: const ['t1'],
-        personName: 'แม่',
-        direction: DebtEntryDirection.paid,
-        lines: [
-          RecurringLineWrite(
-            rule: recurrenceFromJson(
-              {'freq': 'monthly', 'interval': 1},
-              start: '2026-11-01',
-              end: {'kind': 'none'},
-            ),
-            amount: 300,
-            debtSub: DebtEntrySub.repay,
-          ).toJson(),
-        ],
-      ).toJson();
+      // the rework: every rule carries its own target (spec §1)
+      final body =
+          RuleDraft.blank(RecurringKind.debt, start: DateTime(2026, 11))
+              .copyWith(
+                amount: 300,
+                person: const EmbeddedPerson(name: 'แม่'),
+                direction: DebtEntryDirection.paid,
+                category: const EmbeddedCategory(
+                  id: 'cat-should-not-go',
+                  name: 'x',
+                ),
+                tags: const [TagRef(id: 't1', name: 't')],
+              )
+              .toJson();
       expect(body['type'], 'debt');
-      expect(body['counterparty'], {
-        'contact_id': null,
-        'person_name': 'แม่',
-        'institution_id': null,
-      });
+      expect(body['counterparty'], {'person_name': 'แม่'});
       expect(body['debt_direction'], 'paid');
+      expect(body['debt_kind'], 'repayment');
       expect(body['category_id'], isNull);
       expect(body['tag_ids'], isEmpty);
       expect(body['goal_id'], isNull);
-      final line = (body['reminders'] as List).single as Map<String, dynamic>;
-      expect(line['debt_kind'], 'repayment');
-      expect(line['amount'], 300);
-      expect(line['source'], {'account_id': null});
-      expect((line['schedule'] as Map)['start_date'], '2026-11-01');
+      expect(body['amount'], 300);
+      expect(body['amount_mode'], 'fixed');
+      expect(body['source'], {'account_id': null});
+      expect((body['schedule'] as Map)['start_date'], '2026-11-01');
+      expect(body['notify'], isNull, reason: 'null = the user default');
     },
   );
 
-  test('the debt form: person preset, needs a person, wallet optional, the '
-      'arrow sets money in / out', () {
-    final preset = RecurringPreset.fromQuery({
-      'kind': 'debt',
-      'person_name': 'แม่',
-      'contact': 'c1',
-    });
-    var d = RecurringDraft.blank(preset: preset);
-    expect(d.isDebt, isTrue);
-    expect(d.person?.contactId, 'c1');
-    expect(d.personOk, isTrue);
-    expect(d.walletOk, isTrue, reason: 'no wallet = ledger only');
-    expect(d.type, TransactionType.expense);
-
-    d = d.withDebt(
+  test('a contact wins over the name; a plan rule sends only its plan; an '
+      'asked amount never auto-accepts', () {
+    final d = RuleDraft.blank(RecurringKind.debt).copyWith(
+      person: const EmbeddedPerson(name: 'แม่', contactId: 'c1'),
       direction: DebtEntryDirection.received,
-      sub: DebtEntrySub.repay,
+      debtRecord: true,
     );
-    expect(d.type, TransactionType.income);
-    final w = d.copyWith(amount: '300').toWrite().toJson();
-    final cp = w['counterparty'] as Map<String, dynamic>;
-    expect(cp['contact_id'], 'c1');
-    expect(cp['person_name'], isNull, reason: 'a contact wins over the name');
+    final w = d.toJson();
+    expect(w['counterparty'], {'contact_id': 'c1'});
     expect(w['debt_direction'], 'received');
-    final line = (w['reminders'] as List).single as Map<String, dynamic>;
-    expect(line['debt_kind'], 'repayment');
+    expect(w['debt_kind'], 'debt');
 
-    final empty = RecurringDraft.blank(
-      preset: const RecurringPreset(kind: RecurringKind.debt),
+    final plan = RuleDraft.blank(
+      RecurringKind.debt,
+    ).copyWith(planId: 'p1', planName: 'ผ่อนรถ').toJson();
+    expect(plan['debt_plan_id'], 'p1');
+    expect(plan.containsKey('counterparty'), isFalse);
+
+    final card = RuleDraft.blank(RecurringKind.transfer).copyWith(
+      ask: true,
+      autoAccept: true,
+      toAccount: const AccountRef(
+        id: 'ktc',
+        name: 'KTC',
+        type: AccountType.creditCard,
+      ),
     );
-    expect(empty.personOk, isFalse);
-    // Leaving the debt kind drops the person.
-    final money = d.withKind(RecurringKind.expense);
-    expect(money.person, isNull);
-    expect(money.withKind(RecurringKind.debt).person, isNull);
-    expect(
-      d.withDebt(person: const EmbeddedPerson(name: 'Lee')).person?.name,
-      'Lee',
-    );
+    final cw = card.toJson();
+    expect(cw['amount_mode'], 'ask');
+    expect(cw['auto_accept'], isNull);
+    expect(cw['to_account_id'], 'ktc');
+    expect(cw['category_id'], isNull);
   });
 }

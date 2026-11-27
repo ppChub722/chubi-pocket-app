@@ -53,4 +53,3 @@ void configureChubiThemes() {
     ),
   ], defaultThemeId: 'mint');
 }
-

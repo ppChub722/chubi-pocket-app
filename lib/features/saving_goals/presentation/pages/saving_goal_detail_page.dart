@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
@@ -18,7 +19,11 @@ import '../../../accounts/domain/account_type.dart';
 import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../recurring/domain/recurring.dart';
 import '../../../recurring/presentation/cubit/recurring_directory_cubit.dart';
+import '../../../recurring/domain/rule_draft.dart';
+import '../../../recurring/domain/rule_group.dart';
+import '../../../recurring/presentation/pages/rule_page.dart';
 import '../../../recurring/presentation/recurring_rows.dart';
+import '../../../recurring/presentation/widgets/rules_box.dart';
 import '../widgets/saving_goal_picker.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../data/saving_goals_repository.dart';
@@ -1138,6 +1143,30 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
         r.goalId == goalId &&
         r.status != RecurringStatus.archived;
     final planned = g != null && g.targetAmount != null;
+    // a goal: the rules into it, pulled by goal_id (spec §3; mock GoalTrip)
+    if (g != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (planned)
+            SectionCard(title: l.sgPlanTitle, children: _planRows(l, g)),
+          RulesBox(
+            key: ValueKey('goalRules:${g.id}'),
+            filter: RuleFilter(goalId: g.id),
+            preset: RuleDraft.blank(RecurringKind.saving).copyWith(
+              goal: SavingGoalRef(id: g.id, name: g.name),
+              goalPicked: true,
+            ),
+            newName: l.rulesNewNameSaving(g.name),
+            title: l.rulesBoxSavingTitle,
+            addLabel: l.rulesBoxSavingAdd,
+            trackingType: 'saving',
+            onChanged: () => unawaited(_cubit!.load()),
+          ),
+        ],
+      );
+    }
     return BlocBuilder<RecurringDirectoryCubit, RecurringDirectoryState>(
       buildWhen: (a, b) => a.rules != b.rules,
       builder: (context, dir) => SectionCard(
@@ -1166,11 +1195,17 @@ class _SavingGoalDetailPageState extends State<SavingGoalDetailPage>
               ),
           DetailAddRow(
             label: l.sgAutoAdd,
-            onTap: () => openPage(
-              context,
-              goalId == null
-                  ? '/recurring/new?kind=saving&spare=1'
-                  : '/recurring/new?kind=saving&goal=$goalId',
+            onTap: () => context.push(
+              '/recurring-rules/new',
+              extra: RulePageArgs(
+                fromPage: RuleFromPage(
+                  newName: l.sgRecurringTitle,
+                  trackingType: 'saving',
+                  preset: RuleDraft.blank(
+                    RecurringKind.saving,
+                  ).copyWith(goalPicked: true),
+                ),
+              ),
             ),
           ),
         ],

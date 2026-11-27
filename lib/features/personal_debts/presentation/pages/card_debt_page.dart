@@ -1,14 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../recurring/domain/recurring.dart' show RecurringKind;
+import '../../../recurring/domain/rule_draft.dart';
+import '../../../recurring/domain/rule_group.dart';
+import '../../../recurring/presentation/widgets/rule_due_box.dart';
+import '../../../recurring/presentation/widgets/rules_box.dart';
 import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/tab_nav.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/presentation/widgets/account_picker.dart';
 import '../../../recurring/domain/recurring_page.dart';
 import '../../../transactions/data/transactions_repository.dart';
 import '../../../transactions/domain/transaction.dart';
@@ -31,12 +37,13 @@ class CardDebtPage extends StatefulWidget {
 }
 
 class _CardDebtPageState extends State<CardDebtPage> {
+  /// Bumped when a rule is saved here: ต้องทำ loads again.
+  int _rulesTick = 0;
   CardSummary? _card;
 
   /// The rows of the bill's cycle (D-Card รายการในรอบบิลนี้).
   List<Transaction> _rows = const [];
   Object? _error;
-  bool _busy = false;
 
   PersonalDebtsRepository get _repo => context.read<PersonalDebtsRepository>();
 
@@ -71,28 +78,19 @@ class _CardDebtPageState extends State<CardDebtPage> {
   }
 
   /// A monthly bill reminder on the due day, from the wallet picked.
-  Future<void> _addReminder(CardSummary c) async {
-    final l = AppLocalizations.of(context)!;
-    final r = await AccountPicker.one(
-      context,
-      title: l.debtPlanPayFrom,
-      excludeIds: {c.account.id},
-    );
-    if (!mounted || r is! AccountPicked) return;
-    setState(() => _busy = true);
-    try {
-      final id = await _repo.createCardBillReminder(
-        accountId: c.account.id,
-        name: '${l.debtCardBillReminderSet} ${c.account.name}',
-        fromAccountId: r.account.id,
-        day: (c.bill.dueDate ?? DateTime.now()).day,
-      );
-      if (mounted) openPage(context, '/recurring/$id');
-    } catch (e) {
-      if (mounted) showErrorSnackBar(context, e);
-    } finally {
-      if (mounted) setState(() => _busy = false);
+  /// จ่ายบิล: a transfer into the card, monthly on its statement day, the
+  /// amount asked each round (the BE prefills it with the bill).
+  RuleDraft _billPreset(CardSummary c) {
+    final day = c.bill.cycleEnd.day;
+    final now = DateTime.now();
+    var start = DateTime(now.year, now.month, day);
+    if (start.isBefore(DateTime(now.year, now.month, now.day))) {
+      start = DateTime(now.year, now.month + 1, day);
     }
+    return RuleDraft.blank(
+      RecurringKind.transfer,
+      start: start,
+    ).copyWith(toAccount: c.account, ask: true);
   }
 
   static String _ymd(DateTime d) =>
@@ -188,24 +186,27 @@ class _CardDebtPageState extends State<CardDebtPage> {
         ],
       ),
       const SizedBox(height: PpForgeSpacing.md),
-      SectionCard(
-        title: l.debtCardPay,
-        children: [
-          if (c.recurringId != null)
-            InfoRow(
-              label: l.debtCardBillReminderSet,
-              value: '✓',
-              showChevron: true,
-              onTap: () => openPage(context, '/recurring/${c.recurringId}'),
-            )
-          else
-            InfoRow(
-              key: const ValueKey('cardBillReminderAdd'),
-              label: '+ ${l.debtCardBillReminder}',
-              showChevron: true,
-              onTap: _busy ? null : () => _addReminder(c),
-            ),
-        ],
+      // ต้องทำ: the due rounds of those rules (the bill round first)
+      RuleDueBox(
+        key: ValueKey('cardDue:${c.account.id}'),
+        filter: RuleFilter.wallet(c.account.id),
+        reloadKey: _rulesTick,
+        onChanged: () => unawaited(_load()),
+      ),
+      // รายการอัตโนมัติ: rules from or into this card (spec §2.3, §3; mock
+      // CardNew): the bill rule = a transfer into the card on its statement
+      // day, the amount asked (prefilled with the bill)
+      RulesBox(
+        key: ValueKey('cardRules:${c.account.id}'),
+        filter: RuleFilter.wallet(c.account.id),
+        preset: _billPreset(c),
+        newName: l.rulesNewNameCard(c.account.name),
+        addLabel: l.rulesBoxCardAdd,
+        trackingType: 'credit_card',
+        onChanged: () {
+          setState(() => _rulesTick++);
+          unawaited(_load());
+        },
       ),
       const SizedBox(height: PpForgeSpacing.md),
       SectionCard(

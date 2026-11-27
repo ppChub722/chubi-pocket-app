@@ -42,7 +42,7 @@ bool isSuggestedRound(RecurringItem i, String? slot, String? line) =>
 abstract final class RecurringPicker {
   static const _likely = 'likely';
   static const _recurring = 'recurring';
-  static const _reminders = 'reminders';
+  static const _asked = 'asked';
   static const _create = 'create';
 
   static const _near = 'near';
@@ -198,7 +198,7 @@ abstract final class RecurringPicker {
           groups: [
             PickerGroup(_likely, l.recurringPickerGroupLikely),
             PickerGroup(_recurring, l.recurringPickerGroupRecurring),
-            PickerGroup(_reminders, l.recurringPickerGroupReminders),
+            PickerGroup(_asked, l.recurringPickerGroupReminders),
           ],
           actions: [
             if (createRoute != null)
@@ -261,7 +261,7 @@ abstract final class RecurringPicker {
       id: s.id,
       title: s.name,
       subtitle: '${recurrenceLabel(l, s.rule)} | $period $status',
-      group: c.likely ? _likely : (c.isReminder ? _reminders : _recurring),
+      group: c.likely ? _likely : (c.isReminder ? _asked : _recurring),
       leading: c.isReminder
           ? const PpForgeIcon(AppIcons.notifications)
           : IconDisplay(

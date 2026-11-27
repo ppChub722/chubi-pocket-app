@@ -16,6 +16,7 @@ import '../../personal_debts/domain/debt_ledger.dart';
 import '../../personal_debts/presentation/debt_wiring.dart'
     show debtEntryKindName;
 import '../../transactions/domain/transaction.dart';
+import '../../transactions/domain/transaction_type.dart';
 import '../../transactions/presentation/cubit/transactions_cubit.dart';
 import '../../transactions/presentation/widgets/quick_create_sheet.dart';
 import '../../transactions/presentation/widgets/transaction_picker.dart';
@@ -92,6 +93,7 @@ Future<bool> confirmOccurrence(
   required ValueChanged<ItemWriteResult> onChanged,
   PendingDraft? was,
   PendingDraft? now,
+  Map<String, dynamic>? billDiff,
 }) {
   final l = AppLocalizations.of(context)!;
   final rule = item.ruleId!;
@@ -115,6 +117,7 @@ Future<bool> confirmOccurrence(
         accountId: now == null || now.accountId == was?.accountId
             ? null
             : now.accountId,
+        billDiff: billDiff,
       );
     },
     onChanged,
@@ -364,6 +367,19 @@ Future<void> openOccurrenceSheet(
   final initial = item.toDraft();
   final settled = item.state.settled;
   final archived = item.state == OccurrenceState.archived;
+  // A card bill round (a transfer into a card): ยอดบิลจริง vs what was
+  // recorded, the difference booked only when asked (mock BillSheet).
+  final card = item.toAccount;
+  final bill =
+      !settled &&
+          item.bySlot &&
+          item.type == TransactionType.transfer &&
+          card != null &&
+          card.isLiability &&
+          (item.amount ?? 0) > 0
+      ? BillDiffController(item.amount!)
+      : null;
+  var addByHand = false;
   await showEntrySheet(
     context,
     title: item.recurring?.name ?? item.title,
@@ -375,6 +391,14 @@ Future<void> openOccurrenceSheet(
     initial: initial,
     // หนี้: the person card instead of the category, no tag row.
     debtPerson: debt ? item.person : null,
+    section: bill == null
+        ? null
+        : (amount) => BillDiffSection(
+            controller: bill,
+            card: card!.name,
+            date: item.date,
+            paid: amount,
+          ),
     // หนี้ fills with an entry of its person, not a transaction.
     chips: [
       if (debt && item.bySlot)
@@ -437,13 +461,18 @@ Future<void> openOccurrenceSheet(
         ? null
         : EntrySheetAction(
             label: l.occurrenceCreateNow,
-            onPressed: (draft) => confirmOccurrence(
-              context,
-              item,
-              onChanged: onChanged,
-              was: initial,
-              now: draft,
-            ),
+            onPressed: (draft) async {
+              final ok = await confirmOccurrence(
+                context,
+                item,
+                onChanged: onChanged,
+                was: initial,
+                now: draft,
+                billDiff: bill?.billDiff,
+              );
+              addByHand = ok && (bill?.addByHand ?? false);
+              return ok;
+            },
           ),
     actions: [
       EntrySheetAction(
@@ -461,6 +490,22 @@ Future<void> openOccurrenceSheet(
       ),
     ],
   );
+  bill?.dispose();
+  if (addByHand && context.mounted) {
+    final acc = context.read<AccountsCubit>().state.accounts;
+    final full = [
+      for (final a in acc)
+        if (a.id == card!.id) a,
+    ];
+    unawaited(
+      showQuickCreateSheet(
+        context,
+        type: TransactionType.expense,
+        account: full.isEmpty ? null : full.first,
+        amount: bill!.diff,
+      ),
+    );
+  }
 }
 
 /// [openOccurrenceSheet] for an occurrence known only by its address (a home

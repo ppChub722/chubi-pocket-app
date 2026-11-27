@@ -14,28 +14,10 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../accounts/domain/account.dart';
 import '../../../accounts/presentation/cubit/accounts_cubit.dart';
-import '../../../accounts/presentation/widgets/account_picker.dart';
-import '../../../institutions/presentation/widgets/institution_picker.dart';
-import '../../../categories/domain/category_type.dart';
 import '../../../categories/presentation/cubit/categories_cubit.dart';
-import '../../../categories/presentation/widgets/category_picker.dart';
-import '../../../personal_debts/domain/debt_direction.dart';
-import '../../../personal_debts/domain/debt_ledger.dart' show debtPersonKey;
-import '../../../personal_debts/presentation/debt_wiring.dart'
-    show debtPersonLevel;
-import '../../../saving_goals/data/saving_goals_repository.dart';
-import '../../../saving_goals/domain/saving_goal.dart';
-import '../../../saving_goals/domain/saving_goals_overview.dart';
-import '../../../saving_goals/presentation/widgets/saving_goal_picker.dart';
 import '../../../tags/presentation/cubit/tags_cubit.dart';
-import '../../../tags/presentation/widgets/tag_picker.dart';
 import '../../../transactions/domain/transaction_type.dart';
-import '../../../transactions/domain/refs.dart' show EmbeddedPerson;
-import '../../../transactions/presentation/widgets/category_pick_card.dart';
-import '../../../transactions/presentation/widgets/debt_entry_form.dart'
-    show DebtPick, showDebtPersonPicker;
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/recurring.dart';
@@ -44,43 +26,23 @@ import '../../domain/recurring_page.dart';
 import '../due_boxes.dart';
 import '../item_write_apply.dart';
 import '../occurrence_actions.dart';
-import '../recurring_draft.dart';
 import '../recurring_rows.dart';
-import '../widgets/recurring_plan_form.dart';
-import '../widgets/recurring_reminders_form.dart';
+import '../widgets/rule_row.dart';
+import 'recurring_form_page.dart' show trackingTypeLabel;
+import 'rule_page.dart' show RulePageArgs;
 
 enum _Tab { past, upcoming }
 
-enum _Field { name, description, amount, note }
-
 class RecurringDetailPage extends StatefulWidget {
-  const RecurringDetailPage({
-    this.id,
-    this.startEditing = false,
-    this.preset = const RecurringPreset(),
-    super.key,
-  });
+  const RecurringDetailPage({required this.id, super.key});
 
-  final String? id;
-
-  final bool startEditing;
-
-  final RecurringPreset preset;
-
-  bool get isCreate => id == null;
+  final String id;
 
   @override
   State<RecurringDetailPage> createState() => _RecurringDetailPageState();
 }
 
-class _RecurringDetailPageState extends State<RecurringDetailPage>
-    with EditModeMixin<RecurringDetailPage, RecurringDraft> {
-  final _formKey = GlobalKey<FormState>();
-  final _ctrl = {for (final f in _Field.values) f: TextEditingController()};
-  final _nameFocus = FocusNode();
-  final _descriptionFocus = FocusNode();
-  final _noteFocus = FocusNode();
-
+class _RecurringDetailPageState extends State<RecurringDetailPage> {
   RecurringDetail? _detail;
   bool _loading = false;
 
@@ -88,23 +50,16 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
 
   ApiException? _refreshError;
 
-  _Tab _tab = _Tab.past;
+  _Tab _tab = _Tab.upcoming;
 
   /// Amounts changed in the tabs' waiting rows, by occurrence.
   final _rowAmounts = <String, double?>{};
   bool _busy = false;
   bool _changed = false;
 
-  /// The rule this page just made: a create pops with its id (the recurring
-  /// picker picks it, owner 2026-11-04).
-  String? _createdId;
-  bool _walletMissing = false;
-  bool _goalMissing = false;
-  bool _personMissing = false;
-
-  /// ออมเงิน: the goals for the goal tile (loaded once a saving rule shows).
-  SavingGoalsOverview? _goals;
-  bool _goalsAsked = false;
+  // the hero's description (read only; ✎ edits it on /settings)
+  final _description = TextEditingController();
+  final _descriptionFocus = FocusNode();
 
   ItemPage _produced = const ItemPage();
   bool _producedMore = false;
@@ -130,18 +85,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   @override
   void initState() {
     super.initState();
-    initDraft(
-      RecurringDraft.blank(preset: widget.preset),
-      editing: widget.isCreate,
-    );
-    onDraftRestored();
     _offEffects = WriteEffectsBus.instance.listen(_onEffects);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<AccountsCubit>().loadIfNeeded();
       context.read<CategoriesCubit>().loadIfNeeded();
       context.read<TagsCubit>().loadIfNeeded();
-      if (!widget.isCreate) _load(first: true);
+      _load(first: true);
     });
   }
 
@@ -152,7 +102,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   void _onEffects(WriteEffects e) {
     final r = ItemWriteResult.fromEffects(e);
     final id = widget.id;
-    if (r == null || id == null || !mounted || _detail == null) return;
+    if (r == null || !mounted || _detail == null) return;
     final mine = [
       for (final i in r.items)
         if (i.ruleId == id) i,
@@ -175,13 +125,9 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   @override
   void dispose() {
     _offEffects?.call();
-    for (final c in _ctrl.values) {
-      c.dispose();
-    }
-    _nameFocus.dispose();
-    _descriptionFocus.dispose();
-    _noteFocus.dispose();
     _sheetTick.dispose();
+    _description.dispose();
+    _descriptionFocus.dispose();
     super.dispose();
   }
 
@@ -193,14 +139,13 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       });
     }
     try {
-      final d = await _repo.get(widget.id!);
+      final d = await _repo.get(widget.id);
       if (!mounted) return;
       _take(d);
       setState(() {
         _error = null;
         _refreshError = null;
       });
-      if (first && widget.startEditing) enterEdit();
     } catch (e, st) {
       if (!mounted) return;
       final err = ApiException.from(e, st);
@@ -223,7 +168,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       _produced = d.produced;
       _upcoming = d.upcoming;
     });
-    if (!isEditing) resetDraft(RecurringDraft.fromDetail(d));
+    _description.text = d.recurring.description ?? '';
   }
 
   Future<void> _loadMoreProduced() async {
@@ -235,7 +180,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     });
     try {
       final next = await _repo.items(
-        widget.id!,
+        widget.id,
         upcoming: false,
         page: current.page + 1,
       );
@@ -256,7 +201,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     if (current.windowed ? from == null : !current.hasMore) return;
     await _fetchUpcoming(
       () => _repo.items(
-        widget.id!,
+        widget.id,
         upcoming: true,
         page: current.page + 1,
         from: from,
@@ -308,61 +253,15 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   }
 
   Future<void> _action(RecurringAction a) =>
-      _detailCall(() => _repo.action(widget.id!, a));
+      _detailCall(() => _repo.action(widget.id, a));
 
   /// The form on one line ([lineId]) or a new blank one ([newLine]); the
   /// item's other lines go back unchanged.
-  void _editLine({String? lineId, bool newLine = false}) {
-    final d = _detail;
-    if (d == null) return;
-    resetDraft(RecurringDraft.fromDetail(d, lineId: lineId, newLine: newLine));
-    onDraftRestored();
-    enterEdit();
-  }
 
-  Future<void> _lineMenu(RecurringLine line, LineMenu a) async {
-    final l = AppLocalizations.of(context)!;
-    final id = widget.id!;
-    if (a == LineMenu.edit) return _editLine(lineId: line.id);
-    if (a == LineMenu.delete) {
-      final ok = await showConfirmDialog(
-        context,
-        title: l.recurringLineDeleteTitle,
-        message: l.recurringLineDeleteBody,
-        confirmLabel: l.commonDelete,
-        destructive: true,
-      );
-      if (!ok || !mounted) return;
-    }
-    await _detailCall(
-      () => switch (a) {
-        LineMenu.delete => _repo.deleteLine(id, line.id),
-        LineMenu.pause => _repo.lineAction(id, line.id, RecurringAction.pause),
-        LineMenu.resume => _repo.lineAction(
-          id,
-          line.id,
-          RecurringAction.resume,
-        ),
-        LineMenu.archive => _repo.lineAction(
-          id,
-          line.id,
-          RecurringAction.archive,
-        ),
-        LineMenu.restore => _repo.lineAction(
-          id,
-          line.id,
-          RecurringAction.restore,
-        ),
-        LineMenu.edit => throw StateError('handled above'),
-      },
-    );
-  }
-
-  /// ตารางงวด: the installments (one call), a tap = แก้งวดนี้ / tick.
   Future<void> _openPlanTable() async {
     final List<PlanInstallment> rows;
     try {
-      rows = await _repo.installments(widget.id!);
+      rows = await _repo.installments(widget.id);
     } on ApiException catch (e) {
       if (mounted) showErrorSnackBar(context, e);
       return;
@@ -376,7 +275,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   }
 
   Future<void> _installmentMenu(PlanInstallment i) async {
-    final id = widget.id!;
+    final id = widget.id;
     final a = await showInstallmentMenu(context, i);
     if (!mounted || a == null) return;
     switch (a) {
@@ -404,19 +303,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     }
   }
 
-  /// ปิดแผนก่อนกำหนด: the unticked installments are skipped.
-  Future<void> _closePlan() async {
-    final l = AppLocalizations.of(context)!;
-    final ok = await showConfirmDialog(
-      context,
-      title: l.recurringPlanClose,
-      message: l.recurringPlanCloseBody,
-      confirmLabel: l.recurringPlanClose,
-    );
-    if (!ok || !mounted) return;
-    await _run(() => _repo.closePlan(widget.id!));
-  }
-
   /// One call that answers with the item page; the page takes it.
   Future<void> _detailCall(Future<RecurringDetail> Function() call) async {
     setState(() => _busy = true);
@@ -434,341 +320,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   }
 
   @override
-  bool get leaveOnCancel => widget.isCreate;
-
-  @override
-  void leavePage() {
-    if (context.canPop()) {
-      context.pop(widget.isCreate ? _createdId : _changed);
-    } else {
-      super.leavePage();
-    }
-  }
-
-  @override
-  void onDraftRestored() {
-    void sync(_Field f, String v) {
-      if (_ctrl[f]!.text != v) _ctrl[f]!.text = v;
-    }
-
-    sync(_Field.name, working.name);
-    sync(_Field.description, working.description);
-    sync(_Field.amount, working.amount);
-    sync(_Field.note, working.note);
-  }
-
-  void _onText(_Field f, String v) => applyTextChange(f, switch (f) {
-    _Field.name => working.copyWith(name: v),
-    _Field.description => working.copyWith(description: v),
-    _Field.amount => working.copyWith(amount: v),
-    _Field.note => working.copyWith(note: v),
-  });
-
-  void _change(RecurringDraft next) {
-    if (!isEditing) enterEdit();
-    applyChange(next);
-  }
-
-  Future<void> _pickIcon() async {
-    final l = AppLocalizations.of(context)!;
-    final r = await showIconMakerSheet(
-      context: context,
-      type: IconType.category,
-      initial: working.iconCode,
-      title: l.recurringFieldIcon,
-    );
-    if (!mounted || r == null) return;
-    if (r is PpForgeIconMakerSelected) {
-      _change(working.copyWith(iconCode: r.iconCode));
-    } else if (r is PpForgeIconMakerRemoved) {
-      _change(working.copyWith(clearIcon: true));
-    }
-  }
-
-  Future<void> _pickWallet({required bool to}) async {
-    final l = AppLocalizations.of(context)!;
-    final r = await AccountPicker.one(
-      context,
-      selectedId: to ? working.toAccountId : working.accountId,
-      excludeIds: {?(to ? working.accountId : working.toAccountId)},
-      title: to ? l.recurringFieldToWallet : null,
-      // หนี้: no wallet = ledger-only entries.
-      allowNone: working.isDebt,
-    );
-    if (!mounted) return;
-    if (r is AccountPickedNone && working.isDebt) {
-      _change(working.copyWith(clearAccount: true));
-      return;
-    }
-    if (r is! AccountPicked) return;
-    setState(() => _walletMissing = false);
-    _change(
-      to
-          ? working.copyWith(toAccountId: r.account.id)
-          : working.copyWith(accountId: r.account.id),
-    );
-  }
-
-  void _loadGoals() {
-    if (_goalsAsked) return;
-    _goalsAsked = true;
-    final repo = context.read<SavingGoalsRepository>();
-    unawaited(
-      repo.list().then(
-        (o) {
-          if (mounted) setState(() => _goals = o);
-        },
-        onError: (Object _) {
-          if (mounted) setState(() => _goals = const SavingGoalsOverview());
-        },
-      ),
-    );
-  }
-
-  Future<void> _pickGoal() async {
-    final w = working;
-    final r = await SavingGoalPicker.one(
-      context,
-      selectedId: w.goalId,
-      spareSelected: w.goalPicked && w.goalId == null,
-      overview: _goals,
-    );
-    if (!mounted || r == null) return;
-    setState(() => _goalMissing = false);
-    _change(working.withGoal(r.goalId));
-  }
-
-  Future<void> _pickCategory() async {
-    final l = AppLocalizations.of(context)!;
-    final r = await CategoryPicker.one(
-      context,
-      types: {
-        working.type == TransactionType.income
-            ? CategoryType.income
-            : CategoryType.expense,
-      },
-      selectedId: working.categoryId,
-      allowNone: true,
-      title: l.recurringFieldCategory,
-      allowCreate: true,
-    );
-    if (!mounted || r == null) return;
-    _change(switch (r) {
-      CategoryPicked(:final category) => working.copyWith(
-        categoryId: category.id,
-      ),
-      CategoryPickedNone() => working.copyWith(clearCategory: true),
-    });
-  }
-
-  Future<void> _pickTags() async {
-    final l = AppLocalizations.of(context)!;
-    final picked = await TagPicker.many(
-      context,
-      selected: working.tagIds,
-      title: l.transactionFormTagsLabel,
-    );
-    if (picked == null || !mounted) return;
-    _change(working.copyWith(tagIds: picked.ids));
-  }
-
-  Future<void> _pickDates() async {
-    final l = AppLocalizations.of(context)!;
-    final first = today();
-    final days = await showMultiDatePicker(
-      context,
-      initial: {
-        if (working.rule.freq == RecurrenceFreq.dates) ...working.rule.dates,
-      },
-      first: first,
-      last: DateTime(first.year + 2, first.month, first.day),
-      title: l.recurringRepeatDatesTitle,
-      confirmLabel: l.recurringRepeatDatesConfirm,
-    );
-    if (!mounted || days == null || days.isEmpty) return;
-    final sorted = days.toList()..sort();
-    _change(
-      working.copyWith(
-        rule: RecurrenceRule(
-          freq: RecurrenceFreq.dates,
-          start: sorted.first,
-          dates: sorted,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickStart() async {
-    final now = today();
-    final current = working.rule.start;
-    final picked = await PpForgeDatePicker.show(
-      context,
-      initial: current,
-      first: current.isBefore(now) ? current : now,
-      last: DateTime(now.year + 2, now.month, now.day),
-    );
-    if (!mounted || picked is! PpForgeDatePicked) return;
-    final d = picked.date;
-    final r = working.rule;
-    _change(
-      working.copyWith(
-        rule: r.copyWith(
-          start: d,
-          weekdays: r.weekdays.length == 1 ? {d.weekday} : null,
-          monthly: r.monthly?.mode == RecurrenceMonthlyMode.day
-              ? RecurrenceMonthly.onDay(d.day)
-              : null,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openRecurrenceSheet() async {
-    final picked = await AppRecurrenceSheet.show(
-      context,
-      initial: working.rule,
-    );
-    if (!mounted || picked == null) return;
-    _change(working.copyWith(rule: picked));
-  }
-
-  Future<void> _save() async {
-    commitTextSession();
-    final l = AppLocalizations.of(context)!;
-    final formOk = _formKey.currentState?.validate() ?? false;
-    final walletOk = working.walletOk;
-    final goalOk = working.goalOk;
-    final personOk = working.personOk;
-    if (!walletOk || !goalOk || !personOk) {
-      setState(() {
-        _walletMissing = !walletOk;
-        _goalMissing = !goalOk;
-        _personMissing = !personOk;
-      });
-    }
-    if (!formOk || !walletOk || !goalOk || !personOk) return;
-    if (!working.planOk) {
-      showPpForgeSnackBarOn(
-        pageMessenger!,
-        l.fpRecurringPlanIncomplete,
-        tone: Tone.danger,
-      );
-      return;
-    }
-
-    // A rule edit never touches filled slots (R6): their tx keep their own
-    // values.
-    final r = _recurring;
-    FocusScope.of(context).unfocus();
-    setSaving(true);
-    final accounts = context.read<AccountsCubit>();
-    try {
-      final write = working.toWrite();
-      final d = r == null
-          ? await _repo.create(write)
-          : await _repo.update(r.id, write);
-      accounts.patchBalances(d.balances);
-      if (!mounted) return;
-      HapticFeedback.mediumImpact();
-      _changed = true;
-      if (widget.isCreate) {
-        _createdId = d.recurring.id;
-        commitSaved(working);
-        leavePage();
-        return;
-      }
-      _take(d);
-      commitSaved(RecurringDraft.fromDetail(d));
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setSaving(false);
-      showErrorSnackBarOn(pageMessenger!, e);
-    }
-  }
-
-  Future<void> _run(Future<RecurringDetail> Function() call) async {
-    setSaving(true);
-    try {
-      final d = await call();
-      if (!mounted) return;
-      _changed = true;
-      _take(d);
-      commitSaved(RecurringDraft.fromDetail(d));
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setSaving(false);
-      showErrorSnackBarOn(pageMessenger!, e);
-    }
-  }
-
-  Future<void> _archive(Recurring r, {required bool restore}) async {
-    final l = AppLocalizations.of(context)!;
-    if (!restore) {
-      final ok = await showConfirmDialog(
-        context,
-        title: l.recurringArchiveTitle,
-        message: l.recurringArchiveBody,
-        confirmLabel: l.recurringArchive,
-      );
-      if (!ok || !mounted) return;
-    }
-    await _run(
-      () => _repo.action(
-        r.id,
-        restore ? RecurringAction.restore : RecurringAction.archive,
-      ),
-    );
-  }
-
-  Future<void> _duplicate(Recurring r) async {
-    setSaving(true);
-    try {
-      final d = await _repo.duplicate(r.id);
-      if (!mounted) return;
-      _changed = true;
-      commitSaved(working);
-      context.pushReplacement('/recurring/${d.recurring.id}');
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setSaving(false);
-      showErrorSnackBarOn(pageMessenger!, e);
-    }
-  }
-
-  /// Deletes the item and its lines; what its rounds wrote stays (txs as
-  /// they are, debt rows become general debts of the counterparty).
-  Future<void> _delete(Recurring r) async {
-    final l = AppLocalizations.of(context)!;
-    final ok = await showConfirmDialog(
-      context,
-      title: l.recurringDeleteTitle,
-      message: l.recurringDeleteKeepsWritten,
-      confirmLabel: l.commonDelete,
-      destructive: true,
-    );
-    if (!ok || !mounted) return;
-    setSaving(true);
-    final accounts = context.read<AccountsCubit>();
-    try {
-      final balances = await _repo.delete(r.id);
-      accounts.patchBalances(balances);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setSaving(false);
-      showErrorSnackBarOn(pageMessenger!, e);
-      return;
-    }
-    if (!mounted) return;
-    _changed = true;
-    // Pop without the discard prompt — it is gone.
-    commitSaved(working);
-    leavePage();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    if (!widget.isCreate && _detail == null) {
+    final d = _detail;
+    if (d == null) {
       return AppPage(
         topBar: AppTopBar(title: l.recurringTitle, showBack: true),
         body: AsyncStateView.fallback(
@@ -783,34 +338,23 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ),
       );
     }
-    final r = _recurring;
-    return editScope(
-      AppPage(
+    // View only: the recurring's own fields edit on /settings, a rule on
+    // its page (mock DetailNew).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.pop(_changed);
+      },
+      child: AppPage(
         topBar: AppTopBar(
-          // Titles never change with the mode.
-          title: r == null ? l.recurringNewTitle : r.name,
+          title: d.recurring.name,
           showBack: true,
-          editing: isEditing,
-          onBack: handleBack,
+          onBack: () => context.pop(_changed),
         ),
         body: BusyScope(
           busy: _busy,
-          child: Form(
-            key: _formKey,
-            child: Builder(
-              builder: (context) {
-                final barInset = MediaQuery.paddingOf(context).top;
-                final bottom =
-                    PpForgeSpacing.huge + MediaQuery.paddingOf(context).bottom;
-                final d = _detail;
-                return (d == null || isEditing)
-                    ? _editBody(context, l, r, barInset, bottom)
-                    : _viewBody(context, l, d);
-              },
-            ),
-          ),
+          child: Builder(builder: (context) => _viewBody(context, l, d)),
         ),
-        bottomBar: isEditing ? editActionBar(onSave: _save) : null,
       ),
     );
   }
@@ -841,27 +385,20 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         ?banner,
         ?_notice(l, r),
         ?_focusCard(l, r),
-        ?_aheadCard(l, r),
         if (d.page?.plan case final plan?)
           RecurringPlanSection(plan: plan, onTable: _openPlanTable),
-        if (d.page case final page? when page.lines.isNotEmpty)
-          RecurringLinesSection(
-            page: page,
-            onMenu: (line, a) => unawaited(_lineMenu(line, a)),
-            onAdd: page.actions.addLine ? () => _editLine(newLine: true) : null,
-          ),
+        if (d.page case final page?) ..._rulesSection(l, page),
       ],
       tabs: [
-        PpForgeTab(
-          value: _Tab.past,
-          label: l.fpRecurringTabPast,
-          badgeCount: r.counts.notCreated,
-          icon: AppIcons.history,
-        ),
         PpForgeTab(
           value: _Tab.upcoming,
           label: l.fpRecurringTabUpcoming,
           icon: AppIcons.date,
+        ),
+        PpForgeTab(
+          value: _Tab.past,
+          label: l.fpRecurringTabPast,
+          icon: AppIcons.history,
         ),
       ],
       selected: _tab,
@@ -872,6 +409,75 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         _Tab.upcoming => _upcomingTab(l, r),
       },
     );
+  }
+
+  /// Rules | n (+ เพิ่ม rule, top right) and one row per rule (mock
+  /// DetailNew): a tap opens the rule page, ⋯ = พัก / ทำต่อ / ลบ.
+  List<Widget> _rulesSection(AppLocalizations l, RecurringPage page) => [
+    PpForgeListHeader(
+      key: const ValueKey('detailRulesHeader'),
+      title: l.recurringRulesTitle,
+      count: page.lines.length,
+      actions: [
+        if (page.actions.addLine)
+          ListHeaderAction.button(
+            AppIcons.add,
+            tooltip: l.recurringAddRule,
+            onTap: () => unawaited(_openRule(null)),
+          ),
+      ],
+    ),
+    SectionCard(
+      key: const ValueKey('detailRules'),
+      first: true,
+      children: [
+        for (final line in page.lines)
+          RuleRow.of(
+            line,
+            key: ValueKey('detailRule:${line.id}'),
+            onTap: () => unawaited(_openRule(line)),
+            onMenu: (m) => unawaited(_ruleMenu(line, m)),
+          ),
+      ],
+    ),
+  ];
+
+  /// The rule page (a saved rule, or [line] null = a new one); back with the
+  /// recurring page it answered.
+  Future<void> _openRule(RecurringLine? line) async {
+    final r = await context.push<Object?>(
+      '/recurring/${widget.id}/rules/${line?.id ?? 'new'}',
+      extra: RulePageArgs(seq: line?.seq, recurringName: _detail?.page?.name),
+    );
+    if (!mounted) return;
+    if (r is RecurringDetail) {
+      _take(r);
+    } else {
+      unawaited(_load());
+    }
+  }
+
+  Future<void> _ruleMenu(RecurringLine line, RuleRowMenu m) => _detailCall(
+    () => switch (m) {
+      RuleRowMenu.pause => _repo.lineAction(
+        widget.id,
+        line.id,
+        RecurringAction.pause,
+      ),
+      RuleRowMenu.resume => _repo.lineAction(
+        widget.id,
+        line.id,
+        RecurringAction.resume,
+      ),
+      RuleRowMenu.delete => _repo.deleteLine(widget.id, line.id),
+    },
+  );
+
+  /// ✎: the recurring's own fields (icon, name, description, tracking
+  /// type, note; พัก / เก็บถาวร / ลบ) on the edit page.
+  Future<void> _openForm() async {
+    await context.push<Object?>('/recurring/${widget.id}/settings');
+    if (mounted) unawaited(_load());
   }
 
   PpForgeCompactHeroCard _compactBar(Recurring r) {
@@ -905,7 +511,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
             label: l.recurringExtend,
             onPressed: () => _detailCall(
               () =>
-                  _repo.extend(widget.id!, lineId: _detail?.page?.mainLine?.id),
+                  _repo.extend(widget.id, lineId: _detail?.page?.mainLine?.id),
             ),
           ),
         ],
@@ -936,28 +542,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
   /// (plan E). Nothing to do: nothing here; the next one is in the hero.
   /// ที่จะมา (S-Elec): the next 3 rounds not waiting in ต้องทำ; ดูทั้งหมด = the
   /// ที่จะมา tab.
-  Widget? _aheadCard(AppLocalizations l, Recurring r) {
-    final next = [
-      for (final i in _upcoming.items)
-        if (i.state == OccurrenceState.upcoming && !i.needsAmount) i,
-    ]..sort((a, b) => a.date.compareTo(b.date));
-    if (next.isEmpty) return null;
-    return SectionCard(
-      key: const ValueKey('recurringAhead'),
-      title: l.debtPlanUpcoming,
-      children: [
-        for (final i in next.take(3))
-          _occurrenceRow(l, r, i, onTap: () => _openOccurrence(i)),
-        if (next.length > 3)
-          DueMoreRow(
-            key: const ValueKey('recurringAheadAll'),
-            label: l.debtPlanAll,
-            onTap: () => _onTab(_Tab.upcoming),
-          ),
-      ],
-    );
-  }
-
   Widget? _focusCard(AppLocalizations l, Recurring r) {
     final due = [
       for (final i in _produced.items)
@@ -1016,9 +600,19 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
     final next = _nextItem;
     if (next == null) return null;
     final unknown = next.amount == null || next.amount! <= 0;
+    final nextLine = _detail?.page?.lines
+        .where((x) => x.id == next.ruleId)
+        .firstOrNull;
     return HeroNextOccurrence(
       key: const ValueKey('heroNext'),
-      label: _nextLabel(l, r, next),
+      label: [
+        _nextLabel(l, r, next),
+        if (nextLine != null)
+          [
+            l.ruleTitle(nextLine.seq),
+            ?nextLine.account?.name ?? nextLine.paidBy?.name,
+          ].join(' · '),
+      ].join(' | '),
       amount: unknown
           ? null
           : MoneyText(
@@ -1095,12 +689,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
         HeroIdentity(
           icon: EditableCircle(
             size: HeroIdentity.iconSize,
-            onLongPress: () {
-              enterEdit();
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) _pickIcon();
-              });
-            },
+            onLongPress: () => unawaited(_openForm()),
             child: IconDisplay(
               type: IconType.category,
               size: HeroIdentity.iconSize,
@@ -1111,12 +700,12 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           description: description.isEmpty
               ? null
               : HeroDescription(
-                  controller: _ctrl[_Field.description]!,
+                  controller: _description,
                   editing: false,
                   focusNode: _descriptionFocus,
                   hint: l.commonDescription,
                   maxLength: TextLimits.description,
-                  onEnterEdit: () => enterEdit(focus: _descriptionFocus),
+                  onEnterEdit: () => unawaited(_openForm()),
                 ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1124,35 +713,38 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
               HeroInfoBox(
                 key: const ValueKey('heroRound'),
                 icon: AppIcons.recurring,
-                title: recurrenceLabel(l, rule),
-                subtitle: plan != null
-                    ? l.fpRecurringCountUnit(plan.count)
-                    : !r.hasEnd
-                    ? l.fpRecurringSince(
-                        DateFormat.yMMM(_locale).format(rule.start),
-                      )
-                    : rule.freq == RecurrenceFreq.dates
-                    ? l.fpRecurringCountUnit(rule.dates.length)
-                    : _endText(l, rule.end),
+                title: l.recurringRulesCount(d.page?.lines.length ?? 1),
+                subtitle: l.fpRecurringSince(
+                  DateFormat.yMMM(_locale).format(_firstStart(d) ?? rule.start),
+                ),
               ),
               const SizedBox(width: PpForgeSpacing.sm),
               CardActionButton(
                 key: const ValueKey('heroEdit'),
                 icon: AppIcons.edit,
                 tooltip: PpForgeConfig.stringsOf(context).edit,
-                onTap: enterEdit,
+                onTap: () => unawaited(_openForm()),
               ),
             ],
           ),
         ),
         if (plan != null) _planTrack(l, plan) else ?_track(l, r, d.stats),
         if (stats.isNotEmpty) HeroTiles(joined: true, children: stats),
-        ?_pickCards(l),
         ?_purchaseRow(l, plan),
         HeroChipRow(chips: _heroChips(l, r, plan)),
         ?_heroNext(l, r),
       ],
     );
+  }
+
+  /// The earliest start over the rules (ตั้งแต่ …).
+  DateTime? _firstStart(RecurringDetail d) {
+    DateTime? out;
+    for (final line in d.page?.lines ?? const <RecurringLine>[]) {
+      final s = line.rule.start;
+      if (out == null || s.isBefore(out)) out = s;
+    }
+    return out;
   }
 
   /// The next occurrence still to come.
@@ -1391,9 +983,10 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       else
         _statusChip(l, r),
       PpForgeChip(
+        key: const ValueKey('heroTracking'),
         label: plan == null
-            ? recurringKindLabel(l, r.kind)
-            : '${recurringKindLabel(l, r.kind)} · ${plan.onCard ? l.recurringPlanOnCard : l.recurringPlanChip(plan.count)}',
+            ? trackingTypeLabel(l, _detail?.page?.trackingType ?? 'other')
+            : '${trackingTypeLabel(l, _detail?.page?.trackingType ?? 'other')} · ${plan.onCard ? l.recurringPlanOnCard : l.recurringPlanChip(plan.count)}',
         selected: true,
         tone: PpForgeChipTone.neutral,
       ),
@@ -1441,494 +1034,6 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       color: EventTagRef(name, iconCode: iconCode).colorOf(palette),
       selected: true,
       size: ChipSize.mini,
-    );
-  }
-
-  String _date(DateTime d) => DateFormatter.medium(
-    d,
-    locale: Localizations.localeOf(context).toLanguageTag(),
-  );
-
-  String _endText(AppLocalizations l, RecurrenceEnd end) => switch (end.kind) {
-    RecurrenceEndKind.never => l.recurringEndNever,
-    RecurrenceEndKind.onDate => l.recurEndUntil(_date(end.date!)),
-    RecurrenceEndKind.afterCount => l.fpRecurringCountUnit(end.count ?? 0),
-  };
-
-  /// Edit: when it runs. ทำซ้ำ opens the kit's custom-repeat sheet (its end
-  /// too); เลือกวันเอง picks single dates instead of a round.
-  Widget _periodSection(AppLocalizations l) {
-    final rule = working.rule;
-    final dates = rule.freq == RecurrenceFreq.dates;
-    return SectionCard(
-      first: true,
-      title: l.recurringSectionPeriod,
-      children: [
-        if (!dates)
-          PpForgeDetailRow(
-            label: l.recurringFieldStart,
-            trailing: Text(
-              _date(rule.start),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            showChevron: true,
-            onTap: _pickStart,
-          ),
-        PpForgeDetailRow.pick(
-          key: const ValueKey('repeatRow'),
-          label: l.recurringFieldRepeat,
-          valueChips: _repeatChips(l, rule),
-          emptyText: '',
-          onTap: _openRecurrenceSheet,
-        ),
-        PpForgeDetailRow.pick(
-          key: const ValueKey('datesRow'),
-          label: l.recurringFieldDates,
-          value: dates ? _datesText(rule.dates) : null,
-          emptyText: '',
-          onTap: _pickDates,
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _repeatChips(AppLocalizations l, RecurrenceRule rule) {
-    if (rule.freq == RecurrenceFreq.dates) {
-      return [
-        PpForgeChip(
-          label: l.recurringFieldDates,
-          icon: AppIcons.date,
-          tone: PpForgeChipTone.primary,
-          size: ChipSize.chip,
-        ),
-      ];
-    }
-    final end = rule.end;
-    return [
-      PpForgeChip(
-        label: recurrenceLabel(l, rule),
-        icon: AppIcons.recurring,
-        tone: PpForgeChipTone.primary,
-        size: ChipSize.chip,
-      ),
-      PpForgeChip(
-        label: end.kind == RecurrenceEndKind.afterCount
-            ? l.fpRecurringCountValue(end.count ?? 0)
-            : _endText(l, end),
-        size: ChipSize.chip,
-      ),
-    ];
-  }
-
-  /// The picked dates: the first two, then "+n".
-  String _datesText(List<DateTime> dates) {
-    final f = DateFormat.MMMd(_locale);
-    return [
-      for (final d in dates.take(2)) f.format(d),
-      if (dates.length > 2) '+${dates.length - 2}',
-    ].join(' | ');
-  }
-
-  /// หมวดหมู่ + กระเป๋า as the pair of tiles quick create uses; a transfer is
-  /// กระเป๋า → กระเป๋า. View mode: a tap opens the category / wallet, a long
-  /// press edits it, and a missing one is left out.
-  Widget? _pickCards(AppLocalizations l) {
-    final editing = isEditing;
-    final accounts = context.watch<AccountsCubit>();
-    final w = working;
-    final account = accounts.byId(w.accountId ?? '');
-    final toAccount = accounts.byId(w.toAccountId ?? '');
-    final category = w.isTransfer
-        ? null
-        : context.watch<CategoriesCubit>().byId(w.categoryId ?? '');
-    String? missing(Account? a) => editing && _walletMissing && a == null
-        ? l.recurringWalletRequired
-        : null;
-    Widget wallet(Account? a, String label, {bool to = false}) =>
-        WalletPickCard(
-          account: a,
-          label: label,
-          placeholder: l.quickPickWallet,
-          dense: true,
-          editable: editing,
-          errorText: missing(a),
-          onTap: editing
-              ? () => _pickWallet(to: to)
-              : () => openPage(context, '/accounts/${a!.id}'),
-          onLongPress: editing
-              ? null
-              : () => enterEdit(then: () => _pickWallet(to: to)),
-        );
-    if (w.isTransfer) {
-      if (!editing && account == null && toAccount == null) return null;
-      return FlowCards(
-        from: wallet(account, l.fpRecurringFieldFromWallet),
-        to: wallet(toAccount, l.recurringFieldToWallet, to: true),
-      );
-    }
-    if (w.isSaving) {
-      return FlowCards(
-        from: wallet(account, l.transactionFormAccountLabel),
-        to: _goalCard(l),
-      );
-    }
-    if (w.isDebt) return _debtCards(l, account);
-    final categoryCard = !editing && category == null
-        ? null
-        : CategoryPickCard(
-            category: category,
-            label: l.recurringFieldCategory,
-            placeholder: l.transactionFormCategoryNone,
-            dense: true,
-            editable: editing,
-            onTap: editing
-                ? _pickCategory
-                : () => openPage(context, '/categories/${category!.id}'),
-            onLongPress: editing ? null : () => enterEdit(then: _pickCategory),
-          );
-    final walletCard = w.paidBy != null
-        ? _paidByCard(l)
-        : !editing && account == null
-        ? null
-        : wallet(account, l.transactionFormAccountLabel);
-    if (categoryCard == null || walletCard == null) {
-      return categoryCard ?? walletCard;
-    }
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: categoryCard),
-          // As far apart as the cards sit from the hero's edge.
-          SizedBox(width: HeroMetrics.of(context).padding.left),
-          Expanded(child: walletCard),
-        ],
-      ),
-    );
-  }
-
-  /// หนี้: [กับใคร] ⇄ [กระเป๋า] in the money's direction (paid = me → them),
-  /// as quick create's debt mode; the arrow swaps it. No wallet = the entries
-  /// stay in the person book only ("ไม่ระบุกระเป๋า").
-  Widget _debtCards(AppLocalizations l, Account? account) {
-    final editing = isEditing;
-    final w = working;
-    final p = w.person;
-    final inst = w.institution;
-    final person = PickCard(
-      label: l.recurringCounterpartyLabel,
-      value: inst?.name ?? p?.name,
-      placeholder: l.debtPickPerson,
-      dense: true,
-      editable: editing,
-      accent: Theme.of(context).colorScheme.primary,
-      errorText: editing && _personMissing ? l.debtPickPerson : null,
-      leading: inst != null
-          ? InstitutionMark(name: inst.name, iconCode: inst.iconCode, size: 32)
-          : p == null
-          ? const PickCardEmptyIcon(AppIcons.contact, size: 32)
-          : PersonMark(level: debtPersonLevel(p), avatar: p.avatar, size: 32),
-      onTap: editing
-          ? _pickCounterparty
-          : () => openPage(
-              context,
-              inst != null
-                  ? '/personal-debts/people/${Uri.encodeComponent(inst.debtKey)}'
-                  : debtPersonPath(p!),
-            ),
-      onLongPress: editing ? null : () => enterEdit(then: _pickCounterparty),
-    );
-    if (w.paidBy != null) {
-      return FlowCards(
-        key: const ValueKey('debtFlow'),
-        from: person,
-        to: _paidByCard(l),
-      );
-    }
-    // ผ่อนผ่านบัตร: no line; the debt is held by the card.
-    final plan = _detail?.page?.plan;
-    if (plan != null && plan.onCard) {
-      final card = context.watch<AccountsCubit>().byId(plan.cardAccountId!);
-      return FlowCards(
-        key: const ValueKey('debtFlow'),
-        from: person,
-        to: WalletPickCard(
-          account: card,
-          label: l.recurringPlanInCard,
-          placeholder: plan.cardAccount?.name ?? l.debtNoWallet,
-          dense: true,
-          onTap: card == null
-              ? null
-              : () => openPage(context, '/accounts/${card.id}'),
-        ),
-      );
-    }
-    final wallet = WalletPickCard(
-      account: account,
-      label: l.transactionFormAccountLabel,
-      placeholder: l.debtNoWallet,
-      dense: true,
-      editable: editing,
-      onTap: editing
-          ? () => _pickWallet(to: false)
-          : (account == null
-                ? null
-                : () => openPage(context, '/accounts/${account.id}')),
-      onLongPress: editing
-          ? null
-          : () => enterEdit(then: () => _pickWallet(to: false)),
-    );
-    final paid = w.direction == DebtEntryDirection.paid;
-    return FlowCards(
-      key: const ValueKey('debtFlow'),
-      from: paid ? wallet : person,
-      to: paid ? person : wallet,
-      swapTooltip: l.quickSwap,
-      onSwap: editing
-          ? () => _change(
-              w.withDebt(
-                direction: paid
-                    ? DebtEntryDirection.received
-                    : DebtEntryDirection.paid,
-              ),
-            )
-          : null,
-    );
-  }
-
-  static String debtPersonPath(EmbeddedPerson p) =>
-      '/personal-debts/people/'
-      '${Uri.encodeComponent(debtPersonKey(contactId: p.contactId, name: p.name))}';
-
-  /// หนี้: a person or an institution (two short options, central).
-  Future<void> _pickCounterparty() async {
-    final l = AppLocalizations.of(context)!;
-    final institution = await showChoiceDialog<bool>(
-      context,
-      title: l.recurringCounterpartyLabel,
-      choices: [
-        DialogChoice(value: false, label: l.recurringCounterpartyPerson),
-        DialogChoice(value: true, label: l.recurringCounterpartyInstitution),
-      ],
-    );
-    if (!mounted || institution == null) return;
-    if (!institution) return _pickPerson();
-    final picked = await InstitutionPicker.one(
-      context,
-      selectedId: working.institution?.id,
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _personMissing = false);
-    _change(working.withInstitution(picked));
-  }
-
-  /// คนจ่ายแทน: the person who pays this line for me.
-  Future<void> _pickPaidBy() async {
-    final p = working.paidBy;
-    final picked = await showDebtPersonPicker(
-      context,
-      selected: p == null
-          ? null
-          : DebtPick(
-              key: debtPersonKey(contactId: p.contactId, name: p.name),
-              person: p,
-            ),
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _walletMissing = false);
-    _change(working.withPaidBy(picked.person));
-  }
-
-  /// The line's คนจ่ายแทน in place of its wallet card.
-  Widget _paidByCard(AppLocalizations l) {
-    final editing = isEditing;
-    final p = working.paidBy!;
-    return PickCard(
-      key: const ValueKey('paidByCard'),
-      label: l.recurringSourcePaidBy,
-      value: p.name,
-      placeholder: l.recurringPaidByPick,
-      dense: true,
-      editable: editing,
-      accent: Theme.of(context).colorScheme.primary,
-      leading: PersonMark(
-        level: debtPersonLevel(p),
-        avatar: p.avatar,
-        size: 32,
-      ),
-      onTap: editing ? _pickPaidBy : () => openPage(context, debtPersonPath(p)),
-      onLongPress: editing ? null : () => enterEdit(then: _pickPaidBy),
-    );
-  }
-
-  Future<void> _pickPerson() async {
-    final p = working.person;
-    final picked = await showDebtPersonPicker(
-      context,
-      selected: p == null
-          ? null
-          : DebtPick(
-              key: debtPersonKey(contactId: p.contactId, name: p.name),
-              person: p,
-            ),
-    );
-    if (picked == null || !mounted) return;
-    setState(() => _personMissing = false);
-    _change(working.withDebt(person: picked.person));
-  }
-
-  /// ออมเงิน: where it goes. View mode: a tap opens the goal (or
-  /// ยังไม่จัดสรร), a long press edits it.
-  Widget _goalCard(AppLocalizations l) {
-    _loadGoals();
-    final editing = isEditing;
-    final w = working;
-    SavingGoal? goal;
-    for (final g in _goals?.goals ?? const <SavingGoal>[]) {
-      if (g.id == w.goalId) goal = g;
-    }
-    final spare = w.goalPicked && w.goalId == null;
-    return SavingGoalPickCard(
-      // Until the goals load, the rule's own goal name shows.
-      goal: goal,
-      spare: spare,
-      spareAmount: _goals?.spare.amount,
-      label: l.savingEntryGoalLabel,
-      placeholder: w.goalId != null
-          ? (_recurring?.goal?.name ?? l.savingEntryPickGoal)
-          : l.savingEntryPickGoal,
-      spareLabel: l.savingEntrySpare,
-      dense: true,
-      editable: editing,
-      errorText: editing && _goalMissing ? l.savingEntryPickGoal : null,
-      onTap: editing
-          ? _pickGoal
-          : () => openPage(
-              context,
-              '/saving-goals/${w.goalId ?? SavingGoalsRepository.spareId}',
-            ),
-      onLongPress: editing ? null : () => enterEdit(then: _pickGoal),
-    );
-  }
-
-  /// The item's person-paid lines other than the one in the form.
-  List<RecurringLine> _paidByLines(RecurringDraft w) => [
-    for (final line in _detail?.page?.lines ?? const <RecurringLine>[])
-      if (line.paidBy != null && line.id != w.lineId) line,
-  ];
-
-  String _repaysLabel(AppLocalizations l, RecurringDraft w) {
-    final id = w.repaysReminderId;
-    if (id == null) return l.recurringRepaysNone;
-    final line = _paidByLines(w).where((x) => x.id == id).firstOrNull;
-    return l.recurringRepaysTo(line?.paidBy?.name ?? '');
-  }
-
-  /// Edit: what it is and its options. ประเภท and แบบ drop down in place.
-  Widget _detailSection(AppLocalizations l) {
-    final w = working;
-    return SectionCard(
-      children: [
-        SettingDropdownRow<RecurringKind>(
-          key: const ValueKey('kindRow'),
-          label: l.recurringFieldKind,
-          value: recurringKindLabel(l, w.kind),
-          icon: recurringKindIcon(w.kind),
-          iconColor: w.kind.iconDefault.color,
-          selected: w.kind,
-          submits: false,
-          onSelected: (k) {
-            if (k != w.kind) _change(w.withKind(k));
-          },
-          options: [
-            // 0.4.3: the type is fixed once the item exists (delete and
-            // create a new one to change it).
-            for (final k in RecurringKind.values)
-              if (_recurring == null || k == w.kind)
-                SheetOption(
-                  value: k,
-                  label: recurringKindLabel(l, k),
-                  leading: PpForgeIcon(
-                    recurringKindIcon(k),
-                    color: k.iconDefault.color,
-                  ),
-                ),
-          ],
-        ),
-        if (w.canPaidBy && !w.cardPlan && !w.notifyOnly)
-          SettingDropdownRow<bool>(
-            key: const ValueKey('sourceRow'),
-            label: l.recurringSourceLabel,
-            value: w.paidBy == null
-                ? l.recurringSourceWallet
-                : l.recurringSourcePaidBy,
-            selected: w.paidBy != null,
-            submits: false,
-            onSelected: (paid) => paid
-                ? unawaited(_pickPaidBy())
-                : _change(working.withPaidBy(null)),
-            options: [
-              SheetOption(value: false, label: l.recurringSourceWallet),
-              SheetOption(value: true, label: l.recurringSourcePaidBy),
-            ],
-          ),
-        if (w.canPaidBy &&
-            w.paidBy == null &&
-            !w.notifyOnly &&
-            _paidByLines(w).isNotEmpty)
-          SettingDropdownRow<String>(
-            key: const ValueKey('repaysRow'),
-            label: l.recurringRepaysLabel,
-            value: _repaysLabel(l, w),
-            selected: w.repaysReminderId ?? '',
-            submits: false,
-            onSelected: (id) => _change(w.withRepays(id.isEmpty ? null : id)),
-            options: [
-              SheetOption(value: '', label: l.recurringRepaysNone),
-              for (final line in _paidByLines(w))
-                SheetOption(
-                  value: line.id,
-                  label: l.recurringRepaysTo(line.paidBy?.name ?? ''),
-                ),
-            ],
-          ),
-        SettingToggleRow(
-          key: const ValueKey('notifyOnlyRow'),
-          label: l.recurringNotifyOnly,
-          caption: l.recurringNotifyOnlyHint,
-          value: w.notifyOnly,
-          submits: false,
-          onChanged: (v) => _change(w.withNotifyOnly(v)),
-        ),
-        if (!w.notifyOnly)
-          SettingToggleRow(
-            key: const ValueKey('autoCreateRow'),
-            label: l.fpRecurringAutoCreate,
-            caption: w.canAutoCreate
-                ? l.fpRecurringAutoCreateHint
-                : l.fpRecurringAutoCreateNeedsWallet,
-            value: w.autoCreate && w.canAutoCreate,
-            submits: false,
-            onChanged: w.canAutoCreate
-                ? (v) => _change(w.copyWith(autoCreate: v))
-                : null,
-          ),
-        if (w.autoCreateWarns)
-          Padding(
-            key: const ValueKey('autoCreateZeroWarn'),
-            padding: const EdgeInsets.fromLTRB(
-              PpForgeSpacing.lg,
-              0,
-              PpForgeSpacing.lg,
-              PpForgeSpacing.md,
-            ),
-            child: PpForgeMessage(
-              tone: Tone.warning,
-              message: l.fpRecurringAutoCreateZeroWarn,
-            ),
-          ),
-      ],
     );
   }
 
@@ -2089,7 +1194,7 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
           editing: false,
           text: r.note,
           hint: l.commonLongPressToEdit,
-          onLongPress: () => enterEdit(focus: _noteFocus),
+          onLongPress: _openForm,
         ),
       ],
     );
@@ -2377,175 +1482,5 @@ class _RecurringDetailPageState extends State<RecurringDetailPage>
       await _loadMoreUpcoming();
       if (_upcomingMoreError != null) return;
     }
-  }
-
-  Widget _editBody(
-    BuildContext context,
-    AppLocalizations l,
-    Recurring? r,
-    double barInset,
-    double bottom,
-  ) {
-    final w = working;
-    final palette = Theme.of(context).extension<PpForgeColors>()!;
-    final icon = recurringIconCode(
-      kind: w.kind,
-      own: w.iconCode,
-      category: context
-          .watch<CategoriesCubit>()
-          .byId(w.isTransfer ? '' : w.categoryId ?? '')
-          ?.iconCode,
-    );
-    final accent = icon.tintFor(palette);
-    final tags = context.watch<TagsCubit>();
-    return DetailLayout(
-      topInset: barInset + PpForgeSpacing.lg,
-      bottomInset: bottom,
-      onRefresh: widget.isCreate ? null : _load,
-      hero: PpForgeHeroCard(
-        style: HeroStyle.tinted(color: accent, glyph: AppIcons.scheduled),
-        mode: HeroCardMode.edit,
-        content: [
-          HeroIdentity(
-            icon: EditableCircle(
-              size: 44,
-              onTap: _pickIcon,
-              child: IconDisplay(
-                type: IconType.category,
-                size: 44,
-                iconCode: icon,
-              ),
-            ),
-            name: HeroNameInput(
-              editing: true,
-              controller: _ctrl[_Field.name]!,
-              focusNode: _nameFocus,
-              hint: l.commonName,
-              maxLength: TextLimits.name,
-              onChanged: (v) => _onText(_Field.name, v),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? l.recurringNameRequired
-                  : null,
-            ),
-            description: HeroDescription(
-              controller: _ctrl[_Field.description]!,
-              editing: true,
-              hint: l.commonDescription,
-              maxLength: TextLimits.description,
-              focusNode: _descriptionFocus,
-              onChanged: (v) => _onText(_Field.description, v),
-            ),
-          ),
-          HeroAmountField(
-            controller: _ctrl[_Field.amount]!,
-            label: w.amountOptional
-                ? l.fpRecurringAmountOptional
-                : l.fpRecurringAmountLabel,
-            symbol: context.readUserCurrencySymbol,
-            onChanged: (v) => _onText(_Field.amount, v),
-            validator: (v) {
-              final n = AmountInput.parse(v);
-              if (w.cardPlan) return null;
-              if (w.amountOptional && (v ?? '').trim().isEmpty) return null;
-              return (n == null || n <= 0) ? l.recurringAmountInvalid : null;
-            },
-          ),
-          ?_pickCards(l),
-        ],
-      ),
-      // ออมเงิน and หนี้ have no tags.
-      tags: w.isSaving || w.isDebt
-          ? null
-          : TagRow(
-              tags: [
-                for (final id in w.tagIds)
-                  if (tags.byId(id) case final t?) _tagChip(t.name, t.iconCode),
-              ],
-              onAdd: _pickTags,
-              addLabel: l.tagsAddNew,
-            ),
-      info: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!w.cardPlan) _periodSection(l),
-          _detailSection(l),
-          if (w.isDebt)
-            RecurringPlanForm(
-              plan: w.plan,
-              onChanged: (p) => _change(working.withPlan(p)),
-            ),
-          RecurringRemindersForm(
-            reminders: w.reminders,
-            hasEnd: w.rule.end.kind != RecurrenceEndKind.never,
-            onChanged: (r) => _change(working.withReminders(r)),
-          ),
-        ],
-      ),
-      note: NoteSection(
-        label: l.commonNote,
-        editing: true,
-        controller: _ctrl[_Field.note]!,
-        maxLength: TextLimits.note,
-        editField: DetailStacked(
-          label: l.commonNote,
-          child: PpForgeInput.inline(
-            editing: true,
-            controller: _ctrl[_Field.note]!,
-            focusNode: _noteFocus,
-            maxLines: 3,
-            maxLength: TextLimits.note,
-            hint: l.recurringNoteHint,
-            onChanged: (v) => _onText(_Field.note, v),
-          ),
-        ),
-      ),
-      endZone: r == null ? null : _endZone(l, r),
-      metaLines: r == null
-          ? const []
-          : detailMetaLines(
-              context,
-              createdAt: r.createdAt,
-              updatedAt: r.updatedAt,
-            ),
-    );
-  }
-
-  Widget _endZone(AppLocalizations l, Recurring r) {
-    final archived = r.status == RecurringStatus.archived;
-    final canArchive = archived ? r.actions.restore : r.actions.archive;
-    return EndZone(
-      actions: [
-        EndZoneAction(
-          kind: EndZoneKind.close,
-          icon: AppIcons.copy,
-          label: l.fpRecurringDuplicate,
-          consequence: l.fpRecurringDuplicateConsequence,
-          onTap: isSaving ? null : () => _duplicate(r),
-        ),
-        if (_detail?.page?.plan case final plan? when !plan.closed)
-          EndZoneAction(
-            kind: EndZoneKind.close,
-            icon: AppIcons.check,
-            label: l.recurringPlanClose,
-            consequence: l.recurringPlanCloseConsequence,
-            onTap: isSaving ? null : _closePlan,
-          ),
-        if (canArchive)
-          EndZoneAction(
-            kind: EndZoneKind.archive,
-            label: archived ? l.recurringRestore : l.recurringArchive,
-            consequence: archived
-                ? l.fpRecurringRestoreConsequence
-                : l.fpRecurringArchiveConsequence,
-            onTap: isSaving ? null : () => _archive(r, restore: archived),
-          ),
-        EndZoneAction(
-          kind: EndZoneKind.delete,
-          label: l.recurringDelete,
-          consequence: l.fpRecurringDeleteConsequence,
-          onTap: isSaving ? null : () => _delete(r),
-        ),
-      ],
-    );
   }
 }

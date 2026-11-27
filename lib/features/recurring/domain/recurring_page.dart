@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../ui/ui.dart'
-    show RecurrenceEnd, RecurrenceFreq, RecurrenceMonthly, RecurrenceRule;
+import '../../../ui/ui.dart' show RecurrenceEnd, RecurrenceFreq, RecurrenceRule;
 import '../../categories/domain/category.dart';
 import '../../institutions/domain/institution.dart';
 import '../../personal_debts/domain/debt_direction.dart';
@@ -85,9 +84,9 @@ class RecurringLineActions extends Equatable {
   List<Object?> get props => [pause, resume, archive, restore, extend, delete];
 }
 
-/// One line of an item (BE `Line`): its source (a wallet or a person paying
-/// for me), amount and schedule. [view] reads it as a whole rule (the item's
-/// name / type / category with this line's numbers) for the rule pieces.
+/// One rule of a recurring (BE `RecurringRule`): its own type, category,
+/// tags, goal / debt target, source, amount, schedule and switches. [view]
+/// reads it as a whole rule (the recurring's name with this rule's fields).
 class RecurringLine extends Equatable {
   const RecurringLine({
     required this.id,
@@ -95,7 +94,9 @@ class RecurringLine extends Equatable {
     required this.json,
     this.paidBy,
     this.repaysReminderId,
-    this.notifyOnly = false,
+    this.seq = 1,
+    this.notifyOn = true,
+    this.autoAcceptOn = false,
     this.actions = const RecurringLineActions(),
   });
 
@@ -111,8 +112,10 @@ class RecurringLine extends Equatable {
       paidBy: paidBy is Map<String, dynamic>
           ? EmbeddedPerson.fromJson(paidBy)
           : null,
-      repaysReminderId: json['repays_reminder_id'] as String?,
-      notifyOnly: json['action'] == 'notify',
+      repaysReminderId: json['repays_rule_id'] as String?,
+      seq: (json['seq'] as num?)?.toInt() ?? 1,
+      notifyOn: json['notify_on'] != false,
+      autoAcceptOn: json['auto_accept_on'] == true,
       actions: RecurringLineActions.fromJson(json['actions']),
     );
   }
@@ -126,44 +129,84 @@ class RecurringLine extends Equatable {
   /// คนจ่ายแทน: the person who pays for me; null = a wallet line.
   final EmbeddedPerson? paidBy;
 
-  /// คืนคนจ่ายแทน (0.4.3): the person-paid line of the item this one pays
-  /// back (each round = that line's latest round).
+  /// คืนคนจ่ายแทน: the person-paid rule of the recurring this one pays back
+  /// (each round = that rule's latest round).
   final String? repaysReminderId;
 
-  /// แค่แจ้งเตือน: the rounds book nothing; only the alerts go out.
-  final bool notifyOnly;
+  /// "Rule n": its place among the recurring's rules (1-based).
+  final int seq;
+
+  /// The switches in effect (the rule's own, else the user's default).
+  final bool notifyOn;
+  final bool autoAcceptOn;
   final RecurringLineActions actions;
+
+  /// The rule's own switches as stored (null = the user's default).
+  bool? get notify => json['notify'] as bool?;
+  bool? get autoAccept => json['auto_accept'] as bool?;
+
+  /// fixed | ask | schedule (a plan's installments) | follow (the rule it repays).
+  String get amountMode => (json['amount_mode'] as String?) ?? 'fixed';
+
+  /// An asked person repayment next to another rule of that person: the net,
+  /// shown, not filled.
+  double? get prefillHint => (json['prefill_hint'] as num?)?.toDouble();
+
+  /// goal_reached | debt_cleared: a rule that stops by itself.
+  String? get endText => json['end_text'] as String?;
+  String? get debtPlanId => json['debt_plan_id'] as String?;
+  RecurringCounterparty? get counterparty =>
+      RecurringCounterparty.tryParse(json['counterparty']);
 
   RecurrenceRule get rule => view.rule;
   double? get amount => view.amount;
   AccountRef? get account => view.account;
   RecurringStatus get status => view.status;
 
-  /// This line as a `LineInput` (unchanged), for a whole-item PUT.
-  Map<String, dynamic> toInput() => {
-    'id': id,
-    'repays_reminder_id': ?repaysReminderId,
-    if (notifyOnly) 'notify_only': true,
-    'amount': json['amount'],
-    'source': json['source'],
-    'to_account_id': json['to_account_id'],
-    'debt_kind': ?json['debt_kind'],
-    'schedule': json['schedule'],
-    'auto_create': json['auto_create'] == true,
-  };
+  /// This rule as a `RecurringRuleInput` (unchanged), for a whole PUT.
+  Map<String, dynamic> toInput() {
+    final cp = counterparty;
+    return {
+      'id': id,
+      'type': json['type'],
+      'category_id': json['category_id'],
+      'tag_ids': json['tag_ids'] ?? const [],
+      'goal_id': json['goal_id'],
+      if (debtPlanId != null)
+        'debt_plan_id': debtPlanId
+      else if (cp != null) ...{
+        'counterparty': cp.institution != null
+            ? {'institution_id': cp.institution!.id}
+            : cp.person?.contactId != null
+            ? {'contact_id': cp.person!.contactId}
+            : {'person_name': cp.name},
+        'debt_direction': json['debt_direction'],
+      },
+      'repays_rule_id': ?repaysReminderId,
+      if (amountMode == 'fixed' || amountMode == 'ask')
+        'amount_mode': amountMode,
+      'amount': json['amount'],
+      'source': json['source'],
+      'to_account_id': json['to_account_id'],
+      'debt_kind': ?json['debt_kind'],
+      'schedule': json['schedule'],
+      'notify': json['notify'],
+      'auto_accept': json['auto_accept'],
+    };
+  }
 
   @override
   List<Object?> get props => [id, json, view, paidBy, actions];
 }
 
-/// [line] of [item] as one rule: the item's identity, the line's numbers.
+/// [line] of [item] as one rule: the recurring's identity, the rule's fields.
 Recurring lineView(
   Map<String, dynamic> item,
   Map<String, dynamic> line, {
   bool asItem = false,
 }) {
   final schedule = line['schedule'] as Map<String, dynamic>?;
-  final counterparty = item['counterparty'];
+  final counterparty = line['counterparty'];
   final person = counterparty is Map<String, dynamic>
       ? (counterparty['person'] ??
             {'name': counterparty['name'] ?? '', 'contact_id': null})
@@ -175,13 +218,13 @@ Recurring lineView(
     'description': item['description'],
     'note': item['note'],
     'icon_code': item['icon_code'],
-    'type': item['type'],
-    'category': item['category'],
-    'tags': item['tags'],
-    'goal_id': item['goal_id'],
-    'goal': item['goal'],
+    'type': line['type'],
+    'category': line['category'],
+    'tags': line['tags'],
+    'goal_id': line['goal_id'],
+    'goal': line['goal'],
     'person': ?person,
-    'direction': item['debt_direction'],
+    'direction': line['debt_direction'],
     'rule': schedule,
     'start_date': schedule?['start_date'],
     'end': schedule?['end'],
@@ -195,6 +238,35 @@ Recurring lineView(
       },
     },
   });
+}
+
+/// One page a recurring's rules show on (goal / person / institution / plan /
+/// card), BE `RecurringTouch`.
+class RecurringTouch extends Equatable {
+  const RecurringTouch({
+    required this.kind,
+    required this.id,
+    required this.name,
+    this.key,
+  });
+
+  factory RecurringTouch.fromJson(Map<String, dynamic> json) => RecurringTouch(
+    kind: (json['kind'] as String?) ?? 'goal',
+    id: (json['id'] as String?) ?? '',
+    name: (json['name'] as String?) ?? '',
+    key: json['key'] as String?,
+  );
+
+  /// goal | person | institution | plan | card
+  final String kind;
+  final String id;
+  final String name;
+
+  /// A person / institution: its debt page key.
+  final String? key;
+
+  @override
+  List<Object?> get props => [kind, id, name, key];
 }
 
 enum InstallmentStatus {
@@ -413,7 +485,7 @@ class RecurringPlan extends Equatable {
   RecurrenceRule get rule => RecurrenceRule(
     freq: RecurrenceFreq.monthly,
     start: start,
-    monthly: RecurrenceMonthly.onDay(start.day),
+    monthDays: {start.day},
     end: RecurrenceEnd.afterCount(count),
   );
 
@@ -477,7 +549,7 @@ class RecurringItemActions extends Equatable {
       archive: j['archive'] == true,
       restore: j['restore'] == true,
       delete: j['delete'] == true,
-      addLine: j['add_reminder'] == true,
+      addLine: j['add_rule'] == true,
     );
   }
 
@@ -492,15 +564,6 @@ class RecurringItemActions extends Equatable {
   List<Object?> get props => [pause, resume, archive, restore, delete, addLine];
 }
 
-/// The first reminder's alerts (the form edits one set for every reminder).
-List<Object?> _firstAlerts(Object? reminders) {
-  if (reminders is List && reminders.isNotEmpty) {
-    final first = reminders.first;
-    if (first is Map && first['alerts'] is List) return first['alerts'] as List;
-  }
-  return const [];
-}
-
 /// `GET /recurring/{id}` and every item write (BE `ItemPage`, 0.4.3).
 class RecurringPage extends Equatable {
   const RecurringPage({
@@ -510,10 +573,9 @@ class RecurringPage extends Equatable {
     required this.status,
     required this.lines,
     required this.json,
-    this.counterparty,
-    this.direction,
+    this.trackingType = 'other',
+    this.touches = const [],
     this.plan,
-    this.reminders = const [],
     this.stats,
     this.dueCount = 0,
     this.nextLineId,
@@ -526,24 +588,22 @@ class RecurringPage extends Equatable {
 
   factory RecurringPage.fromJson(Map<String, dynamic> json) {
     final next = json['next'];
+    final rules = (json['rules'] as List?) ?? const [];
+    final first = rules.whereType<Map<String, dynamic>>().firstOrNull;
     return RecurringPage(
       id: json['id'] as String,
       json: json,
       name: (json['name'] as String?) ?? '',
-      kind: RecurringKind.fromJson(json['type'] as String?),
+      kind: RecurringKind.fromJson(first?['type'] as String?),
       status: RecurringStatus.fromJson(json['status'] as String?),
-      counterparty: RecurringCounterparty.tryParse(json['counterparty']),
-      direction: json['debt_direction'] is String
-          ? DebtEntryDirection.parse(json['debt_direction'] as String)
-          : null,
-      plan: RecurringPlan.tryParse(json['plan']),
-      // 0.4.3: alerts sit on each reminder; the page shows the first one's
-      reminders: [
-        for (final r in _firstAlerts(json['reminders']))
-          if (r is Map<String, dynamic>) RecurringReminder.fromJson(r),
+      trackingType: (json['tracking_type'] as String?) ?? 'other',
+      touches: [
+        for (final t in (json['touches'] as List?) ?? const [])
+          if (t is Map<String, dynamic>) RecurringTouch.fromJson(t),
       ],
+      plan: RecurringPlan.tryParse(json['plan']),
       lines: [
-        for (final l in (json['reminders'] as List?) ?? const [])
+        for (final l in rules)
           if (l is Map<String, dynamic> && l['id'] is String)
             RecurringLine.fromJson(l, item: json),
       ],
@@ -551,7 +611,7 @@ class RecurringPage extends Equatable {
           ? RecurringStats.fromJson(json['stats'] as Map<String, dynamic>)
           : null,
       dueCount: (json['due_count'] as num?)?.toInt() ?? 0,
-      nextLineId: next is Map ? next['recurring_reminder_id'] as String? : null,
+      nextLineId: next is Map ? next['recurring_rule_id'] as String? : null,
       nextDate: next is Map ? parseYmd(next['date'] as String?) : null,
       nextAmount: next is Map ? (next['amount'] as num?)?.toDouble() : null,
       monthTotal: (json['month_total'] as num?)?.toDouble() ?? 0,
@@ -565,13 +625,37 @@ class RecurringPage extends Equatable {
   /// The BE's item as sent.
   final Map<String, dynamic> json;
   final String name;
+
+  /// The first rule's money type (each rule has its own).
   final RecurringKind kind;
   final RecurringStatus status;
-  final RecurringCounterparty? counterparty;
-  final DebtEntryDirection? direction;
+
+  /// bill | subscription | installment | credit_card | person_debt | income |
+  /// saving | other: a filter on the list, no effect on the rules.
+  final String trackingType;
+
+  /// What its rules touch on other pages; empty = self-made (ตั้งเอง).
+  final List<RecurringTouch> touches;
   final RecurringPlan? plan;
-  final List<RecurringReminder> reminders;
   final List<RecurringLine> lines;
+
+  /// The first debt rule's counterparty / direction (the debt pieces).
+  RecurringCounterparty? get counterparty {
+    for (final l in lines) {
+      final c = l.counterparty;
+      if (c != null) return c;
+    }
+    return null;
+  }
+
+  DebtEntryDirection? get direction {
+    for (final l in lines) {
+      final d = l.json['debt_direction'];
+      if (d is String) return DebtEntryDirection.parse(d);
+    }
+    return null;
+  }
+
   final RecurringStats? stats;
   final int dueCount;
   final String? nextLineId;
@@ -605,10 +689,9 @@ class RecurringPage extends Equatable {
     name,
     kind,
     status,
-    counterparty,
-    direction,
+    trackingType,
+    touches,
     plan,
-    reminders,
     lines,
     stats,
     dueCount,

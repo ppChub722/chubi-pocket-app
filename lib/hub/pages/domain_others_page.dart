@@ -129,18 +129,6 @@ Widget buildOthersPage(BuildContext context) {
           ),
           HubUse(
             wide: true,
-            label: 'NotificationTile — system notice: extend / let it end',
-            page: 'Notifications inbox',
-            child: notifCard(
-              notif(
-                NotificationType.recurringEnding,
-                system: true,
-                payload: const {'name': 'iPhone', 'left': 2},
-              ),
-            ),
-          ),
-          HubUse(
-            wide: true,
             label:
                 'NotificationTile — system notice: one button (open ต้องจัดการ)',
             page: 'Notifications inbox',
@@ -150,21 +138,6 @@ Widget buildOthersPage(BuildContext context) {
                 system: true,
                 awaitsAnswer: false,
                 payload: const {'count': 3},
-              ),
-            ),
-          ),
-          HubUse(
-            wide: true,
-            label:
-                'NotificationTile — quiet system notice: no button (tap opens '
-                '/recurring)',
-            page: 'Notifications inbox',
-            child: notifCard(
-              notif(
-                NotificationType.recurringAutoCreated,
-                system: true,
-                awaitsAnswer: false,
-                payload: const {'count': 2, 'date': '2026-10-20'},
               ),
             ),
           ),

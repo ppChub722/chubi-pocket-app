@@ -43,7 +43,8 @@ import '../../features/saving_goals/presentation/pages/saving_goal_detail_page.d
 import '../../features/saving_goals/presentation/pages/saving_goals_list_page.dart';
 import '../../features/recurring/presentation/pages/recurring_home_page.dart';
 import '../../features/recurring/presentation/pages/recurring_detail_page.dart';
-import '../../features/recurring/presentation/recurring_draft.dart';
+import '../../features/recurring/presentation/pages/recurring_form_page.dart';
+import '../../features/recurring/presentation/pages/rule_page.dart';
 import '../../features/tags/presentation/pages/tags_page.dart';
 import '../../features/transactions/presentation/pages/debt_entry_detail_page.dart';
 import '../../features/transactions/presentation/pages/transaction_detail_page.dart';
@@ -470,17 +471,35 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
       path: '/recurring',
       name: 'recurring',
       builder: (context, state) => RecurringHomePage(
-        initialTab: state.uri.queryParameters['tab'] == 'calendar'
-            ? RecurringHomeTab.calendar
-            : RecurringHomeTab.overview,
         focusDue: state.uri.queryParameters['focus'] == 'due',
       ),
     ),
     GoRoute(
       path: '/recurring/new',
       name: 'recurring-new',
-      builder: (context, state) => RecurringDetailPage(
-        preset: RecurringPreset.fromQuery(state.uri.queryParameters),
+      builder: (context, state) => RecurringFormPage(
+        preset: RecurringFormPreset.fromQuery(state.uri.queryParameters),
+      ),
+    ),
+    // the create page's draft rules: edited here, handed back unsaved
+    GoRoute(
+      path: '/recurring/new/rules/:ruleId',
+      name: 'recurring-new-rule',
+      builder: (context, state) => RulePage(
+        recurringId: 'new',
+        args: state.extra is RulePageArgs
+            ? state.extra! as RulePageArgs
+            : const RulePageArgs(),
+      ),
+    ),
+    // a rule made from a wallet / goal / debt page
+    GoRoute(
+      path: '/recurring-rules/new',
+      name: 'recurring-rule-from-page',
+      builder: (context, state) => RulePage(
+        args: state.extra is RulePageArgs
+            ? state.extra! as RulePageArgs
+            : const RulePageArgs(),
       ),
     ),
     GoRoute(
@@ -492,10 +511,22 @@ List<RouteBase> _tabRoutes(ShellTab tab) => switch (tab) {
     GoRoute(
       path: '/recurring/:id/settings',
       name: 'recurring-settings',
-      builder: (context, state) => RecurringDetailPage(
-        id: state.pathParameters['id']!,
-        startEditing: true,
-      ),
+      builder: (context, state) =>
+          RecurringFormPage(id: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: '/recurring/:id/rules/:ruleId',
+      name: 'recurring-rule',
+      builder: (context, state) {
+        final rule = state.pathParameters['ruleId']!;
+        return RulePage(
+          recurringId: state.pathParameters['id']!,
+          ruleId: rule == 'new' ? null : rule,
+          args: state.extra is RulePageArgs
+              ? state.extra! as RulePageArgs
+              : const RulePageArgs(),
+        );
+      },
     ),
   ],
   ShellTab.savingGoals => [

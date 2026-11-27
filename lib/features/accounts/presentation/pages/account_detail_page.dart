@@ -25,6 +25,11 @@ import '../../../transactions/domain/transactions_summary.dart';
 import '../../../transactions/presentation/pages/transactions_list_page.dart';
 import '../../../transactions/presentation/tx_list_filters.dart';
 import '../../../transactions/presentation/widgets/quick_create_sheet.dart';
+import '../../../transactions/domain/refs.dart' show AccountRef;
+import '../../../recurring/domain/recurring.dart' show RecurringKind;
+import '../../../recurring/domain/rule_draft.dart';
+import '../../../recurring/domain/rule_group.dart';
+import '../../../recurring/presentation/widgets/rules_box.dart';
 import '../../domain/account.dart';
 import '../../domain/account_identifier.dart';
 import '../../domain/payment_provider.dart';
@@ -858,6 +863,7 @@ class _AccountDetailViewState extends State<_AccountDetailView>
         children: [
           for (final s in [
             _overviewInfo(l, a),
+            _rulesBox(l, a),
             _savedInSection(l, a),
             _peopleStrip(l, a),
             _settingsSection(l, a),
@@ -884,6 +890,23 @@ class _AccountDetailViewState extends State<_AccountDetailView>
   }
 
   Widget? _overviewInfo(AppLocalizations l, Account a) => _infoBox(l, a);
+
+  /// รายการอัตโนมัติ: every rule from or into this wallet (spec §3; mock
+  /// WalletKbank); + starts one with this wallet as its source.
+  Widget _rulesBox(AppLocalizations l, Account a) => RulesBox(
+    key: ValueKey('walletRules:${a.id}'),
+    filter: RuleFilter.wallet(a.id),
+    preset: RuleDraft.blank(RecurringKind.expense).copyWith(
+      account: AccountRef(
+        id: a.id,
+        name: a.name,
+        iconCode: a.iconCode,
+        type: a.type,
+      ),
+    ),
+    newName: l.rulesNewNameWallet(a.name),
+    onChanged: () => unawaited(_refresh()),
+  );
 
   Widget? _savedInSection(AppLocalizations l, Account a) {
     final buckets = a.savings?.buckets ?? const [];

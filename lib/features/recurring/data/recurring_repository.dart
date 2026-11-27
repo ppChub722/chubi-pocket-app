@@ -4,11 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
-import '../../personal_debts/domain/debt_direction.dart';
 import '../domain/recurrence_rule.dart' show parseYmd, ymd;
 import '../domain/recurring.dart';
 import '../domain/recurring_item.dart';
 import '../domain/recurring_page.dart';
+import '../domain/rule_draft.dart';
+import '../domain/rule_group.dart';
 
 class RecurringRepository {
   RecurringRepository({required ApiClient client}) : _client = client;
@@ -57,71 +58,6 @@ class RecurringRepository {
     Future<Response<Map<String, dynamic>>> Function(Dio dio) send,
   ) => _call((dio) async => _withRounds((await send(dio)).data!));
 
-  /// A debt item with a plan (0.4.3): the plan is a debt plan of its own
-  /// (`POST /debt-plans`, its creditor = the item's counterparty); the item
-  /// then pays it (`debt_plan_id`).
-  Future<RecurringDetail> create(RecurringWrite write) => _call((dio) async {
-    final planId = await _savePlan(dio, write, null);
-    final res = await dio.post<Map<String, dynamic>>(
-      '/recurring',
-      data: write.toJson(debtPlanId: planId),
-    );
-    return _withRounds(res.data!);
-  });
-
-  Future<RecurringDetail> update(String id, RecurringWrite write) =>
-      _call((dio) async {
-        final current = await dio.get<Map<String, dynamic>>('/recurring/$id');
-        final plan = current.data?['plan'];
-        final planId = await _savePlan(
-          dio,
-          write,
-          plan is Map ? plan['id'] as String? : null,
-        );
-        final res = await dio.put<Map<String, dynamic>>(
-          '/recurring/$id',
-          data: write.toJson(debtPlanId: planId),
-        );
-        return _withRounds(res.data!);
-      });
-
-  /// The item's plan written (created, or its installments worked out again);
-  /// its id, or null when the item has none.
-  Future<String?> _savePlan(
-    Dio dio,
-    RecurringWrite write,
-    String? planId,
-  ) async {
-    final plan = write.plan;
-    if (write.kind != RecurringKind.debt || plan == null) return planId;
-    if (planId != null) {
-      await dio.put<Map<String, dynamic>>(
-        '/debt-plans/$planId',
-        data: {'name': write.name, 'plan': plan.toJson()},
-      );
-      return planId;
-    }
-    final res = await dio.post<Map<String, dynamic>>(
-      '/debt-plans',
-      data: {
-        'name': write.name,
-        'description': write.description,
-        'note': write.note,
-        'direction': (write.direction ?? DebtEntryDirection.paid).wire,
-        'origin': 'cash',
-        'creditor': {
-          'institution_id': write.institutionId,
-          'contact_id': write.institutionId == null ? write.contactId : null,
-          'person_name': write.institutionId == null && write.contactId == null
-              ? write.personName
-              : null,
-        },
-        'plan': plan.toJson(),
-      },
-    );
-    return res.data?['id'] as String?;
-  }
-
   /// The plan id of an item (0.4.3: plans live at /debt-plans).
   Future<String> _planOf(Dio dio, String itemId) async {
     final res = await dio.get<Map<String, dynamic>>('/recurring/$itemId');
@@ -164,36 +100,81 @@ class RecurringRepository {
     Map<String, dynamic>? end,
   }) => _write(
     (dio) => dio.post(
-      '/recurring/$id/reminders/${lineId ?? id}/extend',
+      '/recurring/$id/rules/${lineId ?? id}/extend',
       data: end == null ? null : <String, dynamic>{'end': end},
     ),
   );
 
   // ---- lines (0.4.3) ----
 
-  Future<RecurringDetail> addLine(String id, RecurringLineWrite line) => _write(
-    (dio) => dio.post('/recurring/$id/reminders', data: line.toJson()),
-  );
-
-  Future<RecurringDetail> updateLine(
-    String id,
-    String lineId,
-    RecurringLineWrite line,
-  ) => _write(
-    (dio) => dio.put('/recurring/$id/reminders/$lineId', data: line.toJson()),
-  );
-
   /// 409 RECURRING_LAST_REMINDER for the item's only reminder.
   Future<RecurringDetail> deleteLine(String id, String lineId) =>
-      _write((dio) => dio.delete('/recurring/$id/reminders/$lineId'));
+      _write((dio) => dio.delete('/recurring/$id/rules/$lineId'));
 
   Future<RecurringDetail> lineAction(
     String id,
     String lineId,
     RecurringAction action,
-  ) => _write(
-    (dio) => dio.post('/recurring/$id/reminders/$lineId/${action.name}'),
+  ) => _write((dio) => dio.post('/recurring/$id/rules/$lineId/${action.name}'));
+
+  // ---- rules (spec §3) ----
+
+  /// A recurring with its rules in one call (the create page saves its draft
+  /// rules together).
+  Future<RecurringDetail> createWithRules({
+    required Map<String, dynamic> recurring,
+    required List<RuleDraft> rules,
+  }) => _write(
+    (dio) => dio.post(
+      '/recurring',
+      data: {
+        ...recurring,
+        'rules': [for (final r in rules) r.toJson()],
+      },
+    ),
   );
+
+  /// The recurring's own fields (its rules stay).
+  Future<RecurringDetail> updateOwn(
+    String id,
+    Map<String, dynamic> recurring,
+  ) => _write((dio) => dio.put('/recurring/$id', data: recurring));
+
+  Future<RecurringDetail> addRule(String id, RuleDraft rule) =>
+      _write((dio) => dio.post('/recurring/$id/rules', data: rule.toJson()));
+
+  Future<RecurringDetail> updateRule(String id, RuleDraft rule) => _write(
+    (dio) => dio.put('/recurring/$id/rules/${rule.id}', data: rule.toJson()),
+  );
+
+  /// A rule made from a wallet / goal / debt page: into [recurringId], or a
+  /// new recurring ([newRecurring]: name, icon, tracking type).
+  Future<RecurringDetail> createRule({
+    required RuleDraft rule,
+    String? recurringId,
+    Map<String, dynamic>? newRecurring,
+  }) => _write(
+    (dio) => dio.post(
+      '/recurring-rules',
+      data: {
+        'recurring_id': ?recurringId,
+        'new_recurring': ?newRecurring,
+        'rule': rule.toJson(),
+      },
+    ),
+  );
+
+  /// The rules that touch a page, grouped by recurring.
+  Future<List<RuleGroup>> rulesOf(RuleFilter filter) => _call((dio) async {
+    final res = await dio.get<Map<String, dynamic>>(
+      '/recurring-rules',
+      queryParameters: filter.toQuery(),
+    );
+    return [
+      for (final g in (res.data?['data'] as List?) ?? const [])
+        if (g is Map<String, dynamic>) RuleGroup.fromJson(g),
+    ];
+  });
 
   // ---- plans and installments (0.4.3) ----
 
@@ -218,7 +199,9 @@ class RecurringRepository {
     for (final i in (list as List?) ?? const []) ?PlanInstallment.tryParse(i),
   ];
 
-  /// แก้เฉพาะงวดนี้: only the fields given change.
+  /// แก้เฉพาะงวดนี้: only the fields given change. [recalcRest] = the user
+  /// said yes to "คำนวณงวดที่เหลือใหม่ไหม": the open rounds after it are
+  /// rebuilt from the real remaining principal (overwriting them).
   Future<RecurringDetail> updateInstallment(
     String id,
     int seq, {
@@ -226,6 +209,7 @@ class RecurringRepository {
     double? amount,
     double? principal,
     double? interest,
+    bool recalcRest = false,
   }) => _planWrite(
     id,
     (dio, plan) => dio.put<Map<String, dynamic>>(
@@ -235,6 +219,7 @@ class RecurringRepository {
         'amount': ?amount,
         'principal': ?principal,
         'interest': ?interest,
+        if (recalcRest) 'recalc_rest': true,
       },
     ),
   );
@@ -308,7 +293,7 @@ class RecurringRepository {
   /// What ต้องจัดการ lists: the due occurrences, plus this month's coming
   /// ones that still need an amount (`needs_amount`). [ruleId] = one rule's.
   Future<List<RecurringItem>> dueItems({String? ruleId}) =>
-      _allItems({'status': 'due', 'recurring_reminder_id': ?ruleId});
+      _allItems({'status': 'due', 'recurring_rule_id': ?ruleId});
 
   /// One rule's occurrences around [txDate] for the link picker, and the one
   /// the BE would pick ("งวดใกล้เคียง").
@@ -336,13 +321,13 @@ class RecurringRepository {
           ?RecurringItem.tryParse(e),
       ],
       suggestedSlot: body['suggested_slot'] as String?,
-      suggestedLine: body['suggested_recurring_reminder_id'] as String?,
+      suggestedLine: body['suggested_recurring_rule_id'] as String?,
     );
   });
 
   /// A round's address (0.4.3): its item, its line ([ruleId]) and its slot.
   String _occ(String ruleId, String slot) =>
-      '/recurring/${RecurringLineIndex.itemOf(ruleId)}/reminders/$ruleId'
+      '/recurring/${RecurringLineIndex.itemOf(ruleId)}/rules/$ruleId'
       '/occurrences/$slot';
 
   /// One occurrence by its address, stored or computed. The BE has no GET of
@@ -362,7 +347,7 @@ class RecurringRepository {
       final items = await _allItems({
         'month': _month(m),
         'status': 'all',
-        'recurring_reminder_id': ruleId,
+        'recurring_rule_id': ruleId,
       });
       for (final i in items) {
         if (i.slot == slot) return i;
@@ -386,10 +371,13 @@ class RecurringRepository {
     double? amount,
     DateTime? date,
     String? accountId,
+    Map<String, dynamic>? billDiff,
   }) => _occWrite('${_occ(ruleId, slot)}/confirm', {
     'amount': ?amount,
     'date': ?(date == null ? null : ymd(date)),
     'account_id': ?accountId,
+    // a card bill's difference, only when the user chose to book it
+    'bill_diff': ?billDiff,
   });
 
   /// ข้าม an open one; a filled one answers 409 (unlink its tx first).
@@ -454,11 +442,7 @@ class RecurringRepository {
     'action': action.wire,
     'items': [
       for (final i in items)
-        {
-          'recurring_reminder_id': i.ruleId,
-          'slot': i.slot,
-          'amount': ?i.amount,
-        },
+        {'recurring_rule_id': i.ruleId, 'slot': i.slot, 'amount': ?i.amount},
     ],
   });
 

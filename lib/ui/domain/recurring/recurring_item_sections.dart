@@ -6,112 +6,11 @@ import 'package:intl/intl.dart';
 import '../../../core/utils/user_currency.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../ui.dart';
-import '../../../features/personal_debts/domain/debt_direction.dart';
 import '../../../features/recurring/domain/recurrence_rule.dart' show today;
-import '../../../features/recurring/domain/recurring.dart';
 import '../../../features/recurring/domain/recurring_page.dart';
-import '../../../features/recurring/presentation/recurring_rows.dart';
 
 /// What a line's menu asks for.
 enum LineMenu { edit, pause, resume, archive, restore, delete }
-
-/// The item page's บรรทัด section (2+ lines): each line as ↻ when · wallet
-/// or คนจ่ายแทน · amount, its menu (pause / archive / delete), then + เพิ่ม
-/// บรรทัด.
-class RecurringLinesSection extends StatelessWidget {
-  const RecurringLinesSection({
-    required this.page,
-    required this.onMenu,
-    this.onAdd,
-    super.key,
-  });
-
-  final RecurringPage page;
-  final void Function(RecurringLine line, LineMenu action) onMenu;
-  final VoidCallback? onAdd;
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final symbol = context.readUserCurrencySymbol;
-    return SectionCard(
-      key: const ValueKey('linesSection'),
-      title: '${l.recurringLinesSection} | ${page.lines.length}',
-      children: [
-        for (final line in page.lines)
-          OptionMenuAnchor<LineMenu>(
-            options: [
-              SheetOption(value: LineMenu.edit, label: l.commonEdit),
-              if (line.actions.pause)
-                SheetOption(value: LineMenu.pause, label: l.recurringPause),
-              if (line.actions.resume)
-                SheetOption(value: LineMenu.resume, label: l.recurringResume),
-              if (line.actions.archive)
-                SheetOption(value: LineMenu.archive, label: l.recurringArchive),
-              if (line.actions.restore)
-                SheetOption(value: LineMenu.restore, label: l.recurringRestore),
-              if (line.actions.delete || page.lines.length > 1)
-                SheetOption(value: LineMenu.delete, label: l.commonDelete),
-            ],
-            onSelected: (a) => onMenu(line, a),
-            builder: (context, toggle) =>
-                _row(context, l, line, symbol, onTap: toggle),
-          ),
-        if (onAdd != null)
-          AddTile(
-            key: const ValueKey('lineAdd'),
-            label: l.recurringLineAdd,
-            onTap: onAdd!,
-          ),
-      ],
-    );
-  }
-
-  Widget _row(
-    BuildContext context,
-    AppLocalizations l,
-    RecurringLine line,
-    String symbol, {
-    VoidCallback? onTap,
-  }) {
-    final v = line.view;
-    final amount = v.amount;
-    final paidBy = line.paidBy;
-    final status = switch (line.status) {
-      RecurringStatus.paused => l.recurringStatusPaused,
-      RecurringStatus.archived => l.recurringStatusArchived,
-      RecurringStatus.done => l.recurringStatusDone,
-      RecurringStatus.active => null,
-    };
-    return PpForgeListRow(
-      key: ValueKey('line-${line.id}'),
-      leading: const PpForgeAvatar.icon(AppIcons.recurring),
-      title: recurrenceLabel(l, line.rule),
-      line2: ListRowLine(
-        lead: paidBy == null ? occurrenceWalletChip(context, v.account) : null,
-        parts: [
-          if (paidBy != null) l.recurringLinePaidBy(paidBy.name),
-          if (v.debtSub != null)
-            v.debtSub == DebtEntrySub.repay
-                ? l.debtSettleChip
-                : l.debtRecordChip,
-          ?status,
-        ],
-      ),
-      trailing: amount == null || amount <= 0
-          ? ListRowTrailing.text(l.fpRecurringAwaitingValue)
-          : ListRowTrailing.value(
-              MoneyText(
-                signedOf(v.type, amount, saving: v.isSaving),
-                tone: toneOf(v.type, saving: v.isSaving),
-                symbol: symbol,
-              ),
-            ),
-      dimmed: line.status != RecurringStatus.active,
-      onTap: onTap,
-    );
-  }
-}
 
 /// A debt item's plan on its page (paid / left / the last one are the
 /// hero's tiles): เงินต้นคงเหลือ / ดอกที่ยังต้องจ่าย, the on-card note, and

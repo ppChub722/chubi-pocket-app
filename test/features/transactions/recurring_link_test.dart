@@ -25,6 +25,8 @@ void main() {
       'category': 'c1',
       'account': 'a1',
       'name': 'Car',
+      // the create page pops with the new id: the picker picks it
+      'pick': '1',
     });
   });
 }

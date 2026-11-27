@@ -93,6 +93,36 @@ class NotificationSettingsCubit extends Cubit<SettingsState> {
     await _put(before, () => _repo.updateSettings(autoAcceptRepayments: on));
   }
 
+  /// รายการประจำ › ถึงงวด: the rules' default แจ้ง / อัตโนมัติ (a rule with
+  /// its own switch keeps it); same flip-back rule.
+  Future<void> setRecurringDefaults({bool? notify, bool? autoAccept}) async {
+    final before = state.settings;
+    if (before == null) return;
+    if ((notify ?? before.recurringNotifyDefault) ==
+            before.recurringNotifyDefault &&
+        (autoAccept ?? before.recurringAutoAcceptDefault) ==
+            before.recurringAutoAcceptDefault) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        settings: before.copyWith(
+          recurringNotifyDefault: notify,
+          recurringAutoAcceptDefault: autoAccept,
+        ),
+        status: SettingsStatus.saving,
+        clearError: true,
+      ),
+    );
+    await _put(
+      before,
+      () => _repo.updateSettings(
+        recurringNotifyDefault: notify,
+        recurringAutoAcceptDefault: autoAccept,
+      ),
+    );
+  }
+
   /// Taken off a bill: [mode] `ask` | `keep` | `delete`.
   Future<void> setOnSplitRemoved(String mode) async {
     final before = state.settings;

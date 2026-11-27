@@ -3488,16 +3488,10 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringSortAmount => 'ยอดมากสุด';
 
   @override
-  String get recurringSortTooltip => 'เรียงลำดับ';
-
-  @override
   String get recurringFilterAllStatus => 'ทุกสถานะ';
 
   @override
   String get recurringFilterAllKinds => 'ทุกประเภท';
-
-  @override
-  String get recurringMonthNoMatch => 'ไม่มีรายการตามตัวกรองนี้';
 
   @override
   String get occurrenceShowLess => 'ย่อ';
@@ -3520,36 +3514,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringFieldKind => 'ประเภท';
-
-  @override
-  String get recurringFieldDates => 'เลือกวันเอง';
-
-  @override
-  String get recurringSectionPeriod => 'ช่วงเวลา';
-
-  @override
-  String get recurringHomeTabOverview => 'ภาพรวม';
-
-  @override
-  String get recurringHomeMonthPay => 'จ่ายรวมทั้งเดือน';
-
-  @override
-  String get recurringHomeMonthCount => 'รายการเดือนนี้';
-
-  @override
-  String recurringHomeItemCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count รายการ',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String recurringHomeToday(String date) {
-    return 'วันนี้ $date';
-  }
 
   @override
   String recurringDayEmpty(String date) {
@@ -3707,20 +3671,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String recurMonthlyOnDay(int day) {
-    return 'ทุกวันที่ $day';
-  }
-
-  @override
-  String get recurMonthlyLastDay => 'ทุกวันสุดท้ายของเดือน';
-
-  @override
-  String recurOnDay(int day) {
-    return 'วันที่ $day';
-  }
-
-  @override
-  String get recurLastDay => 'วันสุดท้าย';
+  String get recurMonthlyLastDay => 'ทุกสิ้นเดือน';
 
   @override
   String recurMonthlyNthWeekday(String ord, int nth, String weekday) {
@@ -3763,8 +3714,8 @@ class AppLocalizationsTh extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'กำหนดเอง $count วัน',
-      zero: 'กำหนดเอง',
+      other: 'เลือกวันเอง · $count วัน',
+      zero: 'เลือกวันเอง',
     );
     return '$_temp0';
   }
@@ -3804,9 +3755,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'ตั้งรายการที่เกิดซ้ำ เช่น ค่าเน็ต ค่าห้อง พอถึงวันจะมีรายการรอยืนยันให้';
 
   @override
-  String get recurringNewTitle => 'รายการประจำใหม่';
-
-  @override
   String get recurringNotFound => 'ไม่พบรายการประจำ';
 
   @override
@@ -3829,25 +3777,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringNameRequired => 'ใส่ชื่อรายการ';
-
-  @override
-  String get recurringAmountInvalid => 'ใส่จำนวนเงินมากกว่า 0';
-
-  @override
-  String get recurringWalletRequired => 'เลือกกระเป๋า';
-
-  @override
-  String get recurringRepeatDatesTitle => 'เลือกวัน';
-
-  @override
-  String recurringRepeatDatesConfirm(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'เลือก $count วัน',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get recurringEndNever => 'ไม่สิ้นสุด';
@@ -3878,13 +3807,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringDelete => 'ลบรายการประจำ';
-
-  @override
-  String get recurringArchiveTitle => 'เก็บรายการประจำนี้ถาวร?';
-
-  @override
-  String get recurringArchiveBody =>
-      'จะหยุดสร้างรายการและซ่อนไว้ กู้คืนได้ภายหลัง';
 
   @override
   String get recurringDeleteTitle => 'ลบรายการประจำนี้?';
@@ -3949,22 +3871,7 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String notifRecurringAutoCreated(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'บันทึกอัตโนมัติ $count รายการ',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String notifRecurringEnding(String name, int left) {
-    return '$name เหลืออีก $left รายการ — ต่ออีกไหม';
-  }
-
-  @override
-  String get recurSheetTitle => 'ทำซ้ำแบบกำหนดเอง';
+  String get recurSheetTitle => 'ทำซ้ำ';
 
   @override
   String get recurSheetEvery => 'ทุก';
@@ -4010,10 +3917,10 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get recurSheetRepeatOn => 'ทำซ้ำในวัน';
+  String get recurSheetRepeatOn => 'วันในสัปดาห์ · เลือกได้หลายวัน';
 
   @override
-  String get recurSheetMonthlyOn => 'วันในเดือน';
+  String get recurSheetMonthlyOn => 'วันในเดือน · เลือกได้หลายวัน';
 
   @override
   String get recurSheetEnds => 'สิ้นสุด';
@@ -4025,7 +3932,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurSheetEndOnDate => 'ถึงวันที่';
 
   @override
-  String get recurSheetEndAfter => 'ครบจำนวนครั้ง';
+  String get recurSheetEndAfter => 'ครบ N ครั้ง';
 
   @override
   String recurSheetOccurrences(int count) {
@@ -4041,23 +3948,451 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurSheetPeriodStart => 'รอบใหม่เริ่มวัน';
 
   @override
-  String get recurSheetYearlyOn => 'ทุกปีในวันที่';
+  String get recurSheetYearlyOn => 'เดือน · เลือกได้หลายเดือน';
 
   @override
-  String get recurSheetByDay => 'ตามวันที่';
-
-  @override
-  String get recurSheetByWeekday => 'ตามวันในสัปดาห์';
-
-  @override
-  String recurSheetNth(String ord, int nth) {
-    return 'ที่ $nth';
+  String recurOnDays(String days) {
+    return 'วันที่ $days';
   }
 
   @override
-  String recurSheetStartMoves(String date) {
-    return 'วันเริ่มจะเลื่อนเป็น $date';
+  String recurMonthlyOnDays(String days) {
+    return 'ทุกวันที่ $days';
   }
+
+  @override
+  String recurNumberList(String list, String last) {
+    return '$list และ $last';
+  }
+
+  @override
+  String recurDaysMore(int count) {
+    return '+$count';
+  }
+
+  @override
+  String get recurLastDayShort => 'สิ้นเดือน';
+
+  @override
+  String recurYearlyOnMonths(String days, String months) {
+    return 'ทุกปี วันที่ $days ของ $months';
+  }
+
+  @override
+  String get recurSheetModeRepeat => 'ทำซ้ำเป็นรอบ';
+
+  @override
+  String get recurSheetModeDates => 'เลือกวันเอง';
+
+  @override
+  String get recurSheetMonthDaysHint =>
+      'เดือนที่ไม่มีวันที่ 29–31 → ใช้วันสุดท้ายของเดือน';
+
+  @override
+  String recurSheetNext(String dates) {
+    return 'ครั้งถัดไป $dates';
+  }
+
+  @override
+  String recurSheetLast(String date) {
+    return 'ครั้งสุดท้าย $date';
+  }
+
+  @override
+  String recurSheetTotal(String amount) {
+    return 'รวม $amount';
+  }
+
+  @override
+  String recurSheetUntilCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'รวม $count ครั้ง',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurSheetDatesHint =>
+      'แตะวันในปฏิทินเพื่อเลือก / เอาออก · เลื่อนเดือนได้';
+
+  @override
+  String get recurSheetPickedDates => 'วันที่เลือก';
+
+  @override
+  String get recurSheetDatesNoEnd =>
+      'ไม่มีส่วนสิ้นสุด: จบที่วันสุดท้ายที่เลือก';
+
+  @override
+  String recurSheetDatesSpan(int count, String from, String to) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count วัน',
+    );
+    return '$_temp0 · $from → $to';
+  }
+
+  @override
+  String ruleTitle(int n) {
+    return 'Rule $n';
+  }
+
+  @override
+  String get ruleRowAsk => 'รอใส่ยอด';
+
+  @override
+  String get ruleRowAuto => 'อัตโนมัติ';
+
+  @override
+  String get ruleRowManual => 'ยืนยันเอง';
+
+  @override
+  String ruleOfTotal(int n, int total) {
+    return 'rule $n จาก $total';
+  }
+
+  @override
+  String get recurringRulesTitle => 'Rules';
+
+  @override
+  String get recurringAddRule => 'เพิ่ม rule';
+
+  @override
+  String get recurringRulesRequired => 'เพิ่มอย่างน้อย 1 rule';
+
+  @override
+  String get recurringFormNewCrumb => 'ใหม่';
+
+  @override
+  String get recurringFormTotalLabel => 'รวมทุก rule';
+
+  @override
+  String get recurringFormTotalHint => 'อ่านอย่างเดียว คิดจาก rules';
+
+  @override
+  String get recurringTrackingHelper => 'ไว้ติดตาม / กรอง ไม่มีผลกับ rule';
+
+  @override
+  String get trackingBill => 'บิล';
+
+  @override
+  String get trackingSubscription => 'Subscription';
+
+  @override
+  String get trackingInstallment => 'ผ่อน';
+
+  @override
+  String get trackingCreditCard => 'บัตรเครดิต';
+
+  @override
+  String get trackingPersonDebt => 'หนี้คน';
+
+  @override
+  String get trackingIncome => 'รายรับ';
+
+  @override
+  String get trackingSaving => 'ออม';
+
+  @override
+  String get trackingOther => 'อื่นๆ';
+
+  @override
+  String get trackingAll => 'ทั้งหมด';
+
+  @override
+  String recurringRulesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rules',
+      one: '1 rule',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get recurringHeroExpense => 'รายจ่ายเดือนนี้ · ไม่รวมออม / ผ่อน';
+
+  @override
+  String recurringHeroPaid(String amount) {
+    return 'จ่ายแล้ว $amount';
+  }
+
+  @override
+  String get recurringCalendarHint =>
+      'แตะวัน = ดูงวดของวันนั้น · กรอบเหลือง = มีงวดรอจัดการ';
+
+  @override
+  String recurringRangeLabel(String from, String to) {
+    return '$from – $to';
+  }
+
+  @override
+  String get recurringRangePay => 'จ่าย';
+
+  @override
+  String get recurringRangeReceive => 'รับ';
+
+  @override
+  String get recurringRangeInstallSave => 'ผ่อน / ออม';
+
+  @override
+  String get recurringNeedsAction => 'ต้องจัดการ';
+
+  @override
+  String get recurringRangeList => 'รายการ';
+
+  @override
+  String get recurringSectionSelf => 'ตั้งเอง';
+
+  @override
+  String get recurringSectionRelated => 'เกี่ยวกับหน้าอื่น';
+
+  @override
+  String get rulesBoxTitle => 'รายการอัตโนมัติ';
+
+  @override
+  String get rulesBoxAdd => 'ตั้งอัตโนมัติ';
+
+  @override
+  String get rulesBoxEmpty => 'ยังไม่ตั้ง';
+
+  @override
+  String get rulesBoxSavingTitle => 'ออมอัตโนมัติ';
+
+  @override
+  String get rulesBoxSavingAdd => 'ตั้งออมอัตโนมัติ';
+
+  @override
+  String get rulesBoxCardAdd => 'ตั้งจ่ายบิลอัตโนมัติ';
+
+  @override
+  String get rulesBoxCardPlanNote => 'จ่ายผ่านบิล · ไม่มี rule';
+
+  @override
+  String get rulesBoxPlanAdd => 'เพิ่ม rule จ่ายงวด';
+
+  @override
+  String get rulesBoxPlanEmpty =>
+      'ยังไม่มี rule · ถึงวันต้องมากด \"จ่ายงวดนี้\" เอง';
+
+  @override
+  String rulesNewNameSaving(String name) {
+    return 'ออม$name';
+  }
+
+  @override
+  String rulesNewNameWallet(String name) {
+    return 'จาก $name';
+  }
+
+  @override
+  String rulesNewNamePerson(String name) {
+    return 'จ่าย$name';
+  }
+
+  @override
+  String rulesNewNameCard(String name) {
+    return 'จ่ายบิล $name';
+  }
+
+  @override
+  String rulesNewNamePlan(String name) {
+    return '$name';
+  }
+
+  @override
+  String get debtPlanRecalcTitle => 'คำนวณงวดที่เหลือใหม่ไหม';
+
+  @override
+  String get debtPlanRecalcBody =>
+      'งวดที่เหลือจะคิดใหม่จากเงินต้นคงเหลือจริง และเขียนทับของเดิม (รวมงวดที่แก้ไว้เอง)';
+
+  @override
+  String get debtPlanRecalcYes => 'คำนวณใหม่';
+
+  @override
+  String get debtPlanRecalcNo => 'ไม่ต้อง';
+
+  @override
+  String get billActualTitle => 'ยอดบิลจริง';
+
+  @override
+  String billRecorded(String amount) {
+    return 'ที่บันทึกไว้ $amount';
+  }
+
+  @override
+  String billDiffWarn(String amount) {
+    return '⚠ ต่างจากที่บันทึกไว้ $amount';
+  }
+
+  @override
+  String get billDiffAsk => 'ลงส่วนต่างเป็นรายจ่ายบนบัตรเลยไหม';
+
+  @override
+  String get billDiffOther => 'อื่นๆ';
+
+  @override
+  String get billDiffInterest => 'ดอกเบี้ย';
+
+  @override
+  String get billDiffManual => 'ไปเพิ่มรายการเอง ›';
+
+  @override
+  String get billDiffNone => 'ไม่ต้อง';
+
+  @override
+  String get billPayLessOk =>
+      'จ่ายน้อยกว่ายอดบิลได้ (เช่น ขั้นต่ำ) ส่วนที่เหลือค้างเป็นหนี้บัตร';
+
+  @override
+  String billDiffSummary(
+    String diff,
+    String card,
+    String category,
+    String date,
+    String paid,
+  ) {
+    return 'บันทึก = รายจ่าย $diff บน $card ($category, $date) + โอน $paid';
+  }
+
+  @override
+  String get ruleNewTitle => 'Rule ใหม่';
+
+  @override
+  String get ruleStatusActive => 'ใช้งาน';
+
+  @override
+  String get ruleStatusPaused => 'พัก';
+
+  @override
+  String get rulePausedBanner =>
+      'rule นี้พักอยู่ · ไม่สร้างงวดใหม่ · งวดที่บันทึกแล้วยังอยู่';
+
+  @override
+  String get ruleInRecurring => 'อยู่ในรายการประจำ';
+
+  @override
+  String get ruleInRecurringHint => 'rule ต้องอยู่ใต้รายการเสมอ';
+
+  @override
+  String ruleInRecurringNew(String name) {
+    return '$name · สร้างใหม่';
+  }
+
+  @override
+  String get ruleAmountPerRound => 'ยอดต่องวด';
+
+  @override
+  String get ruleAmountFixed => 'คงที่';
+
+  @override
+  String get ruleAmountAsk => 'ใส่ทุกงวด';
+
+  @override
+  String get ruleAmountAskValue => 'ใส่ตอนยืนยัน';
+
+  @override
+  String get ruleAmountSchedule => 'ตามตารางแผน';
+
+  @override
+  String ruleAmountFollow(int n) {
+    return 'ตามงวดล่าสุดของ rule $n';
+  }
+
+  @override
+  String get ruleAmountFixedOnly => 'คงที่เท่านั้น';
+
+  @override
+  String rulePrefillHint(String amount) {
+    return 'ค้างอยู่ $amount';
+  }
+
+  @override
+  String get ruleSectionPeriod => 'ช่วงเวลา';
+
+  @override
+  String ruleEndSummary(String date, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ครั้ง',
+    );
+    return 'ครั้งสุดท้าย $date · $_temp0';
+  }
+
+  @override
+  String ruleEndSummaryTotal(String date, int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ครั้ง',
+    );
+    return 'ครั้งสุดท้าย $date · $_temp0 · รวม $amount';
+  }
+
+  @override
+  String get ruleEndGoal => 'ถึงเป้า';
+
+  @override
+  String get ruleEndDebt => 'จนหมดหนี้';
+
+  @override
+  String get ruleSectionDue => 'ถึงงวด';
+
+  @override
+  String get ruleNotify => 'แจ้งเตือน';
+
+  @override
+  String get ruleAutoAccept => 'ยืนยันอัตโนมัติ';
+
+  @override
+  String get ruleAutoAcceptAskOff => 'ปิดเสมอเมื่อยอด \"ใส่ทุกงวด\"';
+
+  @override
+  String get ruleDelete => 'ลบ rule';
+
+  @override
+  String get ruleDeleteConfirm => 'ลบ rule นี้? งวดที่บันทึกแล้วยังอยู่';
+
+  @override
+  String get ruleTypeExpense => 'รายจ่าย';
+
+  @override
+  String get ruleTypeIncome => 'รายรับ';
+
+  @override
+  String get ruleTypeTransfer => 'โอน';
+
+  @override
+  String get ruleTypeSaving => 'ออม';
+
+  @override
+  String get ruleTypeDebt => 'หนี้';
+
+  @override
+  String get ruleDebtRepay => 'จ่ายหนี้';
+
+  @override
+  String get ruleDebtRecord => 'จดหนี้';
+
+  @override
+  String get ruleCounterparty => 'กับใคร';
+
+  @override
+  String get ruleIntoGoal => 'เข้าเป้า';
+
+  @override
+  String get ruleWalletRequired => 'เลือกกระเป๋า';
+
+  @override
+  String get rulePersonRequired => 'เลือกคน';
+
+  @override
+  String get ruleAmountRequired => 'ใส่ยอดมากกว่า 0';
 
   @override
   String get moreGroupPlan => 'แผนการเงิน';
@@ -5460,15 +5795,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifGroupRecurring => 'รายการประจำ';
 
   @override
-  String get notifTypeRecurringDue => 'รายการประจำถึงกำหนด';
-
-  @override
-  String get notifTypeRecurringEnding => 'รายการประจำใกล้จบ';
-
-  @override
-  String get notifTypeRecurringAutoCreated => 'บันทึกอัตโนมัติ';
-
-  @override
   String get settingsSectionApp => 'แอป';
 
   @override
@@ -5560,12 +5886,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get notifEmptyHidden => 'ไม่มีการแจ้งเตือนที่ซ่อนไว้';
 
   @override
-  String get notifActionExtend => 'ต่ออีก';
-
-  @override
-  String get notifActionLetEnd => 'ปล่อยให้จบ';
-
-  @override
   String get notifActionOpenDue => 'ไปจัดการ ›';
 
   @override
@@ -5647,7 +5967,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringPickerGroupRecurring => 'รายการประจำ';
 
   @override
-  String get recurringPickerGroupReminders => 'เตือนจ่าย';
+  String get recurringPickerGroupReminders => 'ใส่ยอดทุกรอบ';
 
   @override
   String get recurringPickerAwaitingAmount => 'รอยอด';
@@ -5702,7 +6022,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get errRecurringLastLine =>
-      'รายการประจำต้องมีอย่างน้อย 1 บรรทัด ถ้าไม่ใช้แล้วให้ลบทั้งรายการ';
+      'รายการประจำต้องมีอย่างน้อย 1 rule ถ้าไม่ใช้แล้วให้ลบทั้งรายการ';
 
   @override
   String get errInstallmentNeedsInstitution =>
@@ -5736,12 +6056,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringLinkSwapYes => 'สลับ';
 
   @override
-  String get fpRecurringTabCalendar => 'ปฏิทิน';
-
-  @override
-  String get fpRecurringPausedGroup => 'หยุดไว้';
-
-  @override
   String get fpRecurringAwaitingAmount => 'รอยอด';
 
   @override
@@ -5758,12 +6072,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpRecurringKindSaving => 'ออมเงิน';
-
-  @override
-  String get recurringHomeMonthPayNoSaving => 'จ่ายรวมทั้งเดือน ไม่รวมออมเงิน';
-
-  @override
-  String get recurringHomeMonthSave => 'ออมเดือนนี้';
 
   @override
   String get sgRecurringTitle => 'ทำเป็นรายการประจำ';
@@ -5865,19 +6173,8 @@ class AppLocalizationsTh extends AppLocalizations {
       'งวดนี้จะไม่ขึ้นร่างใน pending กู้คืนได้ภายหลัง';
 
   @override
-  String get fpRecurringAmountLabel => 'จำนวนเงิน / งวด';
-
-  @override
-  String get fpRecurringAmountOptional => 'จำนวนเงิน / งวด (ไม่บังคับ)';
-
-  @override
   String get fpRecurringReminderHint =>
       'ไม่ต้องใส่ยอดก็ได้ ถึงวันให้ใส่ยอดจริงในร่าง';
-
-  @override
-  String fpRecurringCountValue(int n) {
-    return '$n งวด';
-  }
 
   @override
   String get fpRecurringCountRequired => 'ผ่อนชำระต้องระบุจำนวนงวด';
@@ -5887,24 +6184,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpRecurringFieldFromWallet => 'จากกระเป๋า';
-
-  @override
-  String get fpRecurringArchiveConsequence =>
-      'หยุดสร้างงวดใหม่ ซ่อนไว้ กู้คืนได้';
-
-  @override
-  String get fpRecurringRestoreConsequence => 'กลับมาใช้งานและสร้างงวดใหม่ต่อ';
-
-  @override
-  String get fpRecurringDeleteConsequence =>
-      'ลบรายการประจำนี้ พร้อมงวดที่ยังไม่บันทึก';
-
-  @override
-  String get fpRecurringDuplicate => 'ทำสำเนา';
-
-  @override
-  String get fpRecurringDuplicateConsequence =>
-      'สร้างรายการประจำใหม่ที่เหมือนกัน เริ่มวันนี้';
 
   @override
   String fpM5ContactDeleteDebts(int n) {
@@ -6028,13 +6307,6 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get fpRecurringTapToRestore => 'แตะเพื่อยกเลิกการข้าม';
-
-  @override
-  String get fpRecurringAutoCreate => 'บันทึกอัตโนมัติเมื่อถึงวัน';
-
-  @override
-  String get fpRecurringAutoCreateHint =>
-      'ถึงวันแล้วบันทึกเป็นรายการให้เลย ไม่ต้องกดยืนยัน';
 
   @override
   String get fpM5bRecurringPerMonth => 'ต่อเดือน';
@@ -6542,13 +6814,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtCloseAllHint => 'ติดป้ายจ่ายแล้วให้หนี้ที่ค้างกับคนนี้ทั้งหมด';
 
   @override
-  String get fpRecurringAutoCreateNeedsWallet => 'ต้องเลือกกระเป๋าก่อน';
-
-  @override
-  String get fpRecurringAutoCreateZeroWarn =>
-      'ไม่มียอดคงที่: ถึงวันจะบันทึกยอด 0 ให้ไปแก้เอง ไม่เหมาะกับรายการที่ยอดเปลี่ยนทุกงวด (เช่น ค่าไฟ)';
-
-  @override
   String get txLinkDisconnect => 'ตัดการเชื่อม';
 
   @override
@@ -6711,9 +6976,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get notifSetEventMemberRemovedHint =>
       'รายการที่ลงไว้ยังอยู่ แค่ไม่เชื่อมกันแล้ว';
-
-  @override
-  String get notifSetRecurringAutoCreatedHint => 'ระบบลงรายการให้ตามรอบ';
 
   @override
   String get notifActionAddToBook => 'เพิ่มในสมุด';
@@ -7116,10 +7378,11 @@ class AppLocalizationsTh extends AppLocalizations {
       'อีเวนต์: ตามช่องอีเวนต์ของแถว \"มีคนแก้บิลที่แชร์กับฉัน\"\nแบ่งจ่าย: สำเนาของฉันเป็นรายการธรรมดาเสมอ';
 
   @override
-  String get notifSetRecurringDueHint => 'งวดที่ต้องจ่าย / ต้องรับวันนี้';
+  String get notifSetRecurringDueHint =>
+      'ค่าเริ่มต้นของ rule (rule ที่ตั้งเองแล้วไม่เปลี่ยนตาม)';
 
   @override
-  String get notifSetRecurringEndingHint => 'เหลืองวดสุดท้ายแล้ว';
+  String get notifSetRecurringDue => 'ถึงงวด';
 
   @override
   String get settingsAutoTitle => 'อัตโนมัติ';
@@ -7441,11 +7704,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get recurringDeleteKeepsWritten =>
-      'ลบรายการประจำนี้และทุกบรรทัด | รายการที่บันทึกไปแล้วยังอยู่ หนี้ที่เกิดแล้วกลายเป็นหนี้ทั่วไปของคู่หนี้ ยอดคงเหลือไม่เปลี่ยน';
-
-  @override
-  String get fpRecurringPlanIncomplete =>
-      'ใส่แผนผ่อนให้ครบ: เงินต้น จำนวนงวด และดอกเบี้ย';
+      'ลบรายการประจำนี้และทุก rule | รายการที่บันทึกไปแล้วยังอยู่ หนี้ที่เกิดแล้วกลายเป็นหนี้ทั่วไปของคู่หนี้ ยอดคงเหลือไม่เปลี่ยน';
 
   @override
   String get institutionPickTitle => 'เลือกสถาบัน';
@@ -7486,16 +7745,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringCounterpartyInstitution => 'สถาบันการเงิน';
 
   @override
-  String get recurringSourceLabel => 'จ่ายจาก';
-
-  @override
-  String get recurringSourceWallet => 'กระเป๋า';
-
-  @override
   String get recurringSourcePaidBy => 'คนจ่ายแทน';
-
-  @override
-  String get recurringPaidByPick => 'เลือกคนจ่ายแทน';
 
   @override
   String get recurringPlanSection => 'แผนผ่อน';
@@ -7584,9 +7834,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringPlanBilledOnCard => 'เรียกเก็บในบัตร';
 
   @override
-  String get recurringPlanInCard => 'อยู่ในบัตร';
-
-  @override
   String recurringPlanPurchase(String date) {
     return 'รายการซื้อ | $date | ราคาเต็มเข้าบัตรแล้ว';
   }
@@ -7600,17 +7847,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String recurringPlanRateChip(String method, String rate) {
     return '$method $rate%/ปี';
   }
-
-  @override
-  String get recurringPlanClose => 'ปิดแผนก่อนกำหนด';
-
-  @override
-  String get recurringPlanCloseConsequence =>
-      'งวดที่ยังไม่ติ๊กถูกข้าม งวดที่จ่ายแล้วเก็บเป็นประวัติ';
-
-  @override
-  String get recurringPlanCloseBody =>
-      'ปิดแผนนี้ก่อนกำหนด? งวดที่ยังไม่ได้ติ๊กจ่ายจะถูกข้าม';
 
   @override
   String get recurringPlanClosed => 'ปิดแผนแล้ว';
@@ -7651,49 +7887,14 @@ class AppLocalizationsTh extends AppLocalizations {
   String get recurringInstallmentInterest => 'ดอกเบี้ย';
 
   @override
-  String get recurringLinesSection => 'บรรทัด';
-
-  @override
-  String get recurringLineAdd => 'เพิ่มบรรทัด';
-
-  @override
   String recurringLinePaidBy(String name) {
     return '$name จ่ายแทน';
   }
 
   @override
-  String get recurringLineDeleteTitle => 'ลบบรรทัดนี้?';
-
-  @override
-  String get recurringLineDeleteBody => 'สิ่งที่บรรทัดนี้บันทึกไปแล้วยังอยู่';
-
-  @override
   String recurringLinesCount(int n) {
     return '$n reminders';
   }
-
-  @override
-  String get recurringRemindersSection => 'การเตือน';
-
-  @override
-  String get recurringReminderAdd => 'เพิ่มการเตือน';
-
-  @override
-  String get recurringReminderAnchorDue => 'ก่อนถึงกำหนด';
-
-  @override
-  String get recurringReminderAnchorStart => 'ก่อนเริ่ม';
-
-  @override
-  String get recurringReminderAnchorEnd => 'ก่อนสิ้นสุด';
-
-  @override
-  String recurringReminderDays(int n) {
-    return '$n วัน';
-  }
-
-  @override
-  String get recurringReminderSameDay => 'วันนั้น';
 
   @override
   String get debtsSectionInstitutions => 'สถาบันการเงิน';
@@ -7804,18 +8005,6 @@ class AppLocalizationsTh extends AppLocalizations {
       'แบ่งจ่ายเป็นงวดผ่านบัตร | ราคาเต็มเข้าบัตรตอนนี้';
 
   @override
-  String notifRecurringDueSoon(String name, String amount, String when) {
-    return '$name จะตัด $amount $when';
-  }
-
-  @override
-  String get notifTypeRecurringDueSoon => 'ใกล้ถึงกำหนด';
-
-  @override
-  String get notifSetRecurringDueSoonHint =>
-      'เตือนก่อนถึงกำหนดตามที่ตั้งไว้ในแต่ละรายการประจำ';
-
-  @override
   String get debtsSectionCards => 'บัตร / PayLater';
 
   @override
@@ -7846,12 +8035,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String debtCardDue(String date) {
     return 'ครบกำหนด $date';
   }
-
-  @override
-  String get debtCardBillReminder => 'ตั้ง reminder จ่ายบิล';
-
-  @override
-  String get debtCardBillReminderSet => 'reminder จ่ายบิล';
 
   @override
   String get debtPlanTitle => 'แผนผ่อน';
@@ -7904,12 +8087,6 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get debtPlanDeleteConfirm =>
       'ลบแผนนี้? รายการหนี้ที่บันทึกแล้วยังอยู่';
-
-  @override
-  String get debtPlanReminder => 'ตั้ง reminder';
-
-  @override
-  String get debtPlanReminderOpen => 'reminder ของแผนนี้';
 
   @override
   String get debtPlanClosed => 'ปิดแล้ว';
@@ -7975,17 +8152,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get debtPlanSave => 'บันทึก';
 
   @override
-  String get recurringRepaysLabel => 'คืนคนจ่ายแทน';
-
-  @override
-  String get recurringRepaysNone => 'ไม่ใช่ (รายจ่ายปกติ)';
-
-  @override
-  String recurringRepaysTo(String name) {
-    return 'คืน $name';
-  }
-
-  @override
   String get errRecurringTypeFixed =>
       'เปลี่ยนประเภทรายการไม่ได้ ถ้าจะเปลี่ยนให้ลบแล้วสร้างใหม่';
 
@@ -8034,10 +8200,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtPlanNoReminder =>
-      'ยังไม่มี reminder · ถึงวันต้องมากด \"จ่ายงวดนี้\" เอง';
-
-  @override
   String get debtPlanPrincipalTotal => 'ยอดจัด';
 
   @override
@@ -8079,9 +8241,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get debtCardPay => 'ชำระบัตร';
-
-  @override
   String get debtCardNewPlan => 'ผ่อนใหม่';
 
   @override
@@ -8121,12 +8280,6 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String get recurringNotifyOnly => 'แจ้งเตือนอย่างเดียว';
-
-  @override
-  String get recurringNotifyOnlyHint => 'ไม่บันทึกเงิน ส่งแค่การแจ้งเตือน';
-
-  @override
   String get recurringTagAuto => 'อัตโนมัติ';
 
   @override
@@ -8157,10 +8310,4 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get quickInstallmentFirstDueAuto => 'รอบตัดถัดไป';
-
-  @override
-  String get recurringHeroOwePeople => 'ติดคน';
-
-  @override
-  String get recurringHeroCardBills => 'บิลบัตร';
 }

@@ -14,40 +14,29 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/utils/user_currency.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../../../ui/ui.dart';
-import '../../../auth/domain/user.dart';
-import '../../../preferences/page_prefs.dart';
 import '../../../transactions/domain/transaction_type.dart';
 import '../../data/recurring_repository.dart';
 import '../../domain/recurrence_rule.dart' show today;
-import '../../../personal_debts/data/personal_debts_repository.dart';
 import '../../domain/recurring.dart';
 import '../../domain/recurring_item.dart';
+import '../../domain/recurring_page.dart' show RecurringTouch;
+import '../../domain/recurring_summary.dart';
 import '../cubit/recurring_directory_cubit.dart';
 import '../due_boxes.dart';
 import '../occurrence_actions.dart';
 import '../recurring_rows.dart';
+import 'recurring_form_page.dart'
+    show recurringTrackingTypes, trackingTypeLabel;
 
-enum RecurringHomeTab { overview, calendar }
-
-/// The calendar list's status filter.
-enum _MonthStatus { all, toFill, toConfirm, upcoming, done, skipped }
-
-enum _MonthSort { date, amount, name }
-
-/// Recurring, two tabs over one month, pinned at the top. ภาพรวม: the
-/// month's totals, ต้องจัดการ (pick rows to ยืนยัน / ข้าม together), then
-/// every rule by kind. ปฏิทิน: the month as a calendar in the hero, then the
-/// whole month's occurrences, or a picked day's.
+/// รายการประจำ (spec §3, mock ListPage / ListDay / ListRange): one page, no
+/// tabs. The hero holds this month's figures and the month calendar; nothing
+/// picked = ต้องทำ + every recurring (ตั้งเอง / เกี่ยวกับหน้าอื่น, the tracking
+/// chips); a day, or a second day = the range, lists its rounds with the
+/// ones that need action on top.
 class RecurringHomePage extends StatefulWidget {
-  const RecurringHomePage({
-    this.initialTab = RecurringHomeTab.overview,
-    this.focusDue = false,
-    super.key,
-  });
+  const RecurringHomePage({this.focusDue = false, super.key});
 
-  final RecurringHomeTab initialTab;
-
-  /// `?focus=due` (the due notice): scroll to ต้องจัดการ once it is there.
+  /// `?focus=due` (the due notice): scroll to ต้องทำ once it is there.
   final bool focusDue;
 
   @override
@@ -55,14 +44,10 @@ class RecurringHomePage extends StatefulWidget {
 }
 
 class _RecurringHomePageState extends State<RecurringHomePage> {
-  late RecurringHomeTab _tab = widget.initialTab;
-  late final _pages = PageController(
-    initialPage: RecurringHomeTab.values.indexOf(widget.initialTab),
-  );
   late DateTime _month = _thisMonth;
 
-  /// Null: the calendar lists the whole month.
-  DateTime? _day;
+  /// A picked day (start = end) or range; null = nothing picked.
+  DateTimeRange? _range;
 
   List<RecurringItem>? _items;
 
@@ -79,39 +64,11 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   final _toolbar = PpForgeListToolbarState.of('recurring');
   String _query = '';
 
-  /// The hero's ติดคน / บิลบัตร (S-List): what I owe people, the cards'
-  /// bills left.
-  double? _owePeople;
-  double? _cardBills;
+  /// รายการประจำทั้งหมด's tracking chip (null = ทั้งหมด).
+  String? _tracking;
 
-  Future<void> _loadDebtTiles() async {
-    final repo = context.read<PersonalDebtsRepository>();
-    try {
-      final owe = await repo.iOwePeople();
-      final cards = await repo.cardSummaries();
-      if (!mounted) return;
-      setState(() {
-        _owePeople = owe;
-        _cardBills = cards.fold<double>(0, (s, c) => s + c.bill.left);
-      });
-    } catch (_) {
-      // the hero shows without them
-    }
-  }
-
-  /// รายการทั้งหมด's type chip (null = ทั้งหมด).
-  RecurringKind? _kindFilter;
-
-  // The calendar list's 🔍 / filters / sort, behind its own toggle.
-  final _monthSearch = TextEditingController();
-
-  /// Amounts typed in the calendar list's rows, by occurrence.
+  /// Amounts typed in the rows, by occurrence.
   final _rowAmounts = <String, double?>{};
-  final _monthToolbar = PpForgeListToolbarState.of('recurringMonth');
-  String _monthQuery = '';
-  _MonthStatus _status = _MonthStatus.all;
-  RecurringKind? _kind;
-  _MonthSort _sort = _MonthSort.date;
 
   static DateTime get _thisMonth {
     final t = today();
@@ -125,7 +82,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   @override
   void initState() {
     super.initState();
-    _restorePrefs();
     _offEffects = WriteEffectsBus.instance.listen(_onEffects);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -134,20 +90,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       unawaited(_loadDue());
     });
   }
-
-  /// The month list's status / kind / sort remembered on the account.
-  void _restorePrefs() {
-    final pref = readPagePref(context, PagePrefIds.recurring);
-    final fields = pagePrefPage(PagePrefIds.recurring).fields;
-    String pick(String key) =>
-        fields.firstWhere((f) => f.key == key).pick(pref);
-    _status = _MonthStatus.values.asNameMap()[pick('status')] ?? _status;
-    _kind = RecurringKind.values.asNameMap()[pick('kind')];
-    _sort = _MonthSort.values.asNameMap()[pick('sort')] ?? _sort;
-  }
-
-  void _remember(Map<String, Object?> patch) =>
-      unawaited(rememberPagePref(context, PagePrefIds.recurring, patch));
 
   /// B2: slots any write changed (a tx deleted or unlinked elsewhere too)
   /// patch both lists in place; one that newly needs handling reloads
@@ -171,9 +113,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
   @override
   void dispose() {
     _offEffects?.call();
-    _pages.dispose();
     _search.dispose();
-    _monthSearch.dispose();
     super.dispose();
   }
 
@@ -235,7 +175,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     await Future.wait([
       _loadMonth(),
       _loadDue(),
-      _loadDebtTiles(),
       context.read<RecurringDirectoryCubit>().load(),
     ]);
   }
@@ -259,7 +198,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     if (first == _month) return;
     setState(() {
       _month = first;
-      _day = null;
+      _range = null;
     });
     unawaited(_loadMonth());
   }
@@ -298,50 +237,32 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     child: _page(context),
   );
 
+  /// One page, no tabs (spec §3 recurring list; mock ListPage / ListDay /
+  /// ListRange): the month calendar in the hero; nothing picked = ต้องทำ +
+  /// every recurring; a day / range = its rounds, ต้องจัดการ on top.
   Widget _page(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final dir = context.watch<RecurringDirectoryCubit>().state;
     final items = _items ?? const <RecurringItem>[];
-    // Swipe tabs (owner 2026-11-25): each tab is its own list, the month's
-    // hero on top of it; the tab bar scrolls away and floats back.
     return AppPage(
       topBar: AppTopBar(title: l.recurringTitle, showBack: true),
-      body: TabbedListPageBody<RecurringHomeTab>(
-        controller: _pages,
-        selected: _tab,
-        onChanged: (t) => setState(() => _tab = t),
-        tabs: [
-          PpForgeTab(
-            value: RecurringHomeTab.overview,
-            label: l.recurringHomeTabOverview,
-            icon: AppIcons.pie,
-          ),
-          PpForgeTab(
-            value: RecurringHomeTab.calendar,
-            label: l.fpRecurringTabCalendar,
-            icon: AppIcons.date,
-          ),
+      body: ListPageBody(
+        loading: _items == null && _itemsError == null,
+        error: _items == null ? _itemsError : null,
+        isEmpty: _items == null,
+        onRetry: _refresh,
+        empty: EmptyView.compact(message: l.recurringEmptyTitle),
+        children: [
+          _hero(l, items, dir),
+          if (_range == null) ...[
+            if (_due.isNotEmpty) ...[
+              const SizedBox(height: PpForgeSpacing.md),
+              _dueCard(l, dir),
+            ],
+            ..._allRules(l, dir),
+          ] else
+            ..._rangeList(l, items),
         ],
-        pageBuilder: (context, t) => ListPageBody(
-          loading: _items == null && _itemsError == null,
-          error: _items == null ? _itemsError : null,
-          // Until the month is in: the skeleton, or the error with a retry.
-          isEmpty: _items == null,
-          onRetry: _refresh,
-          empty: EmptyView.compact(message: l.recurringEmptyTitle),
-          children: [
-            _hero(l, items, t),
-            if (t == RecurringHomeTab.overview) ...[
-              if (_due.isNotEmpty) ...[
-                const SizedBox(height: PpForgeSpacing.md),
-                _dueCard(l, dir),
-              ],
-              ..._upcoming(l, items),
-              ..._allRules(l, dir),
-            ] else
-              ..._calendarList(l, items),
-          ],
-        ),
       ),
     );
   }
@@ -350,8 +271,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       moneyString(context, v, symbol: context.readUserCurrencySymbol);
 
   Recurring? _ruleOf(RecurringDirectoryState dir, RecurringItem i) {
-    final id = i.ruleId ?? i.recurring?.id;
-    if (id == null) return null;
+    final id = i.recurring?.id;
     for (final r in dir.rules) {
       if (r.id == id) return r;
     }
@@ -360,45 +280,56 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
 
   static bool _unknown(RecurringItem i) => i.amount == null && !i.state.settled;
 
-  /// The month's money out, a bar of how much of it is already paid, then
-  /// the month's income, its ออมเงิน (saved / planned) and count in one box
-  /// (ต้องจัดการ below says what waits). ออมเงิน is none of the money out,
-  /// the bar or the count.
-  Widget _hero(
-    AppLocalizations l,
-    List<RecurringItem> items,
-    RecurringHomeTab tab,
-  ) {
-    var pay = 0.0;
-    var paid = 0.0;
-    var income = 0.0;
-    var count = 0;
-    var savePlan = 0.0;
-    var saved = 0.0;
-    var anySaving = false;
+  /// The month's figures (mock ListPage): this month = the BE's (it knows the
+  /// card plans' installments); another month = its rounds here. A round
+  /// with no amount counts its rule's average ("~").
+  MonthHero _figures(List<RecurringItem> items, RecurringDirectoryState dir) {
+    if (_month == _thisMonth && dir.summary != null) return dir.summary!.month;
+    var expense = 0.0, paid = 0.0, income = 0.0, saving = 0.0, install = 0.0;
+    var approx = false;
     for (final i in items) {
       if (i.state == OccurrenceState.archived) continue;
-      final a = i.amount;
-      if (i.isSaving) {
-        anySaving = true;
-        if (a == null) continue;
-        savePlan += a;
-        if (i.state.settled) saved += a;
-        continue;
+      final rule = _ruleOf(dir, i);
+      var a = i.amount;
+      if (a == null || a <= 0) {
+        a = rule?.avgAmount ?? 0;
+        if (i.type == TransactionType.expense) approx = true;
       }
-      count++;
-      if (a == null) continue;
-      if (i.type == TransactionType.expense) {
-        pay += a;
+      if (i.isSaving) {
+        saving += a;
+      } else if (rule?.kind == RecurringKind.debt) {
+        if (i.type == TransactionType.expense) install += a;
+      } else if (i.type == TransactionType.expense) {
+        expense += a;
         if (i.state.settled) paid += a;
       } else if (i.type == TransactionType.income) {
         income += a;
       }
     }
+    return MonthHero(
+      expense: expense,
+      approx: approx,
+      paid: paid,
+      income: income,
+      saving: saving,
+      installment: install,
+    );
+  }
+
+  /// รายจ่ายเดือนนี้ (no saving / installments, "~" when some are guesses),
+  /// the paid bar, รายรับ / ออม / ผ่อน, then the month calendar (a day, or a
+  /// second day = the range between).
+  Widget _hero(
+    AppLocalizations l,
+    List<RecurringItem> items,
+    RecurringDirectoryState dir,
+  ) {
+    final f = _figures(items, dir);
     final symbol = context.readUserCurrencySymbol;
-    final captions = tab == RecurringHomeTab.calendar
-        ? _captions(l, items)
-        : const <int, CalendarCaption>{};
+    final captions = _captions(l, items);
+    final number = f.approx
+        ? '~${_money(f.expense)}'
+        : moneyString(context, f.expense, symbol: symbol);
     return PpForgeHeroCard(
       style: HeroStyle.tinted(color: Theme.of(context).colorScheme.primary),
       header: HeroHeader(
@@ -414,313 +345,188 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       ),
       content: [
         HeroNumber(
-          label: anySaving
-              ? l.recurringHomeMonthPayNoSaving
-              : l.recurringHomeMonthPay,
-          value: MoneyText(-pay, tone: MoneyTone.signed, symbol: symbol),
+          key: const ValueKey('heroExpense'),
+          label: l.recurringHeroExpense,
+          value: Text(number),
         ),
-        if (pay > 0)
+        if (f.expense > 0)
           HeroBar(
             key: const ValueKey('heroPaidBar'),
-            value: (paid / pay).clamp(0.0, 1.0),
-            fillLabel: '${(paid / pay * 100).clamp(0, 100).round()}%',
-            left: '${l.occurrenceStatePaid} ${_money(paid)}',
-            right: l.recurringHomeLeft(_money(pay - paid)),
+            value: (f.paid / f.expense).clamp(0.0, 1.0),
+            fillLabel: '${(f.paid / f.expense * 100).clamp(0, 100).round()}%',
+            left: l.recurringHeroPaid(_money(f.paid)),
+            right: l.recurringHomeLeft(
+              '${f.approx ? '~' : ''}${_money(f.left)}',
+            ),
           ),
         HeroTiles(
           joined: true,
           children: [
             SummaryTileView(
-              key: const ValueKey('heroPaid'),
+              key: const ValueKey('heroIncome'),
               tile: SummaryTile(
-                label: l.occurrenceStatePaid,
-                value: _money(paid),
-              ),
-            ),
-            SummaryTileView(
-              key: const ValueKey('heroOwePeople'),
-              tile: SummaryTile(
-                label: l.recurringHeroOwePeople,
-                value: _money(_owePeople ?? 0),
-                tone: (_owePeople ?? 0) > 0
-                    ? SummaryTileTone.red
+                label: l.trackingIncome,
+                value: _money(f.income),
+                tone: f.income > 0
+                    ? SummaryTileTone.green
                     : SummaryTileTone.neutral,
               ),
             ),
             SummaryTileView(
-              key: const ValueKey('heroCardBills'),
+              key: const ValueKey('heroSaving'),
               tile: SummaryTile(
-                label: l.recurringHeroCardBills,
-                value: _money(_cardBills ?? 0),
-                tone: (_cardBills ?? 0) > 0
-                    ? SummaryTileTone.red
-                    : SummaryTileTone.neutral,
+                label: l.trackingSaving,
+                value: _money(f.saving),
               ),
             ),
-            if (income > 0)
-              SummaryTileView(
-                tile: SummaryTile(
-                  label: l.homeIncome,
-                  value: signedMoneyString(
-                    context,
-                    income,
-                    negative: false,
-                    symbol: symbol,
-                  ),
-                  tone: income > 0
-                      ? SummaryTileTone.green
-                      : SummaryTileTone.neutral,
-                ),
-              ),
-            if (anySaving)
-              SummaryTileView(
-                key: const ValueKey('heroSaved'),
-                tile: SummaryTile(
-                  label: l.recurringHomeMonthSave,
-                  value: '${_money(saved)} / ${_money(savePlan)}',
-                ),
-              ),
             SummaryTileView(
+              key: const ValueKey('heroInstallment'),
               tile: SummaryTile(
-                label: l.recurringHomeMonthCount,
-                value: l.recurringHomeItemCount(count),
+                label: l.trackingInstallment,
+                value: _money(f.installment),
               ),
             ),
           ],
         ),
-        if (tab == RecurringHomeTab.calendar)
-          MonthCalendar(
-            month: _month,
-            showStepper: false,
-            today: today(),
-            selected: _day,
-            captions: captions,
-            // The box edged in the day's tone: waiting, out or in.
-            edges: {
-              for (final MapEntry(:key, :value) in captions.entries)
-                if (value.tone != CalendarDot.neutral) key: value.tone,
-            },
-            onMonthChanged: _onMonth,
-            onSelect: (d) => setState(() {
-              final day = _day;
-              _day = day != null && DateUtils.isSameDay(day, d) ? null : d;
-            }),
-          ),
+        MonthCalendar(
+          key: const ValueKey('recurringCalendar'),
+          month: _month,
+          showStepper: false,
+          today: today(),
+          range: _range,
+          captions: captions,
+          // The box edged in the day's tone: waiting, out or in.
+          edges: {
+            for (final MapEntry(:key, :value) in captions.entries)
+              if (value.tone != CalendarDot.neutral) key: value.tone,
+          },
+          onMonthChanged: _onMonth,
+          onSelect: (d) =>
+              setState(() => _range = CalendarPick.tapRange(_range, d)),
+        ),
+        PpForgeText(l.recurringCalendarHint, role: PpForgeTextRole.caption),
       ],
     );
   }
 
-  bool get _monthFiltered =>
-      _monthQuery.isNotEmpty ||
-      _status != _MonthStatus.all ||
-      _kind != null ||
-      _sort != _MonthSort.date;
-
-  String _statusLabel(AppLocalizations l, _MonthStatus s) => switch (s) {
-    _MonthStatus.all => l.recurringFilterAllStatus,
-    _MonthStatus.toFill => l.fpRecurringAwaitingValue,
-    _MonthStatus.toConfirm => l.occurrenceStateNotCreated,
-    _MonthStatus.upcoming => l.occurrenceStateUpcoming,
-    _MonthStatus.done => l.occurrenceStateDone,
-    _MonthStatus.skipped => l.occurrenceStateArchived,
-  };
-
-  /// The calendar list after 🔍, the status and kind filters and the sort.
-  /// Skipped ones show only under their own filter.
-  List<RecurringItem> _monthItems(List<RecurringItem> items) {
-    final dir = context.read<RecurringDirectoryCubit>().state;
-    final needle = _monthQuery.toLowerCase();
-    bool status(RecurringItem i) {
-      final skipped = i.state == OccurrenceState.archived;
-      final waiting = _todo(i) || _unknown(i);
-      return switch (_status) {
-        _MonthStatus.all => !skipped,
-        _MonthStatus.toFill => !skipped && waiting && needsAmountInput(i),
-        _MonthStatus.toConfirm => !skipped && waiting && !needsAmountInput(i),
-        _MonthStatus.upcoming =>
-          i.state == OccurrenceState.upcoming && !waiting,
-        _MonthStatus.done =>
-          i.state == OccurrenceState.done || i.state == OccurrenceState.paid,
-        _MonthStatus.skipped => skipped,
-      };
-    }
-
-    double size(RecurringItem i) => i.amount ?? _ruleOf(dir, i)?.avgAmount ?? 0;
-    final out = [
+  /// A picked day or range (mock ListDay / ListRange): its head (✕ clears),
+  /// a range's totals, ต้องจัดการ in its own box, then everything else by
+  /// date (done and coming together).
+  List<Widget> _rangeList(AppLocalizations l, List<RecurringItem> items) {
+    final r = _range!;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final single = DateUtils.isSameDay(r.start, r.end);
+    bool inRange(RecurringItem i) =>
+        !i.date.isBefore(DateUtils.dateOnly(r.start)) &&
+        !i.date.isAfter(DateUtils.dateOnly(r.end));
+    final rows = [
       for (final i in items)
-        if (status(i) &&
-            (_kind == null ||
-                (i.recurring?.kind ?? _ruleOf(dir, i)?.kind) == _kind) &&
-            (needle.isEmpty || _name(i).toLowerCase().contains(needle)))
-          i,
+        if (i.state != OccurrenceState.archived && inRange(i)) i,
+    ]..sort((a, b) => a.date.compareTo(b.date));
+    final act = [
+      for (final i in rows)
+        if (_actionable(i)) i,
     ];
-    switch (_sort) {
-      case _MonthSort.date:
-        break;
-      case _MonthSort.amount:
-        out.sort((a, b) => size(b).compareTo(size(a)));
-      case _MonthSort.name:
-        out.sort((a, b) => _name(a).compareTo(_name(b)));
+    final rest = [
+      for (final i in rows)
+        if (!_actionable(i)) i,
+    ];
+    final title = single
+        ? itemDateLabel(context, r.start)
+        : l.recurringRangeLabel(
+            DateFormat.d(locale).format(r.start),
+            DateFormat.MMMd(locale).format(r.end),
+          );
+    final out = <Widget>[
+      PpForgeListHeader(
+        key: const ValueKey('rangeHead'),
+        title: title,
+        count: rows.length,
+        onClearTitle: () => setState(() => _range = null),
+      ),
+    ];
+    if (!single) {
+      final dir = context.read<RecurringDirectoryCubit>().state;
+      var pay = 0.0, receive = 0.0, other = 0.0;
+      var approx = false;
+      for (final i in rows) {
+        var a = i.amount;
+        if (a == null || a <= 0) {
+          a = _ruleOf(dir, i)?.avgAmount ?? 0;
+          approx = true;
+        }
+        if (i.isSaving || _ruleOf(dir, i)?.kind == RecurringKind.debt) {
+          other += a;
+        } else if (i.type == TransactionType.income) {
+          receive += a;
+        } else if (i.type == TransactionType.expense) {
+          pay += a;
+        }
+      }
+      out.add(
+        HeroTiles(
+          key: const ValueKey('rangeTotals'),
+          joined: true,
+          children: [
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.recurringRangePay,
+                value: '${approx ? '~' : ''}${_money(pay)}',
+                tone: SummaryTileTone.red,
+              ),
+            ),
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.recurringRangeReceive,
+                value: _money(receive),
+                tone: SummaryTileTone.green,
+              ),
+            ),
+            SummaryTileView(
+              tile: SummaryTile(
+                label: l.recurringRangeInstallSave,
+                value: _money(other),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    if (rows.isEmpty) {
+      out.add(
+        EmptyView.compact(
+          message: l.recurringDayEmpty(DateFormat.MMMd(locale).format(r.start)),
+        ),
+      );
+      return out;
+    }
+    if (act.isNotEmpty) {
+      out.add(const SizedBox(height: PpForgeSpacing.sm));
+      out.add(
+        SectionCard(
+          key: const ValueKey('rangeAction'),
+          title: l.recurringNeedsAction,
+          trailing: PpForgeChip(
+            label: '${act.length}',
+            tone: PpForgeChipTone.warning,
+            size: ChipSize.chip,
+          ),
+          children: [for (final i in act) _listRow(l, i, withDate: true)],
+        ),
+      );
+    }
+    if (rest.isNotEmpty) {
+      out.add(
+        PpForgeListHeader(title: l.recurringRangeList, count: rest.length),
+      );
+      out.add(
+        SectionCard(
+          key: const ValueKey('rangeRest'),
+          children: [for (final i in rest) _listRow(l, i, withDate: true)],
+        ),
+      );
     }
     return out;
-  }
-
-  /// The calendar list's head: the month, or the picked day as a ✕ chip that
-  /// goes back to the month; the count; the status and kind filters and 🔍,
-  /// which opens the search box and the sort under it.
-  List<Widget> _calendarHead(
-    AppLocalizations l,
-    String title,
-    int count, {
-    bool day = false,
-  }) => [
-    PpForgeListHeader(
-      title: title,
-      count: count,
-      onClearTitle: day ? () => setState(() => _day = null) : null,
-      actions: [
-        ListHeaderAction.filter<_MonthStatus>(
-          label: _statusLabel(l, _status),
-          value: _status,
-          active: _status != _MonthStatus.all,
-          options: [
-            for (final s in _MonthStatus.values)
-              SheetOption(value: s, label: _statusLabel(l, s)),
-          ],
-          onSelected: (s) {
-            setState(() => _status = s);
-            _remember({'status': s.name});
-          },
-        ),
-        ListHeaderAction.filter<RecurringKind?>(
-          label: _kind == null
-              ? l.recurringFilterAllKinds
-              : recurringKindLabel(l, _kind!),
-          value: _kind,
-          active: _kind != null,
-          options: [
-            SheetOption(value: null, label: l.recurringFilterAllKinds),
-            for (final k in RecurringKind.values)
-              SheetOption(value: k, label: recurringKindLabel(l, k)),
-          ],
-          onSelected: (k) {
-            setState(() => _kind = k);
-            _remember({'kind': k?.name ?? 'all'});
-          },
-        ),
-        ListHeaderAction.toolbar(
-          _monthToolbar,
-          filtered: _monthQuery.isNotEmpty || _sort != _MonthSort.date,
-          tooltip: l.recurringSearchHint,
-        ),
-      ],
-    ),
-    PpForgeListToolbar(
-      state: _monthToolbar,
-      search: ListToolbarSearch(
-        controller: _monthSearch,
-        onChanged: (v) => setState(() => _monthQuery = v.trim()),
-        hint: l.recurringSearchHint,
-      ),
-      sort: SortChip<_MonthSort>(
-        value: _sort,
-        tooltip: l.recurringSortTooltip,
-        options: [
-          SortOption(_MonthSort.date, l.recurringSortDate),
-          SortOption(_MonthSort.amount, l.recurringSortAmount),
-          SortOption(_MonthSort.name, l.commonName),
-        ],
-        onChanged: (s) {
-          setState(() => _sort = s);
-          _remember({'sort': s.name});
-        },
-      ),
-      sidePadding: 0,
-    ),
-  ];
-
-  /// ปฏิทิน under the hero: the whole month's occurrences, or the picked
-  /// day's (tap it again, or ✕ ทั้งเดือน, to go back), through the list's
-  /// 🔍 / filters / sort. A day with none says so where they would be.
-  List<Widget> _calendarList(AppLocalizations l, List<RecurringItem> items) {
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final day = _day;
-    final shown = _monthItems(items);
-    if (day == null) {
-      return [
-        ..._calendarHead(
-          l,
-          DateFormat.yMMMM(locale).format(_month),
-          shown.length,
-        ),
-        SectionCard(
-          key: const ValueKey('calendarMonthList'),
-          children: shown.isEmpty
-              ? [
-                  EmptyView.compact(
-                    message: _monthFiltered
-                        ? l.recurringMonthNoMatch
-                        : l.recurringEmptyTitle,
-                  ),
-                ]
-              : _monthRows(l, shown),
-        ),
-      ];
-    }
-    final rows = [
-      for (final i in shown)
-        if (DateUtils.isSameDay(i.date, day)) i,
-    ];
-    return [
-      ..._calendarHead(l, itemDateLabel(context, day), rows.length, day: true),
-      SectionCard(
-        key: const ValueKey('calendarDayList'),
-        children: rows.isEmpty
-            ? [
-                EmptyView.compact(
-                  message: l.recurringDayEmpty(
-                    DateFormat.MMMd(locale).format(day),
-                  ),
-                ),
-              ]
-            : [for (final i in rows) _row(l, i)],
-      ),
-    ];
-  }
-
-  /// The month in the list's order. By date, this month: the today line,
-  /// the past dimmed unless still waiting. A past month all dimmed; a coming
-  /// one none.
-  List<Widget> _monthRows(AppLocalizations l, List<RecurringItem> items) {
-    final now = today();
-    final thisMonth = _month == _thisMonth;
-    final pastMonth = _month.isBefore(_thisMonth);
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final rows = <Widget>[];
-    var lined = !thisMonth || _sort != _MonthSort.date;
-    for (final i in items) {
-      final past = i.date.isBefore(now);
-      if (!lined && !past) {
-        rows.add(
-          TodayLine(
-            label: l.recurringHomeToday(DateFormat.MMMd(locale).format(now)),
-          ),
-        );
-        lined = true;
-      }
-      final waiting = _todo(i) || _unknown(i);
-      rows.add(
-        _monthRow(l, i, dimmed: pastMonth || (thisMonth && past && !waiting)),
-      );
-    }
-    if (!lined) {
-      rows.add(
-        TodayLine(
-          label: l.recurringHomeToday(DateFormat.MMMd(locale).format(now)),
-        ),
-      );
-    }
-    return rows;
   }
 
   PpForgeIconCode? _iconOf(RecurringItem i) {
@@ -742,16 +548,6 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
       i.recurring?.name ??
       _ruleOf(context.read<RecurringDirectoryCubit>().state, i)?.name ??
       i.title;
-
-  Widget _monthRow(
-    AppLocalizations l,
-    RecurringItem i, {
-    bool dimmed = false,
-  }) => _listRow(l, i, withDate: true, dimmed: dimmed);
-
-  /// A picked day's row: the day is in the head above.
-  Widget _row(AppLocalizations l, RecurringItem i) =>
-      _listRow(l, i, withDate: false);
 
   /// Waiting on the user: due, or no amount yet.
   bool _actionable(RecurringItem i) =>
@@ -918,32 +714,9 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     onOpen: (i) => unawaited(_openItem(i)),
   );
 
-  /// ที่จะมา (S-List): the next 3 rounds still to come this month; ดูทั้งหมด
-  /// = the calendar tab.
-  List<Widget> _upcoming(AppLocalizations l, List<RecurringItem> items) {
-    final today = DateUtils.dateOnly(DateTime.now());
-    final next = [
-      for (final i in items)
-        if (i.state == OccurrenceState.upcoming && !i.date.isBefore(today)) i,
-    ]..sort((a, b) => a.date.compareTo(b.date));
-    if (next.isEmpty) return const [];
-    return [
-      PpForgeListHeader(
-        key: const ValueKey('recurringUpcoming'),
-        title: l.debtPlanUpcoming,
-        actions: [
-          ListHeaderAction.link(
-            l.debtPlanAll,
-            onTap: () => setState(() => _tab = RecurringHomeTab.calendar),
-          ),
-        ],
-      ),
-      SectionCard(children: [for (final i in next.take(3)) _monthRow(l, i)]),
-    ];
-  }
-
-  /// รายการประจำทั้งหมด (S-List): 🔍 and +, the type chips, then every item
-  /// by its next date (the paused ones last). No archived ones.
+  /// รายการประจำทั้งหมด: 🔍 and +, the tracking chips, then two sections:
+  /// เกี่ยวกับหน้าอื่น (a rule touches a goal / person / institution / plan
+  /// or pays a card; chips say what) and ตั้งเอง. Paused ones dimmed, last.
   List<Widget> _allRules(AppLocalizations l, RecurringDirectoryState dir) {
     final needle = _query.trim().toLowerCase();
     final rules = [
@@ -955,6 +728,7 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
     final head = [
       PpForgeListHeader(
         title: l.recurringHomeAllTitle,
+        count: rules.length,
         actions: [
           ListHeaderAction.toolbar(
             _toolbar,
@@ -996,66 +770,111 @@ class _RecurringHomePageState extends State<RecurringHomePage> {
           ),
       ];
     }
-    final live = [
-      for (final r in rules)
-        if (r.status != RecurringStatus.paused) r,
-    ];
-    final paused = [
-      for (final r in rules)
-        if (r.status == RecurringStatus.paused) r,
-    ];
+    final counts = <String, int>{};
+    for (final r in rules) {
+      counts[r.trackingType] = (counts[r.trackingType] ?? 0) + 1;
+    }
     final shown =
         [
-          for (final r in live)
-            if (_kindFilter == null || r.kind == _kindFilter) r,
+          for (final r in rules)
+            if (_tracking == null || r.trackingType == _tracking) r,
         ]..sort((a, b) {
+          final pa = a.status == RecurringStatus.paused ? 1 : 0;
+          final pb = b.status == RecurringStatus.paused ? 1 : 0;
+          if (pa != pb) return pa - pb;
           final x = a.nextDate, y = b.nextDate;
           if (x == null) return y == null ? 0 : 1;
           if (y == null) return -1;
           return x.compareTo(y);
         });
+    final self = [
+      for (final r in shown)
+        if (!r.related) r,
+    ];
+    final related = [
+      for (final r in shown)
+        if (r.related) r,
+    ];
     return [
       ...head,
       FilterBar(
-        key: const ValueKey('recurringKindChips'),
+        key: const ValueKey('recurringTrackingChips'),
         padding: const EdgeInsets.symmetric(vertical: PpForgeSpacing.xs),
         chips: [
           PpForgeChip(
-            label: l.debtsFilterAll,
-            selected: _kindFilter == null,
-            onTap: () => setState(() => _kindFilter = null),
+            label: '${l.trackingAll} ${rules.length}',
+            selected: _tracking == null,
+            onTap: () => setState(() => _tracking = null),
           ),
-          for (final k in RecurringKind.values)
-            PpForgeChip(
-              label: recurringKindLabel(l, k),
-              selected: _kindFilter == k,
-              onTap: () => setState(() => _kindFilter = k),
-            ),
+          for (final t in recurringTrackingTypes)
+            if ((counts[t] ?? 0) > 0)
+              PpForgeChip(
+                key: ValueKey('tracking:$t'),
+                label: '${trackingTypeLabel(l, t)} ${counts[t]}',
+                selected: _tracking == t,
+                onTap: () => setState(() => _tracking = t),
+              ),
         ],
       ),
-      if (shown.isNotEmpty)
-        SectionCard(
-          key: const ValueKey('recurringAll'),
-          children: [for (final r in shown) _ruleRow(r)],
-        ),
-      if (paused.isNotEmpty) ...[
+      if (self.isNotEmpty) ...[
         PpForgeListHeader(
-          title: l.fpRecurringPausedGroup,
-          count: paused.length,
+          key: const ValueKey('recurringSelf'),
+          title: l.recurringSectionSelf,
+          count: self.length,
         ),
-        SectionCard(children: [for (final r in paused) _ruleRow(r)]),
+        SectionCard(children: [for (final r in self) _recurringRow(l, r)]),
+      ],
+      if (related.isNotEmpty) ...[
+        PpForgeListHeader(
+          key: const ValueKey('recurringRelated'),
+          title: l.recurringSectionRelated,
+          count: related.length,
+        ),
+        SectionCard(children: [for (final r in related) _recurringRow(l, r)]),
       ],
     ];
   }
 
-  /// A rule; one with an end (installments) gets its chain of occurrences
-  /// in the row's footer.
-  Widget _ruleRow(Recurring r) {
+  /// A recurring (mock ListPage): icon · name · n rules · its round · its
+  /// wallet, yellow chips of what it touches (a tap opens that page), the
+  /// per-month amount.
+  Widget _recurringRow(AppLocalizations l, Recurring r) {
     final dots = endChainDots(r);
     return RecurringRow(
+      key: ValueKey('recurring:${r.id}'),
       recurring: r,
-      footer: dots == null ? null : OccurrenceChain(dots: dots),
+      footer: r.touches.isEmpty && dots == null
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (r.touches.isNotEmpty)
+                  Wrap(
+                    spacing: PpForgeSpacing.xs,
+                    runSpacing: PpForgeSpacing.xs,
+                    children: [
+                      for (final t in r.touches)
+                        PpForgeChip(
+                          key: ValueKey('touch:${r.id}:${t.kind}:${t.id}'),
+                          label: t.name,
+                          tone: PpForgeChipTone.warning,
+                          size: ChipSize.mini,
+                          onTap: () => _open(_touchPath(t)),
+                        ),
+                    ],
+                  ),
+                ?dots == null ? null : OccurrenceChain(dots: dots),
+              ],
+            ),
       onTap: () => _open('/recurring/${r.id}'),
     );
   }
+
+  static String _touchPath(RecurringTouch t) => switch (t.kind) {
+    'goal' => '/saving-goals/${t.id}',
+    'plan' => '/personal-debts/plans/${t.id}',
+    'card' => '/personal-debts/cards/${t.id}',
+    _ => '/personal-debts/people/${Uri.encodeComponent(t.key ?? '')}',
+  };
 }

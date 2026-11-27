@@ -290,7 +290,9 @@ class _AdjustBalanceSheetState extends State<AdjustBalanceSheet> {
             ),
             const SizedBox(height: PpForgeSpacing.sm),
             Text(
-              canAdjust ? s.willCreate(diffText, s.formatDate(_date)) : s.noChange,
+              canAdjust
+                  ? s.willCreate(diffText, s.formatDate(_date))
+                  : s.noChange,
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],

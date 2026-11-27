@@ -7,6 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../recurring/domain/rule_draft.dart';
+import '../../../recurring/domain/rule_group.dart';
+import '../../../recurring/presentation/pages/rule_page.dart';
+import '../../../recurring/presentation/widgets/rule_due_box.dart';
+import '../../../recurring/presentation/widgets/rules_box.dart';
 import '../../../../app/shell/app_page.dart';
 import '../../../../app/shell/app_top_bar.dart';
 import '../../../../app/shell/quick_create_context.dart';
@@ -62,6 +67,8 @@ class _PersonView extends StatefulWidget {
 }
 
 class _PersonViewState extends State<_PersonView> {
+  /// Bumped when a rule is saved here: ต้องทำ loads again.
+  int _rulesTick = 0;
   final _heroKey = GlobalKey();
   final _search = TextEditingController();
   final _toolbar = PpForgeListToolbarState.local();
@@ -321,7 +328,16 @@ class _PersonViewState extends State<_PersonView> {
             ),
           ],
         ),
-      ?_recurringSection(l, s),
+      if (s.balance case final b?) ...[
+        // ต้องทำ: the due rounds of this counterparty's rules
+        RuleDueBox(
+          key: ValueKey('personDue:${b.key}'),
+          filter: RuleFilter(debtKey: b.key),
+          reloadKey: _rulesTick,
+          onChanged: () => unawaited(_cubit.load()),
+        ),
+        _rulesBox(l, b),
+      ],
       ?_plansSection(l),
       PpForgeListToolbar(
         state: _toolbar,
@@ -359,111 +375,6 @@ class _PersonViewState extends State<_PersonView> {
     ];
   }
 
-  /// 0.4.3 section รายการประจำ: one card per item of this counterparty (its
-  /// plan's n/N, what is left on its side, its lines); a tap opens the item.
-  /// An institution's cards' debts follow. Shown only when there is one.
-  Widget? _recurringSection(AppLocalizations l, DebtPersonState s) {
-    final items = s.recurrings;
-    final cards = s.cardDebts;
-    if (items.isEmpty && cards.isEmpty) return null;
-    final symbol = debtCurrencySymbol(context);
-    String money(double v) => moneyString(context, v, symbol: symbol);
-    return SectionCard(
-      key: const ValueKey('debtRecurrings'),
-      title: '${l.debtsRecurringSection} | ${items.length}',
-      children: [
-        for (final r in items)
-          RecurringItemCard(
-            key: ValueKey('debtRecurring:${r.id}'),
-            margin: const EdgeInsets.fromLTRB(
-              PpForgeSpacing.md,
-              0,
-              PpForgeSpacing.md,
-              PpForgeSpacing.sm,
-            ),
-            title: r.name,
-            iconCode: r.iconCode,
-            sideLabel: switch (r.signedLeft) {
-              final v? when v > 0.005 => l.debtsSideOwed(money(v)),
-              final v? when v < -0.005 => l.debtsSideOwe(money(v.abs())),
-              _ => null,
-            },
-            sideTone: switch (r.signedLeft) {
-              final v? when v > 0.005 => Tone.success,
-              final v? when v < -0.005 => Tone.danger,
-              _ => null,
-            },
-            chain: _planDots(r.plan),
-            lines: _lineSummaries(l, r, money),
-            onTap: () => openPage(context, '/recurring/${r.id}'),
-          ),
-        for (final c in cards)
-          PpForgeListRow(
-            key: ValueKey('debtCard:${c.account.id}'),
-            leading: const PpForgeAvatar.icon(AppIcons.creditCard, size: 36),
-            title: l.debtsCardDebt,
-            line2: ListRowLine(parts: [c.account.name]),
-            trailing: ListRowTrailing.value(
-              MoneyText(c.amount, symbol: symbol, tone: MoneyTone.expense),
-            ),
-            onTap: () => openPage(context, '/accounts/${c.account.id}'),
-          ),
-      ],
-    );
-  }
-
-  /// A plan's installments as chain dots: ticked = paid, the next one
-  /// current, the rest ahead.
-  static List<ChainDot>? _planDots(DebtRecurringPlan? p) {
-    if (p == null || p.count <= 0) return null;
-    return [
-      for (var i = 0; i < p.count; i++)
-        i < p.done
-            ? ChainDot.paid
-            : i == p.done
-            ? ChainDot.current
-            : ChainDot.future,
-    ];
-  }
-
-  /// An item's lines in one line each: จดหนี้ / จ่ายหนี้, the wallet or who
-  /// pays for me, the next date; without lines from the BE, its next round.
-  List<RecurringLineSummary> _lineSummaries(
-    AppLocalizations l,
-    DebtCounterpartyRecurring r,
-    String Function(double) money,
-  ) {
-    String? date(DateTime? d) =>
-        d == null ? null : DateFormat.MMMd(_locale).format(d);
-    Widget? amount(double? a) => a == null || a <= 0 ? null : Text(money(a));
-    if (r.lines.isEmpty) {
-      final next = date(r.nextDate);
-      return next == null
-          ? const []
-          : [
-              RecurringLineSummary(
-                text: '${l.recurringAheadNext} $next',
-                amount: amount(r.nextAmount),
-              ),
-            ];
-    }
-    return [
-      for (final line in r.lines)
-        RecurringLineSummary(
-          text: [
-            line.repayment ? l.debtSettleChip : l.debtRecordChip,
-            if (line.paidByName != null)
-              l.recurringLinePaidBy(line.paidByName!)
-            else
-              ?line.accountName,
-            ?date(line.nextDate),
-          ].join(' · '),
-          amount: amount(line.amount),
-          paidBy: line.paidByName != null,
-        ),
-    ];
-  }
-
   /// + จดหนี้: quick create in debt mode with this person.
   Future<void> _record(DebtPersonState s) => showQuickCreateSheet(
     context,
@@ -474,24 +385,46 @@ class _PersonViewState extends State<_PersonView> {
   );
 
   /// + รายการประจำ: a new หนี้ item with this counterparty picked.
+  /// A debt rule with this person / institution, its side from the net (I
+  /// owe them = received).
+  RuleDraft _rulePreset(PersonBalance b) =>
+      RuleDraft.blank(RecurringKind.debt).copyWith(
+        person: b.isInstitution ? null : b.person,
+        institution: b.institution,
+        direction: b.net < 0
+            ? DebtEntryDirection.received
+            : DebtEntryDirection.paid,
+      );
+
+  /// รายการอัตโนมัติ: the debt rules of this counterparty (spec §2.1, §3;
+  /// mock Person): pulled by its key, + prefills the person.
+  Widget _rulesBox(AppLocalizations l, PersonBalance b) => RulesBox(
+    key: ValueKey('personRules:${b.key}'),
+    filter: RuleFilter(debtKey: b.key),
+    preset: _rulePreset(b),
+    newName: l.rulesNewNamePerson(b.person.name),
+    trackingType: b.isInstitution ? 'installment' : 'person_debt',
+    onChanged: () {
+      setState(() => _rulesTick++);
+      unawaited(_cubit.load());
+    },
+  );
+
   void _newRecurring(DebtPersonState s) {
     final b = s.balance!;
-    final i = b.institution;
-    openPage(
-      context,
-      Uri(
-        path: '/recurring/new',
-        queryParameters: {
-          'kind': RecurringKind.debt.toJson(),
-          if (i != null) ...{
-            'institution': i.id,
-            'institution_name': i.name,
-          } else ...{
-            'person_name': b.person.name,
-            'contact': ?b.person.contactId,
-          },
-        },
-      ).toString(),
+    unawaited(
+      context.push<Object?>(
+        '/recurring-rules/new',
+        extra: RulePageArgs(
+          fromPage: RuleFromPage(
+            newName: AppLocalizations.of(
+              context,
+            )!.rulesNewNamePerson(b.person.name),
+            preset: _rulePreset(b),
+            trackingType: b.isInstitution ? 'installment' : 'person_debt',
+          ),
+        ),
+      ),
     );
   }
 

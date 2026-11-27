@@ -21,7 +21,6 @@ import '../../projects/data/projects_repository.dart';
 import '../../transactions/data/transactions_repository.dart';
 import '../../transactions/presentation/widgets/quick_create_sheet.dart'
     show showQuickCreateSheet;
-import '../../recurring/data/recurring_repository.dart';
 import '../domain/notification.dart';
 import 'cubit/notifications_inbox_cubit.dart';
 import 'notification_routes.dart';
@@ -77,7 +76,6 @@ abstract final class NotificationActions {
         AcceptRoute.deleteBooks => _onDeleteBooks(ctx, n),
         AcceptRoute.recordRepayment => _onRecordRepayment(ctx, n),
         AcceptRoute.projectInvite => _onAcceptProjectInvite(ctx, n),
-        AcceptRoute.extendRecurring => _onExtendRecurring(ctx, n),
         AcceptRoute.openDue => _onOpenDue(ctx, n),
         AcceptRoute.linkRequest => _onAcceptLinkRequest(ctx, n.id),
       };
@@ -141,50 +139,6 @@ Future<void> _onRejectProjectInvite(BuildContext ctx, String id) async {
   try {
     final summary = await repo.rejectInvite(id);
     inboxCubit.applyInboxSummary(id, summary);
-  } on ApiException catch (e) {
-    _showError(messenger, e);
-  }
-}
-
-Map<String, dynamic>? extendedEnd(Map<String, dynamic> payload) {
-  final end = payload['end'];
-  if (end is! Map) return null;
-  switch (end['kind']) {
-    case 'count':
-      final c = end['count'];
-      return c is num && c > 0
-          ? {'kind': 'count', 'count': c.toInt() * 2}
-          : null;
-    case 'date':
-      final e = DateTime.tryParse('${end['date']}');
-      if (e == null) return null;
-      final s = DateTime.tryParse('${payload['start_date']}');
-      final span = s == null ? null : e.difference(s);
-      final next = span == null || span.inDays <= 0
-          ? DateTime(e.year + 1, e.month, e.day)
-          : DateTime.utc(e.year, e.month, e.day + span.inDays);
-      String two(int v) => v.toString().padLeft(2, '0');
-      return {
-        'kind': 'date',
-        'date': '${next.year}-${two(next.month)}-${two(next.day)}',
-      };
-  }
-  return null;
-}
-
-Future<void> _onExtendRecurring(BuildContext ctx, AppNotification n) async {
-  final id = n.payload['recurring_id'] as String?;
-  if (id == null) return;
-  final repo = ctx.read<RecurringRepository>();
-  final inboxCubit = ctx.read<NotificationsInboxCubit>();
-  final messenger = ScaffoldMessenger.of(ctx);
-  try {
-    await repo.extend(
-      id,
-      lineId: n.payload['recurring_reminder_id'] as String?,
-      end: extendedEnd(n.payload),
-    );
-    await _reload(inboxCubit);
   } on ApiException catch (e) {
     _showError(messenger, e);
   }
