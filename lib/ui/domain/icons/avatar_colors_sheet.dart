@@ -39,13 +39,8 @@ Future<AvatarColorsDraft?> showAvatarColorsSheet({
       ),
     );
   }
-  return showModalBottomSheet<AvatarColorsDraft>(
-    context: context,
-    sheetAnimationStyle: PpForgePageMotion.sheetStyle,
-    isScrollControlled: true,
-    showDragHandle: true,
-    useSafeArea: true,
-    useRootNavigator: true,
+  return showPpForgeBottomSheet<AvatarColorsDraft>(
+    context,
     builder: (ctx) => SizedBox(
       height: MediaQuery.sizeOf(ctx).height * 0.82,
       child: body(ctx),
