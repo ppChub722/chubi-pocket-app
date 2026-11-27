@@ -8,7 +8,7 @@ Part of a multi-repo project:
 
 - **chubi-pocket-app** — this repo, the Flutter client (iOS & Android)
 - [chubi-pocket-be](https://github.com/ppChub722/chubi-pocket-be) — Go REST API
-- [chubi-pocket-web](https://github.com/ppChub722/chubi-pocket-web) — web client (in progress)
+- chubi-pocket-web — web client (in progress, private)
 - [chubi-pocket-docs](https://github.com/ppChub722/chubi-pocket-docs) — specs and design docs
 
 > Solo project, built to learn Flutter and Go by shipping something real rather
