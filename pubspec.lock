@@ -877,15 +877,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
-  pp_forge_core:
+  ppforge_core:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.1.6"
-      resolved-ref: d41097779c0680beb6702547809fb4b84fa16a34
-      url: "https://ppChub722@github.com/ppChub722/pp-forge-core.git"
+      ref: "v0.1.7"
+      resolved-ref: "19ea871b4edceea1af2991c9a3a40b798fa5c8f3"
+      url: "https://ppChub722@github.com/ppChub722/ppforge-core.git"
     source: git
-    version: "0.1.6"
+    version: "0.1.7"
   provider:
     dependency: transitive
     description:

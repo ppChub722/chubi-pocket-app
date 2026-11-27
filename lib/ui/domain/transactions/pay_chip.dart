@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// "จ่าย" under a person's name in a bill: ✓ and filled on the one who paid,
 /// dashed on everyone else (tap = they paid). The event bill and quick

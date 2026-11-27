@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'split_event_section.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// The ผูกกับ choice as a row like the others (โน้ต, รายการประจำ): the label
 /// ("แบ่ง") and a switch. Off = a plain transaction, on = the bill with

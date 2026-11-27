@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 import 'avatar_states_demo.dart';
 
 /// `/dev/atoms/badge-avatar` — badge, avatars, corner badge, icon bubble.

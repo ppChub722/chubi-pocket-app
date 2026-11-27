@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 import 'api/page_flows.dart';
 import 'pages/atoms_chip_page.dart';
 import 'pages/atoms_input_button_page.dart';
@@ -52,7 +52,7 @@ import 'pages/sheets_pickers_page.dart';
 /// Every piece the app is built from has a page here; every UI change lands
 /// here first, the owner reviews it, then the pages adopt it. English only.
 ///
-/// The kit's pages (tokens … templates) come from pp_forge_core's `hub.dart`;
+/// The kit's pages (tokens … templates) come from ppforge_core's `hub.dart`;
 /// this file holds the app's own levels and the pages that still show app
 /// data.
 abstract final class AppHubLevel {

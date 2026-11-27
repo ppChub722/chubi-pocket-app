@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// One occurrence as a cell of [OccurrenceTileGrid] (ปรับแต่งล่วงหน้า):
 /// [label] (its month, or weekday for a weekly rule) over the big [day], then

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// The big `เชื่อม <App>` button of an unlinked connection page (0.4.2 1b):
 /// a full-width primary [PpForgeButton] filled with the app's [brand] colour,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import '../tokens/text_limits.dart';
 
 /// Naming a new tag (the tag picker's "add a tag" with nothing typed).

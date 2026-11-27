@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'money_text.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 class SummaryStat {
   const SummaryStat({

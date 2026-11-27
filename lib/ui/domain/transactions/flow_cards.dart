@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 class FlowCards extends StatelessWidget {
   const FlowCards({

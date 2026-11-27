@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// One person of a [BillDebtSummary]: who, their state with me before →
 /// after the save ([state], null = not known yet) and what the save does

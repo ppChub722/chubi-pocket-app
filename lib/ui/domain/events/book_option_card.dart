@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// One book my part of an event bill can go to ("หนี้" / "รายการ"): a
 /// bordered card with a tick, its icon, words and amount; [child] (the

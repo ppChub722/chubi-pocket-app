@@ -1,5 +1,5 @@
 import '../icon_type.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import 'base/pack_account.dart';
 import 'base/pack_category.dart';
 import 'base/pack_contact.dart';

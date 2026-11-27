@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// Money pieces: MoneyText, CurrencyTile. (IconTile is on Atoms → Badge & avatar,
 /// SummaryStats on Organisms → Section & hero.)

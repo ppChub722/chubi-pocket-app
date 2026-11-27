@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
 import 'net_balance.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 enum DebtSummaryTone { owedToMe, iOwe, cleared, warn }
 

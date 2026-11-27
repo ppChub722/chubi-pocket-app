@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// Quick create's debt result box (owner 2026-10-21, mock QuickCreateDebt):
 /// three rows, the words left and the value right —

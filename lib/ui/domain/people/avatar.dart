@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import '../icons/icon_display.dart';
 import '../icons/icon_type.dart';
 import 'avatar_data.dart';

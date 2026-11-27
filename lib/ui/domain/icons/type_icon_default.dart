@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// The icon + colour an item of a given type (a wallet's cash / bank …) shows
 /// until the user picks their own; a null [PpForgeIconCode] means "not picked".

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/ui/molecules/list-header` — PpForgeListHeader (the head of a group of
 /// rows) and PpForgeListToolbar (search, filters, sort; opened by 🔍).

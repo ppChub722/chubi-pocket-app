@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/network/api_exception.dart';
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/organisms/states` — async states, pull to refresh, saving overlay.
 Widget buildStatesPage(BuildContext context) => const _StatesPage();

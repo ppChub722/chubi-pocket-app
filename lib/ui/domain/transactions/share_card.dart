@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import 'link_mode_bar.dart';
 
 /// The status line under a [ShareCard]: "✓ แบ่งครบแล้ว" when the rows add up

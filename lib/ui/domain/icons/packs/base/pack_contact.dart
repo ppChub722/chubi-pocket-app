@@ -1,4 +1,4 @@
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import '_shared.dart';
 
 const basePackContact = PpForgeIconPack(

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 import '../features/preferences/presentation/cubit/locale_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_id_cubit.dart';

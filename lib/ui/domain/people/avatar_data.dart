@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart' show StringCharacters;
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// What an [AvatarData] draws (the BE decides, the app never picks).
 enum AvatarKind {

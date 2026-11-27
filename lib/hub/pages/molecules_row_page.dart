@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/accounts/domain/account_type.dart';
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/ui/molecules/row` — the one row shell and its two presets:
 /// Shell (PpForgeRow) → List (PpForgeListRow, a list item) → Detail (PpForgeDetailRow, a

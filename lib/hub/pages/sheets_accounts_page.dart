@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/accounts/presentation/widgets/bank_picker.dart';
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/domain/sheets-accounts` — the wallet sheets as presentational
 /// organisms (sample data, no cubit / repository): adjust balance and the

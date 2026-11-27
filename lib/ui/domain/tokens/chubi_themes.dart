@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import 'module_colors.dart';
 
 /// chubi-pocket's brand colours per kit theme: the module colours (and the

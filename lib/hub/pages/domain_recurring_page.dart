@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/domain/recurring` — recurring texts: DueText (a due date as
 /// relative words) and RecurrenceText (a RecurrenceRule in words). The

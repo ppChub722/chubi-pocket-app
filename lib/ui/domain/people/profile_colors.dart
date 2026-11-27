@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import 'avatar_data.dart';
 
 /// Picks a person's colours from their profile colours (`avatar.colors`,

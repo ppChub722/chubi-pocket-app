@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/domain/progress` — the progress pieces shared by budgets and saving
 /// goals: ProgressRow with the expected segment, ProgressCard (row / compact /

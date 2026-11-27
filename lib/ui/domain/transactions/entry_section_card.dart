@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// One of the cards under the entry hero (owner 2026-11-03): the แบ่ง card
 /// and the tx detail card (category / wallet, tags, note, รายการประจำ). Its

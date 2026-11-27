@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/app_icons.dart';
 import '../tokens/quick_create_mode.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// The mode's glyph: the record glyph for a transaction, the debt / saving
 /// module icons.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../features/accounts/domain/account_type.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import '../tokens/app_icons.dart';
 import '../tokens/module_colors.dart';
 import '../icons/icon_type.dart';

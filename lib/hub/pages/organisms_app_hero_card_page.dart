@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/organisms/app-hero-card` — THE hero card: header · content ·
 /// footer, three modes, expanded / folded versions, and every hub piece a

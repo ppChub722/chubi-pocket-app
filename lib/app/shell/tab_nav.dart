@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../ui/domain/tokens/app_modules.dart';
 import 'nav_layout.dart';
 import 'tab_entry.dart';
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 enum ShellTab {
   home,

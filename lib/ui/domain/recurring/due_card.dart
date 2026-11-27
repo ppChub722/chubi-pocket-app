@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 import '../tokens/app_icons.dart';
 
 /// The next occurrence as one slim row inside an item's hero (0.4.3 plan E):

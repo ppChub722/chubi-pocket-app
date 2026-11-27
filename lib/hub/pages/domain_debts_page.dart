@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/transactions/domain/transaction_type.dart';
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/domain/debts` — the debts pieces: NetBalance, the debt hero pieces
 /// and the debt pages' rows (PpForgeListRow). Sample data is Thai (what the debts

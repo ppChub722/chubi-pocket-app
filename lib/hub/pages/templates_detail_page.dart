@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// `/dev/templates/detail-page` — the DetailPage template: one page skeleton
 /// for every entity (wallet, category, contact, event, budget, goal,

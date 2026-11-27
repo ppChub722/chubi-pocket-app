@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/ui.dart';
-import 'package:pp_forge_core/hub.dart';
+import 'package:ppforge_core/hub.dart';
 
 /// Events (projects) pieces: EventListRow, EventTagRef, EventBillRow,
 /// EventBillChildRow, SettleRow.

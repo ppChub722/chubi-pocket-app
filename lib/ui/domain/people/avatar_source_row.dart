@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:pp_forge_core/ui.dart';
+import 'package:ppforge_core/ui.dart';
 
 /// One place a profile picture can come from (0.4.2 1b): the edit page's
 /// "รูปโปรไฟล์" radio list (ไอคอน · อัปโหลดเอง · one row per linked app)
